@@ -9,6 +9,7 @@ assignees: ''
 
 **Please describe why this is needed.**
 A clear and concise description of what the problem is. Ex. The cafeteria needs [...]
+*Required: Please upload a photo or image of the object to give us a clear reference of what it should look like.*
 
 **Requirements**
 A clear and concise description of what you want.
