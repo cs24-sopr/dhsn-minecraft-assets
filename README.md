@@ -1,5 +1,8 @@
 ## Overview: Where Should Each Asset Be Saved?
 
+[Official Minecraft Bedrock Creator Documentation](https://wiki.bedrock.dev/documentation/pack-structure)
+
+
 For **each individual model**, depending on the format (Block or Entity), the following files are created in the repository:
 
 ### 1. For Standard Blocks (Format: `Bedrock Block`)
