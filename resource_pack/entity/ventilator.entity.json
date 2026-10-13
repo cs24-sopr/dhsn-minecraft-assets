@@ -1,0 +1,28 @@
+{
+  "format_version": "1.20.80",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "dhsn:ventilator",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/entity/ventilator"
+      },
+      "geometry": {
+        "default": "geometry.ventilator"
+      },
+      "animations": {
+        "spin": "animation.ventilator.spin"
+      },
+      "scripts": {
+        "animate": [
+          "spin"
+        ]
+      },
+      "render_controllers": [
+        "controller.render.ventilator"
+      ]
+    }
+  }
+}
