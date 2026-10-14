@@ -7,15 +7,32 @@ assignees: ''
 
 ---
 
-**Please describe why this is needed.**
-A clear and concise description of what the problem is. Ex. The cafeteria needs [...]
-*Required: Please upload a photo or image of the object to give us a clear reference of what it should look like.*
+**Please describe what kind of asset you need:** <br />
+*Try to be as precise as possible!*
 
-**Requirements**
-A clear and concise description of what you want.
+--------------------------------------------------------------
 
-**Urgency**
-Link blocked tickets or state when you would like to work with this.
 
-**Additional context**
-Add any other context or screenshots about the request here.
+*Your description here*
+
+
+--------------------------------------------------------------
+
+**Dependencies:** <br />
+*Link blocked tickets or connected tickets.*
+--------------------------------------------------------------
+
+
+*Your dependencies here*
+
+
+--------------------------------------------------------------
+**Photos:** <br />
+*Allways include at least one photo of the object!*
+--------------------------------------------------------------
+
+
+*Your photos here (e. g. drag and drop) *
+
+
+--------------------------------------------------------------
