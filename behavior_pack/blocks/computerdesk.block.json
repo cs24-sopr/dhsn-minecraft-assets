@@ -7,6 +7,12 @@
 				"category": "construction"
 			},
     "traits": {
+      "minecraft:placement_direction": {
+        "enabled_states": [
+          "minecraft:cardinal_direction"
+        ],
+        "y_rotation_offset": 90.0
+      },
       "minecraft:multi_block": {
         "enabled_states": [
           "minecraft:multi_block_part"
@@ -36,7 +42,7 @@
 				}
 			},
 			"minecraft:map_color": "#5f4a2b"
-		},
+		},     
     "permutations": [
       {
         "condition": "q.block_state('minecraft:multi_block_part') == 0",
@@ -48,6 +54,38 @@
         "condition": "q.block_state('minecraft:multi_block_part') == 1",
         "components": {
           "minecraft:geometry": "geometry.computerdesk_leftpart"
+        }
+      },
+      {
+        "condition": "q.block_state('minecraft:cardinal_direction') == 'east'",
+        "components": {
+          "minecraft:transformation": {
+            "rotation": [0, 0, 0]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('minecraft:cardinal_direction') == 'north'",
+        "components": {
+          "minecraft:transformation": {
+            "rotation": [0, 90, 0]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('minecraft:cardinal_direction') == 'west'",
+        "components": {
+          "minecraft:transformation": {
+            "rotation": [0, 180, 0]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('minecraft:cardinal_direction') == 'south'",
+        "components": {
+          "minecraft:transformation": {
+            "rotation": [0, 270, 0]
+          }
         }
       }
     ]
