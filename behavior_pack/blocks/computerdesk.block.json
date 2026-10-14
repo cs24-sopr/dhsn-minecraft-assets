@@ -1,30 +1,55 @@
   {
-	"format_version": "1.21.100",
+	"format_version": "1.26.50",
 	"minecraft:block": {
 		"description": {
 			"identifier": "myname:computerdesk",
 			"menu_category": {
 				"category": "construction"
-			}
+			},
+    "traits": {
+      "minecraft:multi_block": {
+        "enabled_states": [
+          "minecraft:multi_block_part"
+        ],
+        "parts": 2,
+        "direction": "east"
+        }
+      }
 		},
 		"components": {
+      "minecraft:geometry": "geometry.computerdesk_leftpart",
 			"minecraft:collision_box": true,
 			"minecraft:selection_box": true,
+      "minecraft:movable": {
+        "movement_type": "immovable"
+      },
 			"minecraft:destructible_by_mining": {
 				"seconds_to_destroy": 0.5
 			},
 			"minecraft:destructible_by_explosion": {
 				"explosion_resistance": 15
 			},
-			"minecraft:geometry": "geometry.computerdesk",
 			"minecraft:material_instances": {
 				"*": {
 					"texture": "computerdesk",
 					"render_method": "alpha_test"
 				}
 			},
-			"minecraft:map_color": "#5f4a2b",
-			"tag:minecraft:is_axe_item_destructible": {}
-		}
+			"minecraft:map_color": "#5f4a2b"
+		},
+    "permutations": [
+      {
+        "condition": "q.block_state('minecraft:multi_block_part') == 0",
+        "components": {
+          "minecraft:geometry": "geometry.computerdesk_rightpart"
+        }
+      },
+      {
+        "condition": "q.block_state('minecraft:multi_block_part') == 1",
+        "components": {
+          "minecraft:geometry": "geometry.computerdesk_leftpart"
+        }
+      }
+    ]
 	}
 }
