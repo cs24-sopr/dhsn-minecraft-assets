@@ -4,8 +4,8 @@
 		{
 			"description": {
 				"identifier": "geometry.monitor",
-				"texture_width": 32,
-				"texture_height": 32,
+				"texture_width": 64,
+				"texture_height": 64,
 				"visible_bounds_width": 2,
 				"visible_bounds_height": 2.5,
 				"visible_bounds_offset": [0, 0.75, 0]
@@ -100,6 +100,15 @@
 								"down": {"uv": [19, 25], "uv_size": [-1, -2]}
 							}
 						}
+					]
+				},
+				{
+					"name": "bone",
+					"parent": "monitor",
+					"pivot": [0, 0, 2],
+					"cubes": [
+						{"origin": [4, 0, -5], "size": [5, 1, 10], "uv": [23, 33]},
+						{"origin": [6, 0, 7], "size": [3, 1, 2], "uv": [28, 21]}
 					]
 				}
 			]
