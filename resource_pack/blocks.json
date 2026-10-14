@@ -2,5 +2,8 @@
 	"format_version": "1.21.0",
 	"myname:test_block": {
 		"sound": "stone"
-	}
+	},
+	"myname:sink": {
+    	"sound": "stone"
+  }
 }
