@@ -16,6 +16,8 @@ The Block Wizard Plugin handles most of this automatically.
 In the Wizard, under "Export", simply select "Integrate into Package" and under "Select packs manually", choose the `resource_pack` folder from the repository.  
 The Wizard will then automatically save everything in the correct location except for one file: `resource_pack/blocks/<Model_Name>.block.json`. This file must be manually moved into the `behavior_pack/blocks/` directory.
 
+If you want to create a Multiblock-Item with Dimensions bigger than 16x16x16 you can look at [this example](/docs/Multiblock_Example.md).
+
 ---
 
 ### 2. For Entities & Animated Objects (Format: `Bedrock Entity`)
