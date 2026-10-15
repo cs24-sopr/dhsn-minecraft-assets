@@ -4,11 +4,20 @@
 	"padding": 8,
 	"num_mip_levels": 4,
 	"texture_data": {
+		"monitor": {
+			"textures": "textures/blocks/monitor"
+		},
 		"toilet": {
 			"textures": "textures/blocks/toilet"
 		},
 		"test_block": {
 			"textures": "textures/blocks/test_block"
+		},
+		"sink": {
+      		"textures": "textures/blocks/sink"
+    	},
+		"computerdesk": {
+			"textures": "textures/blocks/computerdesk"
 		}
 	}
 }
