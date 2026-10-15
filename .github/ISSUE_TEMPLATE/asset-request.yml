@@ -6,7 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Nutze dieses Formular, um ein spezielles Asset anzufragen (z. B. einen Block, eine Entity oder ein Item). Bitte achtet dabei auf eine möglichst genaue Beschreibung.
+        Nutzt dieses Formular, um ein spezielles Asset anzufragen (z. B. einen Block, eine Entity oder ein Item). Bitte achtet dabei auf eine möglichst genaue Beschreibung.
 
   - type: input
     id: target_name
@@ -19,7 +19,7 @@ body:
   - type: textarea
     id: needed_info
     attributes:
-      label: (Optional) Falls möglich, beschreibe bitte genau wie du dir das Asset vorstellst
+      label: (Optional) Falls möglich, beschreibe bitte genau wie du dir das Asset vorstellst z. B. Farben, Länge x Höhe x Tiefe (z. B. zwei Blöcke Breite x 1 Block Höhe...) etc.
       placeholder: "Der Monitor soll einen Standard Windows Bildschirmschoner haben und wie in Raum 103 aussehen."
     validations:
       required: false
