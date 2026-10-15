@@ -4,6 +4,9 @@
 	"padding": 8,
 	"num_mip_levels": 4,
 	"texture_data": {
+		"urinal": {
+			"textures": "textures/blocks/urinal"
+		},
 		"test_block": {
 			"textures": "textures/blocks/test_block"
 		}
