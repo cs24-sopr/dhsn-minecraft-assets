@@ -1,3 +1,4 @@
 tile.myname:test_block.name=test_block
+tile.myname:sink.name=Sink
 tile.myname:monitor.name=monitor
 tile.myname:computerdesk.name=Computerdesk

@@ -6,6 +6,9 @@
 	"myname:test_block": {
 		"sound": "stone"
 	},
+	"myname:sink": {
+    	"sound": "stone"
+  	},	
 	"myname:computerdesk": {
 		"sound": "wood"
 	}
