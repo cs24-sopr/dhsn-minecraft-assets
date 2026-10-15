@@ -7,8 +7,17 @@
 		"paper_towel_dispenser": {
 			"textures": "textures/blocks/paper_towel_dispenser"
 		},
+		"monitor": {
+			"textures": "textures/blocks/monitor"
+		},
 		"test_block": {
 			"textures": "textures/blocks/test_block"
+		},
+		"sink": {
+      		"textures": "textures/blocks/sink"
+    	},
+		"computerdesk": {
+			"textures": "textures/blocks/computerdesk"
 		}
 	}
 }

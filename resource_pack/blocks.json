@@ -3,7 +3,16 @@
 	"myname:paper_towel_dispenser": {
 		"sound": "stone"
 	},
+	"myname:monitor": {
+		"sound": "glass"
+	},
 	"myname:test_block": {
 		"sound": "stone"
+	},
+	"myname:sink": {
+    	"sound": "stone"
+  	},	
+	"myname:computerdesk": {
+		"sound": "wood"
 	}
 }
