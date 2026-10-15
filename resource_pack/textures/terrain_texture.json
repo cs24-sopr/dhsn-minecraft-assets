@@ -9,6 +9,9 @@
 		},
 		"test_block": {
 			"textures": "textures/blocks/test_block"
+		},
+		"computerdesk": {
+			"textures": "textures/blocks/computerdesk"
 		}
 	}
 }
