@@ -14,9 +14,6 @@
       "minecraft:knockback_resistance": {
         "value": 1.0
       },
-      "minecraft:rotation": {
-        "value": [0, 0]
-      },
       "minecraft:collision_box": {
         "width": 1.0,
         "height": 1.0
