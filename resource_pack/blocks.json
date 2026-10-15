@@ -3,7 +3,13 @@
 	"myname:urinal": {
 		"sound": "stone"
 	},
+	"myname:monitor": {
+		"sound": "glass"
+	},
 	"myname:test_block": {
 		"sound": "stone"
+	},
+	"myname:computerdesk": {
+		"sound": "wood"
 	}
 }
