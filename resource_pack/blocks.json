@@ -1,9 +1,15 @@
 {
 	"format_version": "1.21.0",
+	"myname:monitor": {
+		"sound": "glass"
+	},
 	"myname:test_block": {
 		"sound": "stone"
 	},
 	"myname:sink": {
     	"sound": "stone"
-  }
+  	},	
+	"myname:computerdesk": {
+		"sound": "wood"
+	}
 }

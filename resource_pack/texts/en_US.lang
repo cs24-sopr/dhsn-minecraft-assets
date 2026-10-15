@@ -1,2 +1,7 @@
 tile.myname:test_block.name=test_block
+<<<<<<< HEAD
 tile.myname:sink.name=Sink
+=======
+tile.myname:monitor.name=monitor
+tile.myname:computerdesk.name=Computerdesk
+>>>>>>> bf43a5f16f54a40797b8ab27c629fa61fe95b6d1
