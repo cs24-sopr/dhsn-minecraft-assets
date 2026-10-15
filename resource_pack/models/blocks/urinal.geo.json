@@ -12,7 +12,7 @@
 			},
 			"bones": [
 				{
-					"name": "block",
+					"name": "urinal",
 					"pivot": [0, 0, 0],
 					"cubes": [
 						{
