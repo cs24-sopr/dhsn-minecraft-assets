@@ -4,6 +4,9 @@
 	"padding": 8,
 	"num_mip_levels": 4,
 	"texture_data": {
+		"paper_towel_dispenser": {
+			"textures": "textures/blocks/paper_towel_dispenser"
+		},
 		"test_block": {
 			"textures": "textures/blocks/test_block"
 		}
