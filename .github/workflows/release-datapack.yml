@@ -1,9 +1,10 @@
 name: Conditional Main Workflow
 
 on:
+  workflow_dispatch:
   push:
     branches:
-      - main
+      - "*"
 
 jobs:
   verify-conditions:
