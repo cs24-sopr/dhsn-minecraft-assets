@@ -1,4 +1,4 @@
-name: Conditional Main Workflow
+name: Release datapack bundle
 
 on:
   workflow_dispatch:
