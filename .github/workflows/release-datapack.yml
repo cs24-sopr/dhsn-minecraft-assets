@@ -1,0 +1,55 @@
+name: Conditional Main Workflow
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  verify-conditions:
+    runs-on: ubuntu-latest
+    outputs:
+      should_run: ${{ steps.check.outputs.should_run }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check file and release version
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BEHAVIOUR_MANIFEST="behavior_pack/manifest.json"
+          RESOURCE_MANIFEST="resource_pack/manifest.json"
+
+          if [[ ! -f "$BEHAVIOUR_MANIFEST" || ! -f "$RESOURCE_MANIFEST" ]]; then
+            echo "One of $BEHAVIOUR_MANIFEST, $RESOURCE_MANIFEST or both are missing. Skipping workflow."
+            echo "should_run=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          BEHAVIOUR_REGEX=".behaviour."
+          RESOURCE_REGEX=".resource."
+
+          LATEST_BEHAVIOUR_RELEASE=$(gh release list --limit 100 --json tagName,name,isDraft \
+            --jq "[.[] | select(.isDraft == false and (.tagName | test(\"$BEHAVIOUR_REGEX\")))] | .[0].tagName // \"none\"")
+
+          LATEST_RESOURCE_RELEASE=$(gh release list --limit 100 --json tagName,name,isDraft \
+            --jq "[.[] | select(.isDraft == false and (.tagName | test(\"$RESOURCE_REGEX\")))] | .[0].tagName // \"none\"")
+
+          echo "Latest resource_pack release tag: $LATEST_RESOURCE_RELEASE"
+          echo "Latest behaviour_pack release tag: $LATEST_BEHAVIOUR_RELEASE"
+
+          echo "should_run=false" >> $GITHUB_OUTPUT
+
+  build-and-deploy:
+    needs: verify-conditions
+    if: needs.verify-conditions.outputs.should_run == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Release new pack versions
+        run: |
+          echo "would run here"
