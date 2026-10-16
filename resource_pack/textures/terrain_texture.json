@@ -10,9 +10,15 @@
 		"monitor": {
 			"textures": "textures/blocks/monitor"
 		},
+		"toilet": {
+			"textures": "textures/blocks/toilet"
+		},
 		"test_block": {
 			"textures": "textures/blocks/test_block"
 		},
+		"sink": {
+      		"textures": "textures/blocks/sink"
+    	},
 		"computerdesk": {
 			"textures": "textures/blocks/computerdesk"
 		}

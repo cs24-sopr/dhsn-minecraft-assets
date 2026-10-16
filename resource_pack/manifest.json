@@ -4,14 +4,14 @@
 		"name": "DHSN Resource Pack",
 		"description": "Custom Block Resource Pack",
 		"uuid": "a4799509-fb28-4980-9b75-ca1edcc29eb6",
-		"version": [1, 0, 0],
+		"version": [0, 0, 1],
 		"min_engine_version": [1, 26, 50]
 	},
 	"modules": [
 		{
 			"type": "resources",
 			"uuid": "6fead1ef-af17-409b-ace6-9890dae60795",
-			"version": [1, 0, 0]
+			"version": [0, 0, 1]
 		}
 	],
 	"metadata": {
