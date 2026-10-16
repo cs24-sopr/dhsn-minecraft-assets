@@ -47,7 +47,7 @@ jobs:
           elif [[ "$LATEST_RELEASE" == "none" ]]; then
             echo "No previous release found; continuing."
             SHOULD_RUN=true
-            
+
           else
             BEHAVIOUR_IS_NEWER=$(python3 scripts/compare_semver.py "$BEHAVIOUR_VERSION" "$LATEST_RELEASE")
             RESOURCE_IS_NEWER=$(python3 scripts/compare_semver.py "$RESOURCE_VERSION" "$LATEST_RELEASE")
@@ -58,7 +58,7 @@ jobs:
 
           echo "should_run=$SHOULD_RUN" >> "$GITHUB_OUTPUT"
 
-  build-and-deploy:
+  bundle-and-deploy:
     needs: verify-conditions
     if: needs.verify-conditions.outputs.should_run == 'true'
     runs-on: ubuntu-latest
