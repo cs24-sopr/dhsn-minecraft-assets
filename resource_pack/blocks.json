@@ -3,6 +3,9 @@
 	"myname:monitor": {
 		"sound": "glass"
 	},
+	"myname:toilet": {
+		"sound": "stone"
+	},
 	"myname:test_block": {
 		"sound": "stone"
 	},
