@@ -29,19 +29,34 @@ jobs:
             exit 0
           fi
 
-          BEHAVIOUR_REGEX=".behaviour."
-          RESOURCE_REGEX=".resource."
+          LATEST_RELEASE=$(gh release list --exclude-drafts --limit 1 --json tagName --jq '.[0].tagName // "none"')
 
-          LATEST_BEHAVIOUR_RELEASE=$(gh release list --limit 100 --json tagName,name,isDraft \
-            --jq "[.[] | select(.isDraft == false and (.tagName | test(\"$BEHAVIOUR_REGEX\")))] | .[0].tagName // \"none\"")
+          echo "Latest release tag: $LATEST_RELEASE"
 
-          LATEST_RESOURCE_RELEASE=$(gh release list --limit 100 --json tagName,name,isDraft \
-            --jq "[.[] | select(.isDraft == false and (.tagName | test(\"$RESOURCE_REGEX\")))] | .[0].tagName // \"none\"")
+          BEHAVIOUR_VERSION=$(jq -er '.header.version | if type == "array" and length == 3 then map(tostring) | join(".") else error("header.version not a version array") end' "$BEHAVIOUR_MANIFEST")
+          RESOURCE_VERSION=$(jq -er '.header.version | if type == "array" and length == 3 then map(tostring) | join(".") else error("header.version not a version array") end' "$RESOURCE_MANIFEST")
 
-          echo "Latest resource_pack release tag: $LATEST_RESOURCE_RELEASE"
-          echo "Latest behaviour_pack release tag: $LATEST_BEHAVIOUR_RELEASE"
+          echo "Behavior pack version: $BEHAVIOUR_VERSION"
+          echo "Resource pack version: $RESOURCE_VERSION"
 
-          echo "should_run=false" >> $GITHUB_OUTPUT
+          SHOULD_RUN=false
+
+          if [[ "$BEHAVIOUR_VERSION" != "$RESOURCE_VERSION" ]]; then
+            echo "Pack versions differ; skipping workflow."
+
+          elif [[ "$LATEST_RELEASE" == "none" ]]; then
+            echo "No previous release found; continuing."
+            SHOULD_RUN=true
+            
+          else
+            BEHAVIOUR_IS_NEWER=$(python3 scripts/compare_semver.py "$BEHAVIOUR_VERSION" "$LATEST_RELEASE")
+            RESOURCE_IS_NEWER=$(python3 scripts/compare_semver.py "$RESOURCE_VERSION" "$LATEST_RELEASE")
+            if [[ "$BEHAVIOUR_IS_NEWER" == "true" || "$RESOURCE_IS_NEWER" == "true" ]]; then
+              SHOULD_RUN=true
+            fi
+          fi
+
+          echo "should_run=$SHOULD_RUN" >> "$GITHUB_OUTPUT"
 
   build-and-deploy:
     needs: verify-conditions
