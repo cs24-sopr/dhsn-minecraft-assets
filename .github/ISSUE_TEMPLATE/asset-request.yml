@@ -6,7 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Nutze dieses Formular, um ein spezielles Asset anzufragen (z. B. einen Block, eine Entity oder ein Item). Bitte achtet dabei auf eine möglichst genaue Beschreibung.
+        Nutzt dieses Formular, um ein spezielles Asset anzufragen (z. B. einen Block, eine Entity oder ein Item). Bitte achtet dabei auf eine möglichst genaue Beschreibung.
 
   - type: input
     id: target_name
@@ -19,8 +19,8 @@ body:
   - type: textarea
     id: needed_info
     attributes:
-      label: (Optional) Falls möglich, beschreibe bitte genau wie du dir das Asset vorstellst
-      placeholder: "Der Monitor soll einen Standard Windows Bildschirmschoner haben und wie in Raum 103 aussehen."
+      label: (Optional) Falls möglich, beschreibe bitte genau wie du dir das Asset vorstellst z. B. Farben, Länge x Höhe x Tiefe (z. B. zwei Blöcke Breite x 1 Block Höhe...) etc.
+      placeholder: "z. B. Der Monitor soll einen Standard Windows Bildschirmschoner haben und wie in Raum 103 aussehen."
     validations:
       required: false
 
@@ -28,7 +28,7 @@ body:
     id: linked_blocked
     attributes:
       label: (Optional) Ist dieses Ticket an andere Tickets gebunden oder gibt es Abhängigkeiten?
-      placeholder: "Es gibt außerdem bereits ein Ticket für einen Schreibtisch. Dieser soll zu dem Monitor passen."
+      placeholder: "z. B. Es gibt außerdem bereits ein Ticket für einen Schreibtisch. Dieser soll zu dem Monitor passen."
     validations:
       required: false
 
@@ -36,6 +36,6 @@ body:
     id: references
     attributes:
       label: Bitte füge ein Foto des Objektes hinzu (In der DHSN aufgenommen). Falls du gerade keins hast, füge es bitte später hinzu!
-      placeholder: "Hier z. B. per Drag and Drop ein Foto einfügen..."
+      placeholder: "z. B. Hier z. B. per Drag and Drop ein Foto einfügen..."
     validations:
       required: false

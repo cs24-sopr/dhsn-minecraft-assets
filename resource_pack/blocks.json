@@ -3,15 +3,24 @@
 	"myname:paper_towel_dispenser": {
 		"sound": "stone"
 	},
+	"myname:urinal": {
+		"sound": "stone"
+	},
+	"myname:light_gray_brick": {
+		"sound": "stone"
+	},
 	"myname:monitor": {
 		"sound": "glass"
+	},
+	"myname:toilet": {
+		"sound": "stone"
 	},
 	"myname:test_block": {
 		"sound": "stone"
 	},
 	"myname:sink": {
-    	"sound": "stone"
-  	},	
+		"sound": "stone"
+	},
 	"myname:computerdesk": {
 		"sound": "wood"
 	}
