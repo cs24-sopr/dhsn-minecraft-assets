@@ -4,6 +4,9 @@
 	"padding": 8,
 	"num_mip_levels": 4,
 	"texture_data": {
+		"light_gray_brick": {
+			"textures": "textures/blocks/light_gray_brick"
+		},
 		"monitor": {
 			"textures": "textures/blocks/monitor"
 		},
@@ -14,8 +17,8 @@
 			"textures": "textures/blocks/test_block"
 		},
 		"sink": {
-      		"textures": "textures/blocks/sink"
-    	},
+			"textures": "textures/blocks/sink"
+		},
 		"computerdesk": {
 			"textures": "textures/blocks/computerdesk"
 		}
