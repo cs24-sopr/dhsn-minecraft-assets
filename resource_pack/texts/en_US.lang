@@ -1,4 +1,5 @@
 tile.myname:test_block.name=test_block
+tile.myname:urinal.name=Urinal
 tile.myname:computerdesk.name=Computerdesk
 tile.myname:monitor.name=Monitor
 tile.myname:sink.name=Sink
