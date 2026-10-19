@@ -7,6 +7,9 @@
 		"urinal": {
 			"textures": "textures/blocks/urinal"
 		},
+		"light_gray_brick": {
+			"textures": "textures/blocks/light_gray_brick"
+		},
 		"monitor": {
 			"textures": "textures/blocks/monitor"
 		},
@@ -17,8 +20,8 @@
 			"textures": "textures/blocks/test_block"
 		},
 		"sink": {
-      		"textures": "textures/blocks/sink"
-    	},
+			"textures": "textures/blocks/sink"
+		},
 		"computerdesk": {
 			"textures": "textures/blocks/computerdesk"
 		}
