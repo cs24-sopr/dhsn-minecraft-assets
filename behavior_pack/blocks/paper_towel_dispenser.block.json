@@ -15,11 +15,11 @@
 		"components": {
 			"minecraft:collision_box": {
 				"origin": [-5, 3, 3],
-				"size": [10, 16, 5]
+				"size": [10, 13, 5]
 			},
 			"minecraft:selection_box": {
 				"origin": [-5, 3, 3],
-				"size": [10, 16, 5]
+				"size": [10, 13, 5]
 			},
 			"minecraft:destructible_by_mining": {
 				"seconds_to_destroy": 1
