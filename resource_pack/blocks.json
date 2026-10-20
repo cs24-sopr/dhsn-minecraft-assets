@@ -2,6 +2,14 @@
 	"format_version": "1.21.0",
 	"myname:greenchair": {
 		"sound": "wood"
+	"myname:paper_towel_dispenser": {
+		"sound": "stone"
+	},
+	"myname:urinal": {
+		"sound": "stone"
+	},
+	"myname:light_gray_brick": {
+		"sound": "stone"
 	},
 	"myname:monitor": {
 		"sound": "glass"

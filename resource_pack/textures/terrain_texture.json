@@ -6,6 +6,15 @@
 	"texture_data": {
 		"greenchair": {
 			"textures": "textures/blocks/greenchair"
+    },
+		"paper_towel_dispenser": {
+			"textures": "textures/blocks/paper_towel_dispenser"
+		},
+		"urinal": {
+			"textures": "textures/blocks/urinal"
+		},
+		"light_gray_brick": {
+			"textures": "textures/blocks/light_gray_brick"
 		},
 		"monitor": {
 			"textures": "textures/blocks/monitor"
