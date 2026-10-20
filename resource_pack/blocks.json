@@ -1,5 +1,8 @@
 {
 	"format_version": "1.21.0",
+	"myname:greenchair": {
+		"sound": "wood"
+	},
 	"myname:monitor": {
 		"sound": "glass"
 	},
@@ -10,8 +13,8 @@
 		"sound": "stone"
 	},
 	"myname:sink": {
-    	"sound": "stone"
-  	},	
+		"sound": "stone"
+	},
 	"myname:computerdesk": {
 		"sound": "wood"
 	}
