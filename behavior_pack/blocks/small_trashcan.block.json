@@ -13,8 +13,14 @@
 			}
 		},
 		"components": {
-			"minecraft:collision_box": true,
-			"minecraft:selection_box": true,
+			"minecraft:collision_box": {
+    		"origin": [-1, 0, 1],
+    		"size": [6, 16, 7]
+			},
+			"minecraft:selection_box": {
+    		"origin": [-1, 0, 1],
+    		"size": [6, 16, 7]
+			},
 			"minecraft:destructible_by_mining": {
 				"seconds_to_destroy": 0.4
 			},
