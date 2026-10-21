@@ -7,6 +7,9 @@
 		"green_fence": {
 			"textures": "textures/blocks/green_fence"
 		},
+		"led_roehre": {
+			"textures": "textures/blocks/led_roehre"
+		},
 		"greenchair": {
 			"textures": "textures/blocks/greenchair"
 		},

@@ -3,6 +3,9 @@
 	"myname:green_fence": {
 		"sound": "wood"
 	},
+	"myname:led_roehre": {
+		"sound": "glass"
+	},
 	"myname:greenchair": {
 		"sound": "wood"
 	},
