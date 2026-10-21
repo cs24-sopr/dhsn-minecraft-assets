@@ -7,3 +7,5 @@ tile.myname:sink.name=Sink
 tile.myname:toilet.name=Toilet
 tile.myname:greenchair.name=Greenchair
 tile.myname:light_gray_brick.name=Light Gray Brick
+
+tile.myname:led_roehre.name=LED Tube

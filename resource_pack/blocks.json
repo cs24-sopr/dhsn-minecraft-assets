@@ -1,5 +1,8 @@
 {
 	"format_version": "1.21.0",
+	"myname:led_roehre": {
+		"sound": "glass"
+	},
 	"myname:greenchair": {
 		"sound": "wood"
 	},
