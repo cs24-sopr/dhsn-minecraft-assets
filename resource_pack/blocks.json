@@ -6,6 +6,9 @@
 	"myname:paper_towel_dispenser": {
 		"sound": "stone"
 	},
+	"myname:small_trashcan": {
+		"sound": "stone"
+	},
 	"myname:urinal": {
 		"sound": "stone"
 	},
