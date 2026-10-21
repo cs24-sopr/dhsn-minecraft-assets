@@ -4,9 +4,12 @@
 	"padding": 8,
 	"num_mip_levels": 4,
 	"texture_data": {
+		"green_fence": {
+			"textures": "textures/blocks/green_fence"
+		},
 		"greenchair": {
 			"textures": "textures/blocks/greenchair"
-    	},
+		},
 		"paper_towel_dispenser": {
 			"textures": "textures/blocks/paper_towel_dispenser"
 		},
