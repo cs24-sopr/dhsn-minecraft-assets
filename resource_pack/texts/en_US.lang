@@ -7,9 +7,5 @@ tile.myname:sink.name=Sink
 tile.myname:toilet.name=Toilet
 tile.myname:greenchair.name=Green Chair
 tile.myname:light_gray_brick.name=Light Gray Brick
-<<<<<<< HEAD
-
-tile.myname:green_fence.name=green_fence
-=======
+tile.myname:green_fence.name=Green Fence
 tile.myname:small_trashcan.name=Small Trashcan
->>>>>>> 8c0294a8adf18e7493237347bbfd9cabe2080dc8
