@@ -4,6 +4,24 @@
 	"padding": 8,
 	"num_mip_levels": 4,
 	"texture_data": {
+		"led_roehre": {
+			"textures": "textures/blocks/led_roehre"
+		},
+		"greenchair": {
+			"textures": "textures/blocks/greenchair"
+		},
+		"paper_towel_dispenser": {
+			"textures": "textures/blocks/paper_towel_dispenser"
+		},
+		"small_trashcan": {
+			"textures": "textures/blocks/small_trashcan"
+		},
+		"urinal": {
+			"textures": "textures/blocks/urinal"
+		},
+		"light_gray_brick": {
+			"textures": "textures/blocks/light_gray_brick"
+		},
 		"monitor": {
 			"textures": "textures/blocks/monitor"
 		},
@@ -14,8 +32,8 @@
 			"textures": "textures/blocks/test_block"
 		},
 		"sink": {
-      		"textures": "textures/blocks/sink"
-    	},
+			"textures": "textures/blocks/sink"
+		},
 		"computerdesk": {
 			"textures": "textures/blocks/computerdesk"
 		}

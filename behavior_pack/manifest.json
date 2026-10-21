@@ -4,27 +4,27 @@
 		"name": "DHSN Behavior Pack",
 		"description": "Custom Block Behavior Pack",
 		"uuid": "a1b2c3d4-e5f6-47a8-9901-23456789abcd",
-		"version": [0, 0, 3],
+		"version": [0, 0, 5],
 		"min_engine_version": [1, 26, 50]
 	},
 	"modules": [
 		{
 			"type": "data",
 			"uuid": "b2c3d4e5-f6a7-48b9-0012-3456789abcde",
-			"version": [0, 0, 3]
+			"version": [0, 0, 5]
 		},
 		{
 			"type": "script",
 			"language": "javascript",
 			"uuid": "8cf3f835-e370-4cf4-9d67-2250ffbb68a7",
-			"version": [0, 0, 3],
+			"version": [0, 0, 5],
 			"entry": "scripts/main.js"
 		}
 	],
 	"dependencies": [
 		{
 			"uuid": "a4799509-fb28-4980-9b75-ca1edcc29eb6",
-			"version": [0, 0, 3]
+			"version": [0, 0, 5]
 		},
 		{
 			"module_name": "@minecraft/server",
