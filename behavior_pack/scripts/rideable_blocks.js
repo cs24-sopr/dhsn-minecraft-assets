@@ -1,11 +1,13 @@
 import { world } from "@minecraft/server";
 
-const CHAIR_BLOCK = "myname:toilet";
+const RIDEABLE_BLOCKS = ["myname:toilet", "myname:greenchair"];
 const SEAT_ENTITY = "dhsn:invisible_seat";
-const SEAT_OFFSET_Y = 0;
 const POS_TAG = "chairpos:";
 
 const posKey = (loc) => `${loc.x}:${loc.y}:${loc.z}`;
+const log = (msg) => {
+  if (true) world.sendMessage(`[chair] ${msg}`);
+};
 
 function findSeat(dimension, loc) {
   return dimension.getEntities({
@@ -21,7 +23,7 @@ function spawnSeat(block) {
   }
   const seat = block.dimension.spawnEntity(SEAT_ENTITY, {
     x: loc.x + 0.5,
-    y: loc.y + SEAT_OFFSET_Y,
+    y: loc.y,
     z: loc.z + 0.5,
   });
   seat.addTag(POS_TAG + posKey(loc));
@@ -29,7 +31,7 @@ function spawnSeat(block) {
 
 // Block placed by a player -> spawn its seat
 world.afterEvents.playerPlaceBlock.subscribe(({ block }) => {
-  if (block.typeId === CHAIR_BLOCK) spawnSeat(block);
+  if (RIDEABLE_BLOCKS.includes(block.typeId)) spawnSeat(block);
 });
 
 // Seat entity hit by a player -> break the toilet block and remove the seat
@@ -42,7 +44,7 @@ world.afterEvents.entityHitEntity.subscribe(({ damagingEntity, hitEntity }) => {
     const [x, y, z] = tag.slice(POS_TAG.length).split(":").map(Number);
     const dim = hitEntity.dimension;
     const block = dim.getBlock({ x, y, z });
-    if (block?.typeId === CHAIR_BLOCK) {
+    if (RIDEABLE_BLOCKS.includes(block?.typeId)) {
       dim.runCommand(`setblock ${x} ${y} ${z} air destroy`);
     }
   }
