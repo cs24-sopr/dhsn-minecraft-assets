@@ -1,5 +1,11 @@
 {
 	"format_version": "1.21.0",
+	"myname:green_fence": {
+		"sound": "wood"
+	},
+	"myname:led_roehre": {
+		"sound": "glass"
+	},
 	"myname:window": {
 		"sound": "glass"
 	},
