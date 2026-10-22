@@ -4,6 +4,9 @@
 	"padding": 8,
 	"num_mip_levels": 4,
 	"texture_data": {
+		"green_fence": {
+			"textures": "textures/blocks/green_fence"
+		},
 		"led_roehre": {
 			"textures": "textures/blocks/led_roehre"
 		},
