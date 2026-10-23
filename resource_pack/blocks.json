@@ -1,5 +1,11 @@
 {
 	"format_version": "1.21.0",
+	"myname:computerdesk_short": {
+		"sound": "wood"
+	},
+	"myname:computerdesk_mirrored": {
+		"sound": "wood"
+	},
 	"myname:greenchair": {
 		"sound": "wood"
 	},

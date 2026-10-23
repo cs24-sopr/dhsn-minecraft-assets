@@ -4,9 +4,15 @@
 	"padding": 8,
 	"num_mip_levels": 4,
 	"texture_data": {
+		"computerdesk_short": {
+			"textures": "textures/blocks/computerdesk_short"
+		},
+		"computerdesk_mirrored": {
+			"textures": "textures/blocks/computerdesk_mirrored"
+		},
 		"greenchair": {
 			"textures": "textures/blocks/greenchair"
-    	},
+		},
 		"paper_towel_dispenser": {
 			"textures": "textures/blocks/paper_towel_dispenser"
 		},
