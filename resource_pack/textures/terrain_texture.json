@@ -10,6 +10,9 @@
 		"led_roehre": {
 			"textures": "textures/blocks/led_roehre"
 		},
+		"window": {
+			"textures": "textures/blocks/window"
+		},
 		"greenchair": {
 			"textures": "textures/blocks/greenchair"
 		},

@@ -6,6 +6,9 @@
 	"myname:led_roehre": {
 		"sound": "glass"
 	},
+	"myname:window": {
+		"sound": "glass"
+	},
 	"myname:greenchair": {
 		"sound": "wood"
 	},
