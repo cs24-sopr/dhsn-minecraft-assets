@@ -1,0 +1,11 @@
+{
+	"entity_sounds": {
+		"entities": {
+			"dhsn:invisible_seat": {
+				"events": {
+					"hurt": {}
+				}
+			}
+		}
+	}
+}
