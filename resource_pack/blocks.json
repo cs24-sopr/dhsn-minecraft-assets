@@ -6,6 +6,18 @@
 	"myname:computerdesk_mirrored": {
 		"sound": "wood"
 	},
+	"myname:projector": {
+		"sound": "stone"
+	},
+	"myname:green_fence": {
+		"sound": "wood"
+	},
+	"myname:led_roehre": {
+		"sound": "glass"
+	},
+	"myname:window": {
+		"sound": "glass"
+	},
 	"myname:greenchair": {
 		"sound": "wood"
 	},
