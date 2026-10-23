@@ -10,6 +10,9 @@
 		"paper_towel_dispenser": {
 			"textures": "textures/blocks/paper_towel_dispenser"
 		},
+		"small_trashcan": {
+			"textures": "textures/blocks/small_trashcan"
+		},
 		"urinal": {
 			"textures": "textures/blocks/urinal"
 		},
