@@ -1,5 +1,5 @@
 {
-    "format_version": "1.26.5",
+    "format_version": "1.26.50",
     "minecraft:block": {
         "description": {
             "identifier": "myname:projector",
@@ -42,8 +42,7 @@
             "minecraft:movable": {
                 "movement_type": "immovable"
             },
-            "minecraft:map_color": "#7d7d7d",
-            "tag:minecraft:is_pickaxe_item_destructible": {}
+            "minecraft:map_color": "#7d7d7d"
         },
         "permutations": [
             {
