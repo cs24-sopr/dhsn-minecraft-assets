@@ -1,0 +1,27 @@
+{
+    "format_version": "1.10.0",
+    "animation_controllers": {
+        "controller.animation.frontdoor": {
+            "initial_state": "idle",
+            "states": {
+                "idle": {
+                    "transitions": [
+                        {
+                            "playing": "query.variant == 1"
+                        }
+                    ]
+                },
+                "playing": {
+                    "animations": [
+                        "open"
+                    ],
+                    "transitions": [
+                        {
+                            "idle": "query.variant == 0"
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}
