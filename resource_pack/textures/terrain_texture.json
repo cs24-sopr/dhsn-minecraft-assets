@@ -45,6 +45,9 @@
 		},
 		"computerdesk": {
 			"textures": "textures/blocks/computerdesk"
+		},
+		"frontdoor": {
+			"textures": "textures/entity/frontdoor_entity"
 		}
 	}
 }
