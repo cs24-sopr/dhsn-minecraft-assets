@@ -14,6 +14,7 @@
             }
         },
         "components": {
+            "minecraft:display_name": "tile.dhsn:frontdoor_empty.name",
             "minecraft:geometry": {
                 "identifier": "geometry.frontdoor_empty",
                 "bone_visibility": {
