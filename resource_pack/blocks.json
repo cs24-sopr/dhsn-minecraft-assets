@@ -1,54 +1,54 @@
 {
-	"format_version": "1.21.0",
-	"dhsn:frontdoor_empty": {
-		"sound": "wood"
-	},
-	"myname:computerdesk_short": {
-		"sound": "wood"
-	},
-	"myname:computerdesk_mirrored": {
-		"sound": "wood"
-	},
-	"myname:projector": {
-		"sound": "stone"
-	},
-	"myname:green_fence": {
-		"sound": "wood"
-	},
-	"myname:led_roehre": {
-		"sound": "glass"
-	},
-	"myname:window": {
-		"sound": "glass"
-	},
-	"myname:greenchair": {
-		"sound": "wood"
-	},
-	"myname:paper_towel_dispenser": {
-		"sound": "stone"
-	},
-	"myname:small_trashcan": {
-		"sound": "stone"
-	},
-	"myname:urinal": {
-		"sound": "stone"
-	},
-	"myname:light_gray_brick": {
-		"sound": "stone"
-	},
-	"myname:monitor": {
-		"sound": "glass"
-	},
-	"myname:toilet": {
-		"sound": "stone"
-	},
-	"myname:test_block": {
-		"sound": "stone"
-	},
-	"myname:sink": {
-		"sound": "stone"
-	},
-	"myname:computerdesk": {
-		"sound": "wood"
-	}
+    "format_version": "1.21.0",
+    "dhsn:frontdoor_empty": {
+        "sound": "wood"
+    },
+    "myname:computerdesk_short": {
+        "sound": "wood"
+    },
+    "myname:computerdesk_mirrored": {
+        "sound": "wood"
+    },
+    "myname:projector": {
+        "sound": "stone"
+    },
+    "myname:green_fence": {
+        "sound": "wood"
+    },
+    "myname:led_roehre": {
+        "sound": "glass"
+    },
+    "myname:window": {
+        "sound": "glass"
+    },
+    "myname:greenchair": {
+        "sound": "wood"
+    },
+    "myname:paper_towel_dispenser": {
+        "sound": "stone"
+    },
+    "myname:small_trashcan": {
+        "sound": "stone"
+    },
+    "myname:urinal": {
+        "sound": "stone"
+    },
+    "myname:light_gray_brick": {
+        "sound": "stone"
+    },
+    "myname:monitor": {
+        "sound": "glass"
+    },
+    "myname:toilet": {
+        "sound": "stone"
+    },
+    "myname:test_block": {
+        "sound": "stone"
+    },
+    "myname:sink": {
+        "sound": "stone"
+    },
+    "myname:computerdesk": {
+        "sound": "wood"
+    }
 }

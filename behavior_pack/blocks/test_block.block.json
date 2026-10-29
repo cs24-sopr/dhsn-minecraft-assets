@@ -1,30 +1,30 @@
 {
-	"format_version": "1.21.100",
-	"minecraft:block": {
-		"description": {
-			"identifier": "myname:test_block",
-			"menu_category": {
-				"category": "construction"
-			}
-		},
-		"components": {
-			"minecraft:collision_box": true,
-			"minecraft:selection_box": true,
-			"minecraft:destructible_by_mining": {
-				"seconds_to_destroy": 1
-			},
-			"minecraft:destructible_by_explosion": {
-				"explosion_resistance": 30
-			},
-			"minecraft:geometry": "geometry.test_block",
-			"minecraft:material_instances": {
-				"*": {
-					"texture": "test_block",
-					"render_method": "alpha_test"
-				}
-			},
-			"minecraft:light_emission": 3,
-			"minecraft:map_color": "#ffffff"
-		}
-	}
+    "format_version": "1.21.100",
+    "minecraft:block": {
+        "description": {
+            "identifier": "myname:test_block",
+            "menu_category": {
+                "category": "construction"
+            }
+        },
+        "components": {
+            "minecraft:collision_box": true,
+            "minecraft:selection_box": true,
+            "minecraft:destructible_by_mining": {
+                "seconds_to_destroy": 1
+            },
+            "minecraft:destructible_by_explosion": {
+                "explosion_resistance": 30
+            },
+            "minecraft:geometry": "geometry.test_block",
+            "minecraft:material_instances": {
+                "*": {
+                    "texture": "test_block",
+                    "render_method": "alpha_test"
+                }
+            },
+            "minecraft:light_emission": 3,
+            "minecraft:map_color": "#ffffff"
+        }
+    }
 }

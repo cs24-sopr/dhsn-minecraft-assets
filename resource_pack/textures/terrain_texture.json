@@ -1,59 +1,59 @@
 {
-	"resource_pack_name": "vanilla",
-	"texture_name": "atlas.terrain",
-	"padding": 8,
-	"num_mip_levels": 4,
-	"texture_data": {
-		"computerdesk_short": {
-			"textures": "textures/blocks/computerdesk_short"
-		},
-		"computerdesk_mirrored": {
-			"textures": "textures/blocks/computerdesk_mirrored"
-    },
-		"projector": {
-			"textures": "textures/blocks/projector"
-		},
-		"green_fence": {
-			"textures": "textures/blocks/green_fence"
-		},
-		"led_roehre": {
-			"textures": "textures/blocks/led_roehre"
-		},
-		"window": {
-			"textures": "textures/blocks/window"
-		},
-		"greenchair": {
-			"textures": "textures/blocks/greenchair"
-		},
-		"paper_towel_dispenser": {
-			"textures": "textures/blocks/paper_towel_dispenser"
-		},
-		"small_trashcan": {
-			"textures": "textures/blocks/small_trashcan"
-		},
-		"urinal": {
-			"textures": "textures/blocks/urinal"
-		},
-		"light_gray_brick": {
-			"textures": "textures/blocks/light_gray_brick"
-		},
-		"monitor": {
-			"textures": "textures/blocks/monitor"
-		},
-		"toilet": {
-			"textures": "textures/blocks/toilet"
-		},
-		"test_block": {
-			"textures": "textures/blocks/test_block"
-		},
-		"sink": {
-			"textures": "textures/blocks/sink"
-		},
-		"computerdesk": {
-			"textures": "textures/blocks/computerdesk"
-		},
-		"frontdoor": {
-			"textures": "textures/entity/frontdoor_entity"
-		}
-	}
+    "resource_pack_name": "vanilla",
+    "texture_name": "atlas.terrain",
+    "padding": 8,
+    "num_mip_levels": 4,
+    "texture_data": {
+        "computerdesk_short": {
+            "textures": "textures/blocks/computerdesk_short"
+        },
+        "computerdesk_mirrored": {
+            "textures": "textures/blocks/computerdesk_mirrored"
+        },
+        "projector": {
+            "textures": "textures/blocks/projector"
+        },
+        "green_fence": {
+            "textures": "textures/blocks/green_fence"
+        },
+        "led_roehre": {
+            "textures": "textures/blocks/led_roehre"
+        },
+        "window": {
+            "textures": "textures/blocks/window"
+        },
+        "greenchair": {
+            "textures": "textures/blocks/greenchair"
+        },
+        "paper_towel_dispenser": {
+            "textures": "textures/blocks/paper_towel_dispenser"
+        },
+        "small_trashcan": {
+            "textures": "textures/blocks/small_trashcan"
+        },
+        "urinal": {
+            "textures": "textures/blocks/urinal"
+        },
+        "light_gray_brick": {
+            "textures": "textures/blocks/light_gray_brick"
+        },
+        "monitor": {
+            "textures": "textures/blocks/monitor"
+        },
+        "toilet": {
+            "textures": "textures/blocks/toilet"
+        },
+        "test_block": {
+            "textures": "textures/blocks/test_block"
+        },
+        "sink": {
+            "textures": "textures/blocks/sink"
+        },
+        "computerdesk": {
+            "textures": "textures/blocks/computerdesk"
+        },
+        "frontdoor": {
+            "textures": "textures/entity/frontdoor_entity"
+        }
+    }
 }
