@@ -1,5 +1,8 @@
 {
     "format_version": "1.21.0",
+    "myname:smart_board": {
+        "sound": "amethyst_block"
+    },
     "dhsn:frontdoor_empty": {
         "sound": "wood"
     },

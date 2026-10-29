@@ -4,6 +4,9 @@
     "padding": 8,
     "num_mip_levels": 4,
     "texture_data": {
+        "smart_board": {
+            "textures": "textures/blocks/smart_board"
+        },
         "computerdesk_short": {
             "textures": "textures/blocks/computerdesk_short"
         },
