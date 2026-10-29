@@ -1,0 +1,39 @@
+{
+    "format_version": "1.21.90",
+    "minecraft:block": {
+        "description": {
+            "identifier": "dhsn:frontdoor_empty",
+            "menu_category": {
+                "category": "construction"
+            },
+            "states": {
+                "dhsn:door_state": ["closed", "open"]
+            }
+        },
+        "components": {
+            "minecraft:display_name": "tile.dhsn:frontdoor_empty.name",
+            "minecraft:geometry": {
+                "identifier": "geometry.frontdoor_empty",
+                "bone_visibility": {
+                    "root": false
+                }
+            },
+            "minecraft:material_instances": {
+                "*": {
+                    "texture": "stone",
+                    "render_method": "opaque"
+                }
+            },
+            "minecraft:collision_box": true,
+            "minecraft:selection_box": true
+        },
+        "permutations": [
+            {
+                "condition": "query.block_state('dhsn:door_state') == 'open'",
+                "components": {
+                    "minecraft:collision_box": false
+                }
+            }
+        ]
+    }
+}

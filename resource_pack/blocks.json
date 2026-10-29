@@ -1,5 +1,8 @@
 {
 	"format_version": "1.21.0",
+	"dhsn:frontdoor_empty": {
+		"sound": "wood"
+	},
 	"myname:computerdesk_short": {
 		"sound": "wood"
 	},

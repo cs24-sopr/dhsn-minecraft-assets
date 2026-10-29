@@ -1,0 +1,91 @@
+{
+    "format_version": "1.21.0",
+    "minecraft:entity": {
+        "description": {
+            "identifier": "dhsn:frontdoor_entity",
+            "is_spawnable": true,
+            "is_summonable": true,
+            "is_experimental": false
+        },
+        "components": {
+            "minecraft:type_family": {
+                "family": ["double_door"]
+            },
+            "minecraft:physics": {
+                "has_gravity": false,
+                "has_collision": false
+            },
+            "minecraft:pushable": {
+                "is_pushable": false,
+                "is_pushable_by_piston": false
+            },
+            "minecraft:collision_box": {
+                "width": 1.8,
+                "height": 2.0
+            },
+            "minecraft:variant": {
+                "value": 0
+            }
+        },
+        "component_groups": {
+            "frontdoor:closed": {
+                "minecraft:variant": {
+                    "value": 0
+                },
+                "minecraft:interact": {
+                    "interactions": [
+                        {
+                            "on_interact": {
+                                "event": "frontdoor:open",
+                                "target": "self"
+                            },
+                            "interact_text": "Open Door",
+                            "swing": false
+                        }
+                    ]
+                }
+            },
+            "frontdoor:active": {
+                "minecraft:variant": {
+                    "value": 1
+                },
+                "minecraft:timer": {
+                    "time": 6.1,
+                    "looping": false,
+                    "time_down_event": {
+                        "event": "frontdoor:close",
+                        "target": "self"
+                    }
+                }
+            }
+        },
+        "events": {
+            "minecraft:entity_spawned": {
+                "add": {
+                    "component_groups": ["frontdoor:closed"]
+                }
+            },
+            "frontdoor:init": {
+                "add": {
+                    "component_groups": ["frontdoor:closed"]
+                }
+            },
+            "frontdoor:open": {
+                "remove": {
+                    "component_groups": ["frontdoor:closed"]
+                },
+                "add": {
+                    "component_groups": ["frontdoor:active"]
+                }
+            },
+            "frontdoor:close": {
+                "remove": {
+                    "component_groups": ["frontdoor:active"]
+                },
+                "add": {
+                    "component_groups": ["frontdoor:closed"]
+                }
+            }
+        }
+    }
+}
