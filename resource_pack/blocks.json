@@ -3,6 +3,12 @@
 	"dhsn:frontdoor_empty": {
 		"sound": "wood"
 	},
+	"myname:computerdesk_short": {
+		"sound": "wood"
+	},
+	"myname:computerdesk_mirrored": {
+		"sound": "wood"
+	},
 	"myname:projector": {
 		"sound": "stone"
 	},
