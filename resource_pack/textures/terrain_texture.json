@@ -4,6 +4,12 @@
 	"padding": 8,
 	"num_mip_levels": 4,
 	"texture_data": {
+		"computerdesk_short": {
+			"textures": "textures/blocks/computerdesk_short"
+		},
+		"computerdesk_mirrored": {
+			"textures": "textures/blocks/computerdesk_mirrored"
+    },
 		"projector": {
 			"textures": "textures/blocks/projector"
 		},
