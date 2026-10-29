@@ -9,9 +9,7 @@
         },
         "components": {
             "minecraft:type_family": {
-                "family": [
-                    "double_door"
-                ]
+                "family": ["double_door"]
             },
             "minecraft:physics": {
                 "has_gravity": false,
@@ -64,40 +62,28 @@
         "events": {
             "minecraft:entity_spawned": {
                 "add": {
-                    "component_groups": [
-                        "frontdoor:closed"
-                    ]
+                    "component_groups": ["frontdoor:closed"]
                 }
             },
             "frontdoor:init": {
                 "add": {
-                    "component_groups": [
-                        "frontdoor:closed"
-                    ]
+                    "component_groups": ["frontdoor:closed"]
                 }
             },
             "frontdoor:open": {
                 "remove": {
-                    "component_groups": [
-                        "frontdoor:closed"
-                    ]
+                    "component_groups": ["frontdoor:closed"]
                 },
                 "add": {
-                    "component_groups": [
-                        "frontdoor:active"
-                    ]
+                    "component_groups": ["frontdoor:active"]
                 }
             },
             "frontdoor:close": {
                 "remove": {
-                    "component_groups": [
-                        "frontdoor:active"
-                    ]
+                    "component_groups": ["frontdoor:active"]
                 },
                 "add": {
-                    "component_groups": [
-                        "frontdoor:closed"
-                    ]
+                    "component_groups": ["frontdoor:closed"]
                 }
             }
         }

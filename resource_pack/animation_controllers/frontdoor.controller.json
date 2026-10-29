@@ -12,9 +12,7 @@
                     ]
                 },
                 "playing": {
-                    "animations": [
-                        "open"
-                    ],
+                    "animations": ["open"],
                     "transitions": [
                         {
                             "idle": "query.variant == 0"

@@ -7,10 +7,7 @@
                 "category": "construction"
             },
             "states": {
-                "dhsn:door_state": [
-                    "closed",
-                    "open"
-                ]
+                "dhsn:door_state": ["closed", "open"]
             }
         },
         "components": {
