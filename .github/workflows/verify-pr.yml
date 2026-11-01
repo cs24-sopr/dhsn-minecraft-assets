@@ -1,0 +1,24 @@
+name: Verify Pull Request
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+jobs:
+  check-box:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Assert all checkboxes are ticked
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const body = context.payload.pull_request.body || "";
+            // match any line starting with `- [ ]` or `* [ ]`
+            const uncheckedPattern = /^\s*[\-\*]\s*\[\s*\]/m;
+
+            if (uncheckedPattern.test(body)) {
+              core.set_failed("Merge Blocked: There is at least one unchecked item in the PR description.");
+            } else {
+              console.log("All checkboxes are checked.");
+            }
+
