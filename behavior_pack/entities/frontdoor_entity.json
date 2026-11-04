@@ -19,6 +19,7 @@
                 "is_pushable": false,
                 "is_pushable_by_piston": false
             },
+            "minecraft:knockback_resistance": { "value": 1.0 },
             "minecraft:collision_box": {
                 "width": 1.8,
                 "height": 2.0

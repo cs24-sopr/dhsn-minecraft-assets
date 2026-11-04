@@ -4,6 +4,7 @@ import {
     system,
     BlockPermutation
 } from "@minecraft/server";
+import { isBuilder } from "./util/is_builder";
 
 // --------------------------------------------------
 // 1. CONFIGURATION
@@ -391,6 +392,8 @@ world.afterEvents.entityHitEntity.subscribe((event) => {
     if (player.typeId !== "minecraft:player") return;
     if (target.typeId !== DOOR_ENTITY) return;
 
+    if (!isBuilder(player)) return;
+
     system.run(() => {
         try {
             removeFrontdoor(target);
@@ -400,6 +403,15 @@ world.afterEvents.entityHitEntity.subscribe((event) => {
             );
         }
     });
+});
+
+// on left click (hit), prevent the entity from going red and producing the "hurt" sound
+world.beforeEvents.entityHurt.subscribe((event) => {
+    const entity = event.hurtEntity;
+
+    if (entity.typeId !== DOOR_ENTITY) return;
+
+    event.cancel = true;
 });
 
 // --------------------------------------------------
