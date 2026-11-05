@@ -1,0 +1,54 @@
+name: "[CODE] Feature Request"
+description: "Hier könnt ihr ein neues Feature anfragen."
+title: "[CODE][FEATURE]: "
+labels: ["code", "feature"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Nutzt dieses Formular, um ein neues Feature anzufragen. Bitte beschreibt so genau wie möglich.
+
+  - type: textarea
+    id: current_behavior
+    attributes:
+      label: Aktuelles Verhalten
+      description: Wie verhält sich das Spiel / Datapack aktuell?
+      placeholder: "z. B. Die Tür kann aktuell von jedem Spieler abgebaut werden."
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected_behavior
+    attributes:
+      label: Erwartetes Verhalten
+      description: Wie soll es sich nach der Umsetzung verhalten?
+      placeholder: "z. B. Die Tür kann nur von Spielern mit Kupferhelm abgebaut werden."
+    validations:
+      required: true
+
+  - type: textarea
+    id: constraints
+    attributes:
+      label: (Optional) Zusätzliche Einschränkungen / Anforderungen
+      description: Gibt es Vorgaben oder Dinge, die bei der Umsetzung nicht erlaubt sind? Bitte mit Begründung.
+      placeholder: "z. B. Hierfür dürfen keine Entities verwendet werden, weil X, Y, Z."
+    validations:
+      required: false
+
+  - type: textarea
+    id: similar_functionality
+    attributes:
+      label: (Optional) Gibt es bereits ähnliche Funktionalität im Projekt?
+      description: Falls ja, bitte benennen (Datei, Funktion, Asset, Ticket), damit sie wiederverwendet oder erweitert werden kann.
+      placeholder: "z. B. Ja, die Berechtigungsprüfung für den Kupferhelm in der FrontDoor (#55)."
+    validations:
+      required: false
+
+  - type: textarea
+    id: implementation_hints
+    attributes:
+      label: (Optional) Hinweise zur Umsetzung
+      description: Falls bereits recherchiert wurde, teilt hier Ideen, Links oder Ansätze.
+      placeholder: "z. B. Könnte über ein Advancement-Predicate gelöst werden, siehe https://..."
+    validations:
+      required: false

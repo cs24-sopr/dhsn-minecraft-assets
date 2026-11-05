@@ -1,0 +1,36 @@
+name: "[CODE] Bug Report"
+description: "Hier könnt ihr einen Fehler im Code melden."
+title: "[CODE][BUG]: "
+labels: ["code", "bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Nutzt dieses Formular, um einen Fehler zu melden. Ein Foto oder Video ist **Pflicht**, damit wir den Fehler nachvollziehen können.
+
+  - type: textarea
+    id: current_behavior
+    attributes:
+      label: Aktuelles Verhalten
+      description: Was passiert aktuell (fehlerhaft)? Wenn möglich mit Schritten zur Reproduktion.
+      placeholder: "z. B. Beim Öffnen der Tür bleibt die Animation hängen."
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected_behavior
+    attributes:
+      label: Erwartetes Verhalten
+      description: Was sollte stattdessen passieren?
+      placeholder: "z. B. Die Tür öffnet sich vollständig und schließt sich nach einer Sekunde wieder."
+    validations:
+      required: true
+
+  - type: textarea
+    id: media
+    attributes:
+      label: Foto / Video
+      description: Bitte per Drag and Drop ein Foto oder Video einfügen. Dieses Feld ist verpflichtend.
+      placeholder: "Hier Foto oder Video einfügen..."
+    validations:
+      required: true
