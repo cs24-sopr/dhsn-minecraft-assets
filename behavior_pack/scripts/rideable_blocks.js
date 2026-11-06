@@ -1,4 +1,5 @@
 import { world } from "@minecraft/server";
+import { isBuilder } from "./util/is_builder";
 
 const RIDEABLE_BLOCKS = ["myname:toilet", "myname:greenchair"];
 const SEAT_ENTITY = "dhsn:invisible_seat";
@@ -38,6 +39,7 @@ world.afterEvents.playerPlaceBlock.subscribe(({ block }) => {
 world.afterEvents.entityHitEntity.subscribe(({ damagingEntity, hitEntity }) => {
   if (hitEntity.typeId !== SEAT_ENTITY) return;
   if (damagingEntity.typeId !== "minecraft:player") return;
+  if (!isBuilder(damagingEntity)) return;
 
   const tag = hitEntity.getTags().find((t) => t.startsWith(POS_TAG));
   if (tag) {

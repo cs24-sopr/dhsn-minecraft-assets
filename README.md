@@ -1,7 +1,14 @@
+## Table of Contents
+
+- [Overview: Where Should Each Asset Be Saved?](#overview-where-should-each-asset-be-saved)
+    - [Standard Blocks](#1-for-standard-blocks-format-bedrock-block)
+    - [Entities & Animated Objects](#2-for-entities--animated-objects-format-bedrock-entity)
+- [Testing In-Game (Bedrock on Linux)](#testing-in-game-bedrock-on-linux)
+- [Formatting JSON with Prettier](#formatting-json-with-prettier)
+
 ## Overview: Where Should Each Asset Be Saved?
 
 [Official Minecraft Bedrock Creator Documentation](https://wiki.bedrock.dev/documentation/pack-structure)
-
 
 For **each individual model**, depending on the format (Block or Entity), the following files are created in the repository:
 
@@ -9,11 +16,11 @@ For **each individual model**, depending on the format (Block or Entity), the fo
 
 Every custom block requires **3 files**:
 
-| File Type | Storage Path | Description |
-| :--- | :--- | :--- |
-| **Working File** | `.bbmodels/blocks/<model_name>.bbmodel` | Blockbench project file |
-| **3D Geometry** | `resource_pack/models/blocks/<model_name>.geo.json` | Exported 3D model |
-| **Texture** | `resource_pack/textures/blocks/<model_name>.png` | Texture image file |
+| File Type        | Storage Path                                        | Description             |
+| :--------------- | :-------------------------------------------------- | :---------------------- |
+| **Working File** | `.bbmodels/blocks/<model_name>.bbmodel`             | Blockbench project file |
+| **3D Geometry**  | `resource_pack/models/blocks/<model_name>.geo.json` | Exported 3D model       |
+| **Texture**      | `resource_pack/textures/blocks/<model_name>.png`    | Texture image file      |
 
 The Block Wizard Plugin handles most of this automatically.  
 In the Wizard, under "Export", simply select "Integrate into Package" and under "Select packs manually", choose the `resource_pack` folder from the repository.  
@@ -22,37 +29,38 @@ The Wizard will then automatically save everything in the correct location excep
 If you want to create a Multiblock-Item with Dimensions bigger than 16x16x16 you can look at [this example](/docs/Multiblock_Example.md).
 
 ---
+
 ### 2. For Entities & Animated Objects (Format: `Bedrock Entity`)
 
 Creating entities requires linking the 3D model, textures, animations, and gameplay logic together through specific JSON configuration files.
 
 **You can use the entitiy structure for the ventilator entity for reference **
 
-
 #### Step-by-Step Creation Guide
 
 1. **Create the Project in Blockbench:**
-   - Open **Blockbench** and select **Bedrock Entity** as the format.
-   - Design your 3D model, paint its texture, and create animations (e.g., rotation/looping).
+    - Open **Blockbench** and select **Bedrock Entity** as the format.
+    - Design your 3D model, paint its texture, and create animations (e.g., rotation/looping).
 
 2. **Save the Exported Files:**
-   - **Working File:** Save `.bbmodel` to `.bbmodels/entity/<entity_name>.bbmodel`
-   - **3D Geometry:** Export via `File -> Export -> Export Bedrock Geometry` to `resource_pack/models/entity/<entity_name>.geo.json`
-   - **Texture:** Right-click texture -> **Save As** to `resource_pack/textures/entity/<entity_name>.png`
-   - **Animation:** Export via `File -> Export -> Export Animations` to `resource_pack/animations/<entity_name>.animation.json`
+    - **Working File:** Save `.bbmodel` to `.bbmodels/entity/<entity_name>.bbmodel`
+    - **3D Geometry:** Export via `File -> Export -> Export Bedrock Geometry` to `resource_pack/models/entity/<entity_name>.geo.json`
+    - **Texture:** Right-click texture -> **Save As** to `resource_pack/textures/entity/<entity_name>.png`
+    - **Animation:** Export via `File -> Export -> Export Animations` to `resource_pack/animations/<entity_name>.animation.json`
 
 3. **Set Up the Configuration JSONs:**
-   - **Behavior Logic:** Create `behavior_pack/entities/<entity_name>.json`
-   - **Client Entity Definition:** Create `resource_pack/entity/<entity_name>.entity.json`
-   - **Render Controller:** Create `resource_pack/render_controllers/<entity_name>.render_controllers.json`
+    - **Behavior Logic:** Create `behavior_pack/entities/<entity_name>.json`
+    - **Client Entity Definition:** Create `resource_pack/entity/<entity_name>.entity.json`
+    - **Render Controller:** Create `resource_pack/render_controllers/<entity_name>.render_controllers.json`
 
 ---
 
 #### Configuration Templates
 
 ##### A. Behavior Definition Template
+
 **Location:** `behavior_pack/entities/<entity_name>.json`  
-*Defines entity identifier, hitboxes, and game mechanics.*
+_Defines entity identifier, hitboxes, and game mechanics._
 
 ```json
 {
@@ -92,55 +100,54 @@ Creating entities requires linking the 3D model, textures, animations, and gamep
 ```
 
 #### B. Client Entity Definition Template
+
 Location: resource_pack/entity/<entity_name>.entity.json
 Links geometry, textures, animations, and render controllers together.
+
 ```json
 {
-  "format_version": "1.20.80",
-  "minecraft:client_entity": {
-    "description": {
-      "identifier": "dhsn:<entity_name>",
-      "materials": {
-        "default": "entity_alphatest"
-      },
-      "textures": {
-        "default": "textures/entity/<entity_name>"
-      },
-      "geometry": {
-        "default": "geometry.<entity_name>"
-      },
-      "animations": {
-        "spin": "animation.<entity_name>.spin"
-      },
-      "scripts": {
-        "animate": [
-          "spin"
-        ]
-      },
-      "render_controllers": [
-        "controller.render.<entity_name>"
-      ]
+    "format_version": "1.20.80",
+    "minecraft:client_entity": {
+        "description": {
+            "identifier": "dhsn:<entity_name>",
+            "materials": {
+                "default": "entity_alphatest"
+            },
+            "textures": {
+                "default": "textures/entity/<entity_name>"
+            },
+            "geometry": {
+                "default": "geometry.<entity_name>"
+            },
+            "animations": {
+                "spin": "animation.<entity_name>.spin"
+            },
+            "scripts": {
+                "animate": ["spin"]
+            },
+            "render_controllers": ["controller.render.<entity_name>"]
+        }
     }
-  }
 }
 ```
+
 #### C. Render Controller Template
+
 Location: resource_pack/render_controllers/<entity_name>.render_controllers.json
 Tells Minecraft how to render materials, textures, and geometry.
 
 ```json
 {
-  "format_version": "1.20.80",
-  "render_controllers": {
-    "controller.render.<entity_name>": {
-      "geometry": "Geometry.default",
-      "materials": [ { "*": "Material.default" } ],
-      "textures": [ "Texture.default" ]
+    "format_version": "1.20.80",
+    "render_controllers": {
+        "controller.render.<entity_name>": {
+            "geometry": "Geometry.default",
+            "materials": [{ "*": "Material.default" }],
+            "textures": ["Texture.default"]
+        }
     }
-  }
 }
 ```
-
 
 ---
 
@@ -165,17 +172,21 @@ Tells Minecraft how to render materials, textures, and geometry.
 **Only works if you have installed Minecraft via https://github.com/Wyze3306/BedrockOnLinux as .deb**
 
 ### Linux Setup
+
 1. Define target path in BedrockOnLinux
+
 ```shell
 TARGET="/home/username/.local/share/bedrock-on-linux/compatdata/pfx/drive_c/users/steamuser/AppData/Roaming/Minecraft Bedrock/Users/Shared/games/com.mojang"
 ```
 
 2. Navigate to the repository directory
+
 ```shell
 cd ./dhsn-minecraft-assets
 ```
 
 3. Create symbolic links (symlinks)
+
 ```shell
 ln -s "$(pwd)/behavior_pack" "$TARGET/development_behavior_packs/dhsn_bp"
 ln -s "$(pwd)/resource_pack" "$TARGET/development_resource_packs/dhsn_rp"
@@ -184,7 +195,6 @@ echo "✅ Folders successfully linked!"
 ```
 
 Now everything will be recognized by Minecraft instantly!
-
 
 ### Minecraft Configuration
 
@@ -195,3 +205,23 @@ Now everything will be recognized by Minecraft instantly!
 3. Activate the DHSN Behavior Pack.
 
 4. All done!
+
+## Formatting JSON with Prettier
+
+Prettier is configured for this repository in `.prettierrc.json`. To use it in
+VS Code:
+
+1. Install the **Prettier - Code formatter** extension (`esbenp.prettier-vscode`).
+2. Open a JSON file in the repository. If VS Code asks which formatter to use,
+   choose **Prettier - Code formatter**. Otherwise, open the Command Palette
+   (`Ctrl+Shift+P` / `Cmd+Shift+P`), run **Format Document With...**, then select
+   **Prettier - Code formatter** and **Set as Default Formatter**.
+3. To format a file, run **Format Document** from the Command Palette. You can
+   also enable **Editor: Format On Save** in VS Code Settings (**under Text Editor --> Formatting**)
+   to format it each time you save.
+
+Prettier reads the repository config automatically. It uses four-space
+indentation, omits semicolons, uses single quotes where applicable, and adds
+trailing commas where supported. Use it for JSON files, such as files in
+`behavior_pack/` and `resource_pack/`; it does not format Blockbench `.bbmodel`
+files.
