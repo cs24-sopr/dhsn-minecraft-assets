@@ -4,9 +4,16 @@ Relates to <!-- Insert issue number or URL here -->
 
 ## Summary of Changes
 
-- 
+-
 
 ## Verification
 
 <!-- Check this off if your changes are unrelated -->
+
+### 💻 Assignee:
+
+- [ ] I have tested all changes affecting gameplay, scripts, or assets in-game.
+
+### ✅ Reviewer:
+
 - [ ] I have tested all changes affecting gameplay, scripts, or assets in-game.
