@@ -16,3 +16,7 @@ tile.myname:projector.name=Projector
 tile.myname:window.name=Window
 tile.dhsn:frontdoor_empty.name=Frontdoor
 tile.myname:computer_science_bookshelf.name=Computer Science Bookshelf
+tile.myname:controlling_bookshelf.name=Controlling Bookshelf
+tile.myname:immobilienwirtschaft_bookshelf.name=Immobilienwirtschaft Bookshelf
+tile.myname:nachhaltige_ingenieurwissenschaften_bookshelf.name=Nachhaltige Ingenieurwissenschaften Bookshelf
+tile.myname:steuerberatung_bookshelf.name=Steuerberatung Bookshelf
