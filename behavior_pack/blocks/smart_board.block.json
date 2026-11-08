@@ -18,11 +18,11 @@
         },
         "components": {
             "minecraft:collision_box": {
-                "origin": [-8, 0, -8],
+                "origin": [-8, 0, 1],
                 "size": [16, 16, 7]
             },
             "minecraft:selection_box": {
-                "origin": [-8, 0, -8],
+                "origin": [-8, 0, 1],
                 "size": [16, 16, 7]
             },
             "minecraft:destructible_by_mining": {
@@ -36,7 +36,6 @@
                     "render_method": "opaque"
                 }
             },
-            "minecraft:light_emission": 10,
             "minecraft:map_color": "#3a3c3d",
             "minecraft:redstone_conductivity": {
                 "redstone_conductor": true
