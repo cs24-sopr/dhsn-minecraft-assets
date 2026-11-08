@@ -1,0 +1,19 @@
+{
+	"texture_data": {
+		"stwp_book": {
+			"textures": "textures/items/stwp_book.png"
+		},
+		"cofi_book": {
+			"textures": "textures/items/cofi_book.png"
+		},
+		"immo_book": {
+			"textures": "textures/items/immo_book.png"
+		},
+		"niia_book": {
+			"textures": "textures/items/niia_book.png"
+		},
+		"cs_book": {
+			"textures": "textures/items/cs_book.png"
+		}
+	}
+}
