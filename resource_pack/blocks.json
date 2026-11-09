@@ -1,5 +1,8 @@
 {
     "format_version": "1.21.0",
+    "myname:desk": {
+        "sound": "wood"
+    },
     "myname:smart_board": {
         "sound": "amethyst_block"
     },
@@ -52,6 +55,21 @@
         "sound": "stone"
     },
     "myname:computerdesk": {
+        "sound": "wood"
+    },
+    "myname:controlling_bookshelf": {
+        "sound": "wood"
+    },
+    "myname:immobilienwirtschaft_bookshelf": {
+        "sound": "wood"
+    },
+    "myname:nachhaltige_ingenieurwissenschaften_bookshelf": {
+        "sound": "wood"
+    },
+    "myname:steuerberatung_bookshelf": {
+        "sound": "wood"
+    },
+    "myname:computer_science_bookshelf": {
         "sound": "wood"
     }
 }
