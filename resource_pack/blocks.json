@@ -3,6 +3,9 @@
     "myname:desk": {
         "sound": "wood"
     },
+    "dhsn:red_chair": {
+        "sound": "wood"
+    },
     "myname:smart_board": {
         "sound": "amethyst_block"
     },
