@@ -15,6 +15,7 @@ tile.myname:led_roehre.name=LED Tube
 tile.myname:projector.name=Projector
 tile.myname:window.name=Window
 tile.dhsn:frontdoor_empty.name=Frontdoor
+tile.myname:smart_board.name=Smart Board
 tile.myname:desk.name=Desk
 tile.myname:computer_science_bookshelf.name=Computer Science Bookshelf
 tile.myname:controlling_bookshelf.name=Controlling Bookshelf

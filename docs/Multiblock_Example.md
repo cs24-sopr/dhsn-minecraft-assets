@@ -30,10 +30,11 @@ DHSN_RP/                                Resource Pack
 └── computerdesk_complete.bbmodel        Editable full Blockbench model
 ```
 
-**Four relevant asset files:** 
+**Four relevant asset files:**
+
 - one block definition
 - two geometry files
-- one shared Texture-PNG. 
+- one shared Texture-PNG.
 
 The pack manifests and texture registration are part of the existing add-on setup. They do **not** need special multi-block changes when the original block already works. You do not need a second block definition or a separate item JSON for this example.
 
@@ -44,7 +45,7 @@ Keep the `.bbmodel` file as your editable source. It usually does not belong in 
 1. Create a **Bedrock Block** model, or open your existing Blockbench block project.
 2. Build the full desk at **32 × 16 × 16 pixels** (X = width, Y = height, Z = depth). One Minecraft block is 16 pixels wide.
 3. Put the cubes in two groups (folders in Blockbench): `leftpart` and `rightpart`. Split any cube that crosses the middle line, such as the top of the desk.
-4. If Blockbench limits the model size, open **File → Preferences → Settings** and enable **Deactivate Size Limit**.
+4. If Blockbench limits the model size, open **File → Preferences → Settings → Edit** and enable **Deactivate Size Limit**.
 5. Create or import one texture called `computerdesk.png`. Use **Paint** to texture the complete desk.
 6. Save the full model as `computerdesk_complete.bbmodel`. Use it for later model, UV, and texture changes.
 
@@ -57,8 +58,8 @@ Keep the `.bbmodel` file as your editable source. It usually does not belong in 
 3. Position each half around **its own local block center**. Use Blockbench's marked block area as a guide.
 4. Keep the existing UV mapping. Both parts must use the same `computerdesk.png`, but they can use different regions of the image.
 5. Export both as **Bedrock Geometry**:
-   - `computerdesk_leftpart.geo.json`
-   - `computerdesk_rightpart.geo.json`
+    - `computerdesk_leftpart.geo.json`
+    - `computerdesk_rightpart.geo.json`
 6. Open the exported JSON files in VS Code. Set `minecraft:geometry[0].description.identifier` for each file.
 
 **In `computerdesk_leftpart.geo.json`:**
@@ -191,22 +192,22 @@ Add these entries to the block's **`permutations` array**:
 After the two part entries, add **four direction-based entries**. These are the tested values with `y_rotation_offset: 90.0`:
 
 | Stored `cardinal_direction` | Y rotation for both models |
-|---|---:|
-| `east` | `0` |
-| `north` | `90` |
-| `west` | `180` |
-| `south` | `270` |
+| --------------------------- | -------------------------: |
+| `east`                      |                        `0` |
+| `north`                     |                       `90` |
+| `west`                      |                      `180` |
+| `south`                     |                      `270` |
 
 Example of one direction permutation:
 
 ```json
 {
-  "condition": "q.block_state('minecraft:cardinal_direction') == 'north'",
-  "components": {
-    "minecraft:transformation": {
-      "rotation": [0, 90, 0]
+    "condition": "q.block_state('minecraft:cardinal_direction') == 'north'",
+    "components": {
+        "minecraft:transformation": {
+            "rotation": [0, 90, 0]
+        }
     }
-  }
 }
 ```
 
@@ -220,93 +221,93 @@ This is the final setup confirmed to work in the desk example. Adapt it for othe
 
 ```json
 {
-  "format_version": "1.26.50",
-  "minecraft:block": {
-    "description": {
-      "identifier": "myname:computerdesk",
-      "menu_category": {
-        "category": "construction"
-      },
-      "traits": {
-        "minecraft:placement_direction": {
-          "enabled_states": ["minecraft:cardinal_direction"],
-          "y_rotation_offset": 90.0
+    "format_version": "1.26.50",
+    "minecraft:block": {
+        "description": {
+            "identifier": "myname:computerdesk",
+            "menu_category": {
+                "category": "construction"
+            },
+            "traits": {
+                "minecraft:placement_direction": {
+                    "enabled_states": ["minecraft:cardinal_direction"],
+                    "y_rotation_offset": 90.0
+                },
+                "minecraft:multi_block": {
+                    "enabled_states": ["minecraft:multi_block_part"],
+                    "parts": 2,
+                    "direction": "east"
+                }
+            }
         },
-        "minecraft:multi_block": {
-          "enabled_states": ["minecraft:multi_block_part"],
-          "parts": 2,
-          "direction": "east"
-        }
-      }
-    },
-    "components": {
-      "minecraft:geometry": "geometry.computerdesk_leftpart",
-      "minecraft:collision_box": true,
-      "minecraft:selection_box": true,
-      "minecraft:movable": {
-        "movement_type": "immovable"
-      },
-      "minecraft:destructible_by_mining": {
-        "seconds_to_destroy": 0.5
-      },
-      "minecraft:destructible_by_explosion": {
-        "explosion_resistance": 15
-      },
-      "minecraft:material_instances": {
-        "*": {
-          "texture": "computerdesk",
-          "render_method": "alpha_test"
-        }
-      },
-      "minecraft:map_color": "#5f4a2b"
-    },
-    "permutations": [
-      {
-        "condition": "q.block_state('minecraft:multi_block_part') == 0",
         "components": {
-          "minecraft:geometry": "geometry.computerdesk_rightpart"
-        }
-      },
-      {
-        "condition": "q.block_state('minecraft:multi_block_part') == 1",
-        "components": {
-          "minecraft:geometry": "geometry.computerdesk_leftpart"
-        }
-      },
-      {
-        "condition": "q.block_state('minecraft:cardinal_direction') == 'east'",
-        "components": {
-          "minecraft:transformation": {
-            "rotation": [0, 0, 0]
-          }
-        }
-      },
-      {
-        "condition": "q.block_state('minecraft:cardinal_direction') == 'north'",
-        "components": {
-          "minecraft:transformation": {
-            "rotation": [0, 90, 0]
-          }
-        }
-      },
-      {
-        "condition": "q.block_state('minecraft:cardinal_direction') == 'west'",
-        "components": {
-          "minecraft:transformation": {
-            "rotation": [0, 180, 0]
-          }
-        }
-      },
-      {
-        "condition": "q.block_state('minecraft:cardinal_direction') == 'south'",
-        "components": {
-          "minecraft:transformation": {
-            "rotation": [0, 270, 0]
-          }
-        }
-      }
-    ]
-  }
+            "minecraft:geometry": "geometry.computerdesk_leftpart",
+            "minecraft:collision_box": true,
+            "minecraft:selection_box": true,
+            "minecraft:movable": {
+                "movement_type": "immovable"
+            },
+            "minecraft:destructible_by_mining": {
+                "seconds_to_destroy": 0.5
+            },
+            "minecraft:destructible_by_explosion": {
+                "explosion_resistance": 15
+            },
+            "minecraft:material_instances": {
+                "*": {
+                    "texture": "computerdesk",
+                    "render_method": "alpha_test"
+                }
+            },
+            "minecraft:map_color": "#5f4a2b"
+        },
+        "permutations": [
+            {
+                "condition": "q.block_state('minecraft:multi_block_part') == 0",
+                "components": {
+                    "minecraft:geometry": "geometry.computerdesk_rightpart"
+                }
+            },
+            {
+                "condition": "q.block_state('minecraft:multi_block_part') == 1",
+                "components": {
+                    "minecraft:geometry": "geometry.computerdesk_leftpart"
+                }
+            },
+            {
+                "condition": "q.block_state('minecraft:cardinal_direction') == 'east'",
+                "components": {
+                    "minecraft:transformation": {
+                        "rotation": [0, 0, 0]
+                    }
+                }
+            },
+            {
+                "condition": "q.block_state('minecraft:cardinal_direction') == 'north'",
+                "components": {
+                    "minecraft:transformation": {
+                        "rotation": [0, 90, 0]
+                    }
+                }
+            },
+            {
+                "condition": "q.block_state('minecraft:cardinal_direction') == 'west'",
+                "components": {
+                    "minecraft:transformation": {
+                        "rotation": [0, 180, 0]
+                    }
+                }
+            },
+            {
+                "condition": "q.block_state('minecraft:cardinal_direction') == 'south'",
+                "components": {
+                    "minecraft:transformation": {
+                        "rotation": [0, 270, 0]
+                    }
+                }
+            }
+        ]
+    }
 }
 ```
 
