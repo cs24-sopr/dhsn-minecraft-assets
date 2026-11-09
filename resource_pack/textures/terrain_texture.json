@@ -46,6 +46,9 @@
         "greenchair": {
             "textures": "textures/blocks/greenchair"
         },
+        "red_chair": {
+            "textures": "textures/blocks/red_chair"
+        },
         "paper_towel_dispenser": {
             "textures": "textures/blocks/paper_towel_dispenser"
         },
