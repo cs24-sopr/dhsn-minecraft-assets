@@ -5,6 +5,15 @@
                 "events": {
                     "hurt": {}
                 }
+            },
+            "dhsn:librarian": {
+                "events": {
+                    "death": "dig.wood",
+                    "hurt": "mob.villager.hit",
+                    "spawn": "mob.villager.idle"
+                },
+                "pitch": [1.5, 1.2],
+                "volume": 1
             }
         }
     }

@@ -1,0 +1,38 @@
+{
+    "format_version": "1.12.0",
+    "minecraft:client_entity": {
+        "description": {
+            "identifier": "dhsn:librarian",
+            "materials": {
+                "default": "npc"
+            },
+            "textures": {
+                "default": "textures/entity/librarian"
+            },
+            "geometry": {
+                "default": "geometry.npc"
+            },
+            "scripts": {
+                "animate": [
+                    {
+                        "move": "query.modified_move_speed"
+                    },
+                    "look_at_target",
+                    {
+                        "baby_transform": "query.is_baby"
+                    }
+                ]
+            },
+            "animations": {
+                "look_at_target": "animation.common.look_at_target",
+                "move": "animation.npc.move",
+                "baby_transform": "animation.npc.baby_transform"
+            },
+            "render_controllers": ["controller.render.default"],
+            "spawn_egg": {
+                "base_color": "#985175",
+                "overlay_color": "#f9d775"
+            }
+        }
+    }
+}
