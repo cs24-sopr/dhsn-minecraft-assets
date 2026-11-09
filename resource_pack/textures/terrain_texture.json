@@ -4,6 +4,24 @@
     "padding": 8,
     "num_mip_levels": 4,
     "texture_data": {
+        "desk": {
+            "textures": "textures/blocks/desk"
+        },
+        "controlling_bookshelf": {
+            "textures": "textures/blocks/controlling_bookshelf"
+        },
+        "immobilienwirtschaft_bookshelf": {
+            "textures": "textures/blocks/immobilienwirtschaft_bookshelf"
+        },
+        "nachhaltige_ingenieurwissenschaften_bookshelf": {
+            "textures": "textures/blocks/nachhaltige_ingenieurwissenschaften_bookshelf"
+        },
+        "steuerberatung_bookshelf": {
+            "textures": "textures/blocks/steuerberatung_bookshelf"
+        },
+        "computer_science_bookshelf": {
+            "textures": "textures/blocks/computer_science_bookshelf"
+        },
         "computerdesk_short": {
             "textures": "textures/blocks/computerdesk_short"
         },
