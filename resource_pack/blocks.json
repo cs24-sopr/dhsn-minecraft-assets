@@ -3,6 +3,9 @@
     "myname:desk": {
         "sound": "wood"
     },
+    "myname:smart_board": {
+        "sound": "amethyst_block"
+    },
     "dhsn:frontdoor_empty": {
         "sound": "wood"
     },

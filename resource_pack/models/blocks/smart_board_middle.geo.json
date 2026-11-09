@@ -1,0 +1,58 @@
+{
+    "format_version": "1.21.110",
+    "minecraft:geometry": [
+        {
+            "description": {
+                "identifier": "geometry.smart_board_middle",
+                "texture_width": 128,
+                "texture_height": 128,
+                "visible_bounds_width": 2,
+                "visible_bounds_height": 2,
+                "visible_bounds_offset": [0, 0.5, 0]
+            },
+            "bones": [
+                {
+                    "name": "block",
+                    "pivot": [0, 0, 3]
+                },
+                {
+                    "name": "smabo_middle",
+                    "parent": "block",
+                    "pivot": [0, 0, 3],
+                    "cubes": [
+                        {
+                            "origin": [-8, 2, 2],
+                            "size": [16, 14, 3],
+                            "uv": [38, 0]
+                        },
+                        {
+                            "origin": [-8, 0, 2],
+                            "size": [16, 2, 1],
+                            "uv": [40, 53]
+                        },
+                        {
+                            "origin": [-4, 11, 5],
+                            "size": [8, 5, 3],
+                            "uv": [30, 61]
+                        },
+                        {
+                            "origin": [-1, 0, 5],
+                            "size": [2, 11, 1],
+                            "uv": [18, 62]
+                        },
+                        {
+                            "origin": [-7, 1, 1],
+                            "size": [4, 1, 1],
+                            "uv": [68, 59]
+                        },
+                        {
+                            "origin": [3, 1, 1],
+                            "size": [4, 1, 1],
+                            "uv": [0, 69]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
