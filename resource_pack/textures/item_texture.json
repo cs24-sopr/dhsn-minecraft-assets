@@ -14,6 +14,9 @@
 		},
 		"cs_book": {
 			"textures": "textures/items/cs_book.png"
+		},
+		"volleyball": {
+			"textures": "textures/items/volleyball.png"
 		}
 	}
 }
