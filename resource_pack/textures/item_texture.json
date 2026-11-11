@@ -1,5 +1,8 @@
 {
 	"texture_data": {
+		"doctor_hat": {
+			"textures": "textures/items/doctor_hat.png"
+		},
 		"stwp_book": {
 			"textures": "textures/items/stwp_book.png"
 		},
