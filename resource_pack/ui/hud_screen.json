@@ -1,0 +1,50 @@
+{
+    "namespace": "hud",
+    "questlog_text_lifetime": {
+        "anim_type": "alpha",
+        "easing": "linear",
+        "duration": 3,
+        "from": 1,
+        "to": 1,
+        "destroy_at_end": "hud_actionbar_text",
+        "end_event": "hud_actionbar_text_complete"
+    },
+    "questlog_background_lifetime": {
+        "anim_type": "alpha",
+        "easing": "linear",
+        "duration": 3,
+        "from": 0.35,
+        "to": 0.35,
+        "destroy_at_end": "hud_actionbar_text",
+        "end_event": "hud_actionbar_text_complete"
+    },
+    "hud_actionbar_text": {
+        "type": "image",
+        "anchor_from": "top_right",
+        "anchor_to": "top_right",
+        "offset": [-12, 48],
+        "size": [90, "100%c + 16px"],
+        "texture": "textures/ui/hud_tip_text_background",
+        "alpha": "@hud.questlog_background_lifetime",
+        "propagate_alpha": false,
+        "controls": [
+            {
+                "actionbar_message": {
+                    "type": "label",
+                    "anchor_from": "center",
+                    "anchor_to": "center",
+                    "size": [74, "default"],
+                    "text_alignment": "left",
+                    "text": "$actionbar_text",
+                    "color": [1, 1, 1],
+                    "shadow": true,
+                    "localize": false,
+                    "enable_profanity_filter": true,
+                    "layer": 31,
+                    "alpha": "@hud.questlog_text_lifetime",
+                    "font_scale_factor": 0.5
+                }
+            }
+        ]
+    }
+}
