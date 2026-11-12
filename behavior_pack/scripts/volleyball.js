@@ -3,6 +3,7 @@ import { ItemStack, system, world } from "@minecraft/server";
 const BALL_ITEM = "dhsn:volleyball";
 const BALL_ENTITY = "dhsn:volleyball";
 const BALL_TYPE = { type: BALL_ENTITY };
+const BALL_GRAVITY = 0.1;
 const BOUNCE_DAMPING = 0.7;
 const MIN_BOUNCE_SPEED = 0.08;
 const SPIN_STOP_SPEED = 0.02;
@@ -120,16 +121,17 @@ system.runInterval(() => {
                 wasOnGround: false,
                 velocityY: ball.getVelocity().y,
             };
-            const velocity = ball.getVelocity();
-
             if (ball.isOnGround && !motion.wasOnGround && motion.velocityY < -MIN_BOUNCE_SPEED) {
                 ball.applyImpulse({
                     x: 0,
                     y: -motion.velocityY * BOUNCE_DAMPING,
                     z: 0,
                 });
+            } else if (!ball.isOnGround) {
+                ball.applyImpulse({ x: 0, y: -BALL_GRAVITY, z: 0 });
             }
 
+            const velocity = ball.getVelocity();
             if (
                 ball.isOnGround &&
                 Math.hypot(velocity.x, velocity.y, velocity.z) <= SPIN_STOP_SPEED &&

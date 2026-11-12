@@ -39,12 +39,9 @@
                     }
                 ]
             },
-            "minecraft:gravity": {
-                "value": 0.01
-            },
             "minecraft:physics": {
                 "has_collision": true,
-                "has_gravity": true
+                "has_gravity": false
             },
             "minecraft:pushable": {
                 "is_pushable": false,
