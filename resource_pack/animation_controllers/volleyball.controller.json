@@ -1,0 +1,28 @@
+{
+    "format_version": "1.10.0",
+    "animation_controllers": {
+        "controller.animation.volleyball.spin": {
+            "initial_state": "idle",
+            "states": {
+                "idle": {
+                    "transitions": [
+                        {
+                            "spinning": "query.property('dhsn:is_spinning')"
+                        }
+                    ]
+                },
+                "spinning": {
+                    "animations": [
+                        "spin"
+                    ],
+                    "blend_transition": 0.25,
+                    "transitions": [
+                        {
+                            "idle": "!query.property('dhsn:is_spinning')"
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}
