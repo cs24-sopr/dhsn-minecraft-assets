@@ -1,0 +1,64 @@
+{
+    "format_version": "1.20.80",
+    "minecraft:entity": {
+        "description": {
+            "identifier": "dhsn:volleyball",
+            "is_spawnable": false,
+            "is_summonable": true,
+            "is_experimental": false,
+            "properties": {
+                "dhsn:is_spinning": {
+                    "type": "bool",
+                    "default": false,
+                    "client_sync": true
+                }
+            }
+        },
+        "components": {
+            "minecraft:collision_box": {
+                "width": 0.625,
+                "height": 0.625
+            },
+            "minecraft:damage_sensor": {
+                "triggers": [
+                    {
+                        "cause": "all",
+                        "deals_damage": false
+                    }
+                ]
+            },
+            "minecraft:health": {
+                "max": 1,
+                "value": 1
+            },
+            "minecraft:interact": {
+                "interactions": [
+                    {
+                        "interact_text": "Pick up Volleyball",
+                        "swing": false
+                    }
+                ]
+            },
+            "minecraft:physics": {
+                "has_collision": true,
+                "has_gravity": false
+            },
+            "minecraft:pushable": {
+                "is_pushable": false,
+                "is_pushable_by_piston": false
+            }
+        },
+        "events": {
+            "dhsn:start_spinning": {
+                "set_property": {
+                    "dhsn:is_spinning": true
+                }
+            },
+            "dhsn:stop_spinning": {
+                "set_property": {
+                    "dhsn:is_spinning": false
+                }
+            }
+        }
+    }
+}
