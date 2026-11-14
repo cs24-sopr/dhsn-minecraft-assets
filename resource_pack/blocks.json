@@ -15,6 +15,9 @@
     "dhsn:red_chair": {
         "sound": "wood"
     },
+    "dhsn:mensa_chair": {
+        "sound": "wood"
+    },
     "myname:smart_board": {
         "sound": "amethyst_block"
     },
