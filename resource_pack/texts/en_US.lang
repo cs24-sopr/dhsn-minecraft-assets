@@ -32,7 +32,6 @@ item.myname:cofi_book=Buch Controlling Finance
 item.myname:stwp_book=Buch Steuerberatung Wirtschaftsprüfung
 item.dhsn:volleyball=Volleyball
 entity.dhsn:volleyball.name=Volleyball
-
 tile.myname:pile_of_paper.name=Chaotische Schreibtischdeko 
-
 tile.myname:papers.name=Chaotische Zettel
+item.dhsn:certificate=Zeugnis
