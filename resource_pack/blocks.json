@@ -1,5 +1,8 @@
 {
 	"format_version": "1.21.0",
+	"myname:papers": {
+		"sound": "stone"
+	},
 	"myname:pile_of_paper": {
 		"sound": "stone"
 	},

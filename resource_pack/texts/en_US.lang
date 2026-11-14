@@ -34,3 +34,5 @@ item.dhsn:volleyball=Volleyball
 entity.dhsn:volleyball.name=Volleyball
 
 tile.myname:pile_of_paper.name=Chaotische Schreibtischdeko 
+
+tile.myname:papers.name=Chaotische Zettel

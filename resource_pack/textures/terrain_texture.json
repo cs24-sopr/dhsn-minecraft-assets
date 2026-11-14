@@ -4,6 +4,9 @@
 	"padding": 8,
 	"num_mip_levels": 4,
 	"texture_data": {
+		"papers": {
+			"textures": "textures/blocks/papers"
+		},
 		"pile_of_paper": {
 			"textures": "textures/blocks/pile_of_paper"
 		},
