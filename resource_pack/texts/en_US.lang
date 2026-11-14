@@ -19,6 +19,7 @@ tile.dhsn:frontdoor_empty.name=Frontdoor
 entity.dhsn:librarian.name=Librarian
 item.spawn_egg.entity.dhsn:librarian.name=Librarian Egg
 tile.myname:smart_board.name=Smart Board
+tile.myname:smart_board_206.name=Smart Board 206
 tile.myname:desk.name=Desk
 tile.myname:computer_science_bookshelf.name=Computer Science Bookshelf
 tile.myname:controlling_bookshelf.name=Controlling Bookshelf
