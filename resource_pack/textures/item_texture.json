@@ -3,6 +3,9 @@
         "certificate": {
             "textures": "textures/items/certificate.png"
         },
+        "volleyball": {
+            "textures": "textures/items/volleyball.png"
+        },
         "stwp_book": {
             "textures": "textures/items/stwp_book.png"
         },
