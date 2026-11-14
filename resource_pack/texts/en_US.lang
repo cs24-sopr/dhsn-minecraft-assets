@@ -33,4 +33,6 @@ item.myname:stwp_book=Buch Steuerberatung Wirtschaftsprüfung
 tile.myname:three_eggs_in_mustard_sauce.name=Drei Eier in Senfsoße
 item.dhsn:volleyball=Volleyball
 entity.dhsn:volleyball.name=Volleyball
+tile.myname:pile_of_paper.name=Chaotische Schreibtischdeko 
+tile.myname:papers.name=Chaotische Zettel
 item.dhsn:certificate=Zeugnis
