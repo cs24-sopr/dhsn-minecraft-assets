@@ -1,5 +1,14 @@
 {
     "format_version": "1.21.0",
+    "myname:papers": {
+        "sound": "stone"
+    },
+    "myname:pile_of_paper": {
+        "sound": "stone"
+    },
+    "myname:three_eggs_in_mustard_sauce": {
+        "sound": "glass"
+    },
     "myname:desk": {
         "sound": "wood"
     },
