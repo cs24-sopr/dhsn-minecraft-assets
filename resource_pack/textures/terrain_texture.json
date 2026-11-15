@@ -61,6 +61,9 @@
         "red_chair": {
             "textures": "textures/blocks/red_chair"
         },
+        "mensa_chair": {
+            "textures": "textures/blocks/mensa_chair"
+        },
         "paper_towel_dispenser": {
             "textures": "textures/blocks/paper_towel_dispenser"
         },

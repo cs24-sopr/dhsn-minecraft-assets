@@ -1,7 +1,7 @@
 import { world } from '@minecraft/server'
 import { isBuilder } from './util/is_builder'
 
-const RIDEABLE_BLOCKS = ['myname:toilet', 'myname:greenchair', 'dhsn:red_chair']
+const RIDEABLE_BLOCKS = ['myname:toilet', 'myname:greenchair', 'dhsn:red_chair', 'dhsn:mensa_chair']
 const SEAT_ENTITY = 'dhsn:invisible_seat'
 const POS_TAG = 'chairpos:'
 
