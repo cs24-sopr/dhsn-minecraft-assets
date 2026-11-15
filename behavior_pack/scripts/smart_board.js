@@ -1,6 +1,6 @@
 import { BlockPermutation, system, world } from "@minecraft/server";
 
-const SMART_BOARD = "myname:smart_board";
+const SMART_BOARDS = ["myname:smart_board", "myname:smart_board_206"];
 const PART_STATE = "myname:smart_board_part";
 const FACING_STATE = "minecraft:cardinal_direction";
 const WIDTH_STATE = "myname:smart_board_width";
@@ -37,7 +37,8 @@ function getPartPositions(center, widthDirection) {
 }
 
 world.afterEvents.playerPlaceBlock.subscribe(({ block, player }) => {
-    if (block.typeId !== SMART_BOARD) return;
+    const blockTypeId = block.typeId;
+    if (!SMART_BOARDS.includes(blockTypeId)) return;
 
     const dimension = block.dimension;
     const location = { ...block.location };
@@ -49,7 +50,7 @@ world.afterEvents.playerPlaceBlock.subscribe(({ block, player }) => {
     system.run(() => {
         try {
             const base = dimension.getBlock(location);
-            if (!base || base.typeId !== SMART_BOARD) return;
+            if (!base || base.typeId !== blockTypeId) return;
 
             if (!widthDirection) {
                 base.setType("minecraft:air");
@@ -76,7 +77,7 @@ world.afterEvents.playerPlaceBlock.subscribe(({ block, player }) => {
                 }
                 if (position.part !== 1) createdLocations.push(position);
                 target.setPermutation(
-                    BlockPermutation.resolve(SMART_BOARD, {
+                    BlockPermutation.resolve(blockTypeId, {
                         [PART_STATE]: position.part,
                         [FACING_STATE]: facing,
                         [WIDTH_STATE]: widthName,
@@ -86,7 +87,7 @@ world.afterEvents.playerPlaceBlock.subscribe(({ block, player }) => {
         } catch (error) {
             for (const position of createdLocations) {
                 const target = dimension.getBlock(position);
-                if (target?.typeId === SMART_BOARD) {
+                if (target?.typeId === blockTypeId) {
                     target.setType("minecraft:air");
                 }
             }
@@ -97,7 +98,8 @@ world.afterEvents.playerPlaceBlock.subscribe(({ block, player }) => {
 });
 
 world.afterEvents.playerBreakBlock.subscribe(({ block, brokenBlockPermutation }) => {
-    if (brokenBlockPermutation.type.id !== SMART_BOARD) return;
+    const blockTypeId = brokenBlockPermutation.type.id;
+    if (!SMART_BOARDS.includes(blockTypeId)) return;
 
     const part = brokenBlockPermutation.getState(PART_STATE);
     const facing = brokenBlockPermutation.getState(FACING_STATE);
@@ -124,7 +126,7 @@ world.afterEvents.playerBreakBlock.subscribe(({ block, brokenBlockPermutation })
 
             const target = dimension.getBlock(position);
             if (
-                target?.typeId === SMART_BOARD &&
+                target?.typeId === blockTypeId &&
                 target.permutation.getState(PART_STATE) === position.part &&
                 target.permutation.getState(FACING_STATE) === facing
             ) {
