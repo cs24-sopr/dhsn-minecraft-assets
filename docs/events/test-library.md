@@ -1,8 +1,10 @@
-# Bibliotheks-Test – Bücher sortieren
+# Bibliotheks-Test – Aufbau für die Bibliotheks-Quest
 
 Datei: [test-library.js](../../behavior_pack/scripts/events/test-library.js) · [Übersicht](../Events.md)
 
-Eine Test-Quest für unsere eigenen Bücherregale: Jedes Buch muss ins Regal seines Studiengangs. Jedes Regal nimmt nur sein eigenes Buch an. Sie zeigt außerdem, wie eine echte Quest mehrere Ereignisse mit dem Questlog verbindet: fünfmal `onItemInShelf` mit `itemType` und `shelfType`, dazu ein Questlog-Eintrag mit Fortschritt.
+Baut die Szene für die [Bibliotheks-Quest](../quests/library-quest.md) auf: die fünf eigenen Bücherregale mit Schildern und die Bibliothekarin. **Der Befehl startet nichts.** Quest, Bücher und Questlog-Eintrag beginnen erst, wenn man die Bibliothekarin anspricht.
+
+Jedes Regal nimmt nur das Buch seines Studiengangs an:
 
 | Buch | gehört in |
 | --- | --- |
@@ -29,31 +31,13 @@ Im Chat steht anschließend eine Kurzfassung der Bibliotheks-Quest mit ihren fü
 
 Der Spielmodus ist egal, die eigenen Regale funktionieren auch im Kreativmodus.
 
-## Ablauf
+## Danach
 
-Rechts oben erscheint im Questlog der Eintrag **„Bibliothek: Bücher sortieren“** mit einer Zeile pro Studiengang:
-
-```text
-[ ] Informatik
-[ ] Controlling
-[ ] Immobilienwirtschaft
-[ ] Nachh. Ingenieurwiss.
-[ ] Steuerberatung
-```
-
-1. Die Bibliothekarin ansprechen und die Quest annehmen, dann sind die fünf Bücher im Inventar. Das Informatik-Buch in die Hand nehmen und auf das Informatik-Regal rechtsklicken. Im Chat erscheinen `Buch einsortiert (1/6)` und:
-
-   ```text
-   Ereignis ist eingetreten: Informatik-Buch ins Informatik-Regal (<Name>)
-   ```
-
-   Die Zeile „Informatik“ wird grün abgehakt.
-2. Genauso die anderen vier Bücher in ihre Regale stellen. Welches Regal zu welchem Studiengang gehört, steht auf den Schildern.
-3. Nach dem fünften Buch erscheint `Quest abgeschlossen: Alle Bücher sind richtig sortiert!`, und der Titel im Questlog wird grün mit „(fertig)“.
+Weiter geht es mit der Bibliotheks-Quest: Bibliothekarin ansprechen, Quest annehmen, Bücher in die Regale stellen. Ablauf und Testschritte stehen in der [Quest-Doku](../quests/library-quest.md#testing) (Englisch).
 
 ## Zurücksetzen
 
-Ein erneutes `/scriptevent dhsn:quest_test_library` baut die Regale an der aktuellen Position neu auf, leert ihre Zähler und setzt die Haken zurück. Die Bibliothekarin aus dem vorherigen Durchlauf wird dabei entfernt und neu gesetzt; erkannt wird sie am Tag `dhsn:library_test`.
+Ein erneutes `/scriptevent dhsn:quest_test_library` baut die Regale an der aktuellen Position neu auf und leert ihre Zähler. Die Bibliothekarin aus dem vorherigen Durchlauf wird dabei entfernt und neu gesetzt; erkannt wird sie am Tag `dhsn:library_test`.
 
 **Den Fortschritt der Bibliotheks-Quest setzt der Testbefehl nicht zurück.** Dafür gibt es `/scriptevent dhsn:quest_reset_library`. Kompletter Neustart in dieser Reihenfolge:
 
@@ -67,8 +51,9 @@ Ein erneutes `/scriptevent dhsn:quest_test_library` baut die Regale an der aktue
 
 ## Gegenproben
 
-- **Falsches Regal:** Ein Buch, z. B. das Controlling-Buch, ins Informatik-Regal stellen. Es wird abgelehnt (`Das passt nicht in dieses Regal.`), bleibt in der Hand, und keine Zeile wird abgehakt.
-- **Herausnehmen:** Mit leerer Hand auf ein Regal mit Buch rechtsklicken, dann kommt das Buch zurück. Die Zeile im Questlog bleibt abgehakt.
+- **Kein Questlog:** Direkt nach dem Befehl erscheint kein Questlog-Eintrag, erst nach dem Annehmen der Quest bei der Bibliothekarin.
+- **Falsches Regal:** Ein Buch, z. B. das Controlling-Buch, ins Informatik-Regal stellen. Es wird abgelehnt (`Das passt nicht in dieses Regal.`) und bleibt in der Hand.
+- **Herausnehmen:** Mit leerer Hand auf ein Regal mit Buch rechtsklicken, dann kommt das Buch zurück.
 - **Schilder:** Text auf dem Schild ändern geht nicht, die Schilder sind gewachst.
 - **Fremdes Item:** Papier oder ein anderes Item in ein Regal stellen ergibt `Das passt nicht in dieses Regal.`
 - **Abbauen:** Ein Regal mit Buch abbauen, das Buch fällt heraus.

@@ -76,7 +76,7 @@ No value means the quest was never started. Progress saved by the earlier versio
 | Command | Effect |
 | --- | --- |
 | `/scriptevent dhsn:quest_reset_library` | Resets **your own** quest progress, so you can start over. |
-| `/scriptevent dhsn:quest_test_library` | Test setup: places the five bookshelves with signs and the librarian, see [Testing](#testing). |
+| `/scriptevent dhsn:quest_test_library` | Test setup: places the five bookshelves with signs and the librarian, see [Testing](#testing). Starts nothing by itself. |
 
 Both need cheats to be enabled.
 
@@ -227,7 +227,7 @@ Full description: [Own bookshelves](../events/item-in-shelf.md#eigene-bücherreg
 ## Testing
 
 1. Open a world with **cheats enabled** and both packs, and stand on a flat, open area.
-2. Run `/scriptevent dhsn:quest_test_library`. It places the five bookshelves with a sign each 3 blocks north, the librarian 2 blocks east of the last shelf, and writes a short quest summary to the chat. It does not hand out books. (The test also has its own questlog entry "Bibliothek: Bücher sortieren", which can be ignored here.)
+2. Run `/scriptevent dhsn:quest_test_library`. It places the five bookshelves with a sign each 3 blocks north, the librarian 2 blocks east of the last shelf, and writes a short quest summary to the chat. It starts nothing: no books, no questlog entry until you talk to the librarian.
 3. Right-click the librarian and accept. The five books are in your inventory, and the questlog shows `Runde 1/2` and `Bücher sortiert: 0/5`.
 4. Talk to her again: she reports 0 of 5.
 5. Drop a book (`Q`) and talk to her: she hands it out again.
@@ -251,7 +251,7 @@ Two separate things can be reset; for a complete restart you need both.
 | Command | Resets | Does not reset |
 | --- | --- | --- |
 | `/scriptevent dhsn:quest_reset_library` | Your own quest progress: the librarian offers round 1 again, the quest's questlog entry disappears. Only for the player running the command. | Shelves, librarian, inventory |
-| `/scriptevent dhsn:quest_test_library` | The test setup: rebuilds the five shelves with signs at your current position and empties their counters, replaces the librarian from the previous run, resets the test's own questlog entry. | **Your quest progress.** Without the reset command the quest continues where you left off, or the librarian only thanks you if it is already finished. |
+| `/scriptevent dhsn:quest_test_library` | The test setup: rebuilds the five shelves with signs at your current position and empties their counters, replaces the librarian from the previous run. | **Your quest progress.** Without the reset command the quest continues where you left off, or the librarian only thanks you if it is already finished. |
 
 Complete restart, in this order:
 
