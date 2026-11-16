@@ -1,0 +1,30 @@
+{
+	"format_version": "1.12.0",
+	"minecraft:geometry": [
+		{
+			"description": {
+				"identifier": "geometry.volleyball",
+				"texture_width": 64,
+				"texture_height": 64,
+				"visible_bounds_width": 2,
+				"visible_bounds_height": 2.25,
+				"visible_bounds_offset": [0, 0.875, 0]
+			},
+			"bones": [
+				{
+					"name": "ball",
+					"pivot": [0, 4, 0],
+					"cubes": [
+						{"origin": [-4, 1, -4], "size": [8, 8, 8], "uv": [0, 0]},
+						{"origin": [-3, 9, -3], "size": [6, 1, 6], "uv": [0, 16]},
+						{"origin": [-1, 11, -3], "size": [6, 1, 6], "pivot": [2, 5, 0], "rotation": [0, 0, -90], "uv": [0, 30]},
+						{"origin": [8, 11, -3], "size": [6, 1, 6], "pivot": [11, 5, 0], "rotation": [0, 0, -90], "uv": [24, 30]},
+						{"origin": [-3, 11, -5], "size": [6, 1, 6], "pivot": [0, 5, -2], "rotation": [-90, 0, 0], "uv": [24, 16]},
+						{"origin": [-3, 11, -14], "size": [6, 1, 6], "pivot": [0, 5, -11], "rotation": [-90, 0, 0], "uv": [24, 23]},
+						{"origin": [-3, 0, -3], "size": [6, 1, 6], "uv": [0, 23]}
+					]
+				}
+			]
+		}
+	]
+}

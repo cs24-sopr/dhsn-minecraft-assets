@@ -1,12 +1,27 @@
 {
     "format_version": "1.21.0",
+    "myname:papers": {
+        "sound": "stone"
+    },
+    "myname:pile_of_paper": {
+        "sound": "stone"
+    },
+    "myname:three_eggs_in_mustard_sauce": {
+        "sound": "glass"
+    },
     "myname:desk": {
         "sound": "wood"
     },
     "dhsn:red_chair": {
         "sound": "wood"
     },
+    "dhsn:mensa_chair": {
+        "sound": "wood"
+    },
     "myname:smart_board": {
+        "sound": "amethyst_block"
+    },
+    "myname:smart_board_206": {
         "sound": "amethyst_block"
     },
     "dhsn:frontdoor_empty": {
