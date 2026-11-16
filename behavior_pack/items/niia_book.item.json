@@ -2,7 +2,7 @@
 	"format_version": "1.20.50",
 	"minecraft:item": {
 		"description": {
-			"identifier": "myname:niia_book",
+			"identifier": "dhsn:niia_book",
 			"menu_category": {
 				"category": "items"
 			}

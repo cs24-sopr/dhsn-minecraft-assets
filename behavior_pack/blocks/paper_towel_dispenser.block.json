@@ -2,7 +2,7 @@
     "format_version": "1.21.100",
     "minecraft:block": {
         "description": {
-            "identifier": "myname:paper_towel_dispenser",
+            "identifier": "dhsn:paper_towel_dispenser",
             "menu_category": {
                 "category": "construction"
             },

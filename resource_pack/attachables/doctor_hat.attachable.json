@@ -2,7 +2,7 @@
 	"format_version": "1.10.0",
 	"minecraft:attachable": {
 		"description": {
-			"identifier": "myname:doctor_hat",
+			"identifier": "dhsn:doctor_hat",
 			"render_controllers": ["controller.render.armor"],
 			"materials": {
 				"default": "entity_alphatest_glint",

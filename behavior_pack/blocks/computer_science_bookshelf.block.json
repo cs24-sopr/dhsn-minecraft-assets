@@ -2,7 +2,7 @@
     "format_version": "1.21.100",
     "minecraft:block": {
         "description": {
-            "identifier": "myname:computer_science_bookshelf",
+            "identifier": "dhsn:computer_science_bookshelf",
             "menu_category": {
                 "category": "construction"
             },

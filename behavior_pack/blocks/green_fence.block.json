@@ -2,7 +2,7 @@
     "format_version": "1.26.0",
     "minecraft:block": {
         "description": {
-            "identifier": "myname:green_fence",
+            "identifier": "dhsn:green_fence",
             "menu_category": {
                 "category": "construction"
             },

@@ -2,7 +2,7 @@
 	"format_version": "1.20.50",
 	"minecraft:item": {
 		"description": {
-			"identifier": "myname:stwp_book",
+			"identifier": "dhsn:stwp_book",
 			"menu_category": {
 				"category": "items"
 			}

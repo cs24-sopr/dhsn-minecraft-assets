@@ -2,7 +2,7 @@
     "format_version": "1.21.100",
     "minecraft:block": {
         "description": {
-            "identifier": "myname:nachhaltige_ingenieurwissenschaften_bookshelf",
+            "identifier": "dhsn:nachhaltige_ingenieurwissenschaften_bookshelf",
             "menu_category": {
                 "category": "construction"
             },

@@ -2,7 +2,7 @@
     "format_version": "1.21.100",
     "minecraft:block": {
         "description": {
-            "identifier": "myname:controlling_bookshelf",
+            "identifier": "dhsn:controlling_bookshelf",
             "menu_category": {
                 "category": "construction"
             },

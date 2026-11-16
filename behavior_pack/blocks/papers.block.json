@@ -2,7 +2,7 @@
     "format_version": "1.21.100",
     "minecraft:block": {
         "description": {
-            "identifier": "myname:papers",
+            "identifier": "dhsn:papers",
             "menu_category": {
                 "category": "construction"
             },

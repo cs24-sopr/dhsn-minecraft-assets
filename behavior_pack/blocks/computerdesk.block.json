@@ -2,7 +2,7 @@
     "format_version": "1.26.50",
     "minecraft:block": {
         "description": {
-            "identifier": "myname:computerdesk",
+            "identifier": "dhsn:computerdesk",
             "menu_category": {
                 "category": "construction"
             },

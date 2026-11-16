@@ -2,7 +2,7 @@
     "format_version": "1.26.50",
     "minecraft:block": {
         "description": {
-            "identifier": "myname:led_roehre",
+            "identifier": "dhsn:led_roehre",
             "menu_category": {
                 "category": "construction"
             },

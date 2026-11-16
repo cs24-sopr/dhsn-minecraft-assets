@@ -2,7 +2,7 @@
 	"format_version": "1.20.50",
 	"minecraft:item": {
 		"description": {
-			"identifier": "myname:immo_book",
+			"identifier": "dhsn:immo_book",
 			"menu_category": {
 				"category": "items"
 			}

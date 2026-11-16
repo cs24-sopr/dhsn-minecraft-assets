@@ -2,7 +2,7 @@
     "format_version": "1.21.100",
     "minecraft:block": {
         "description": {
-            "identifier": "myname:pile_of_paper",
+            "identifier": "dhsn:pile_of_paper",
             "menu_category": {
                 "category": "construction"
             },

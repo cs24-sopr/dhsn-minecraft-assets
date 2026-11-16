@@ -2,7 +2,7 @@
     "format_version": "1.21.100",
     "minecraft:block": {
         "description": {
-            "identifier": "myname:sink",
+            "identifier": "dhsn:sink",
             "menu_category": {
                 "category": "construction"
             },

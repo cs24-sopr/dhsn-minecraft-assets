@@ -2,7 +2,7 @@
     "format_version": "1.21.100",
     "minecraft:block": {
         "description": {
-            "identifier": "myname:toilet",
+            "identifier": "dhsn:toilet",
             "menu_category": {
                 "category": "construction"
             },

@@ -2,7 +2,7 @@
     "format_version": "1.21.100",
     "minecraft:block": {
         "description": {
-            "identifier": "myname:three_eggs_in_mustard_sauce",
+            "identifier": "dhsn:three_eggs_in_mustard_sauce",
             "menu_category": {
                 "category": "construction"
             },

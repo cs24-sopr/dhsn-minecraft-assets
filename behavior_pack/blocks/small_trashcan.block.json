@@ -2,7 +2,7 @@
     "format_version": "1.21.100",
     "minecraft:block": {
         "description": {
-            "identifier": "myname:small_trashcan",
+            "identifier": "dhsn:small_trashcan",
             "menu_category": {
                 "category": "construction"
             },

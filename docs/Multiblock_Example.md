@@ -4,7 +4,7 @@
 **Tested setup:** Minecraft Bedrock 26.52 with block `format_version: "1.26.50"`.  
 **Goal:** Place one block item to create two connected block parts. The desk faces the correct direction and both parts use **one shared texture**.
 
-> **Terminology:** This setup uses **one registered block type** (`myname:computerdesk`) with multiple parts. It does not register two separate items. Blockbench defines the visual models. The Behavior Pack defines how the parts work together.
+> **Terminology:** This setup uses **one registered block type** (`dhsn:computerdesk`) with multiple parts. It does not register two separate items. Blockbench defines the visual models. The Behavior Pack defines how the parts work together.
 
 ## 1. Files and folder structure
 
@@ -224,7 +224,7 @@ This is the final setup confirmed to work in the desk example. Adapt it for othe
     "format_version": "1.26.50",
     "minecraft:block": {
         "description": {
-            "identifier": "myname:computerdesk",
+            "identifier": "dhsn:computerdesk",
             "menu_category": {
                 "category": "construction"
             },
@@ -320,7 +320,7 @@ This is the final setup confirmed to work in the desk example. Adapt it for othe
 3. Check if Minecraft knows the block:
 
 ```mcfunction
-/give @s myname:computerdesk 1
+/give @s dhsn:computerdesk 1
 ```
 
 4. Place the desk while facing all four directions. Check that the halves line up, the front faces the player, and both parts break together.

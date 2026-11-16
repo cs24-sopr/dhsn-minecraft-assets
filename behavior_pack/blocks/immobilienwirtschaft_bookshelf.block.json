@@ -2,7 +2,7 @@
     "format_version": "1.21.100",
     "minecraft:block": {
         "description": {
-            "identifier": "myname:immobilienwirtschaft_bookshelf",
+            "identifier": "dhsn:immobilienwirtschaft_bookshelf",
             "menu_category": {
                 "category": "construction"
             },
