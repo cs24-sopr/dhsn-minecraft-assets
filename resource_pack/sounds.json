@@ -14,6 +14,15 @@
                 },
                 "pitch": [1.5, 1.2],
                 "volume": 1
+            },
+            "dhsn:ersti_coach": {
+                "events": {
+                    "death": "dig.wood",
+                    "hurt": "mob.villager.hit",
+                    "spawn": "mob.villager.idle"
+                },
+                "pitch": [0.8, 1.2],
+                "volume": 1
             }
         }
     }

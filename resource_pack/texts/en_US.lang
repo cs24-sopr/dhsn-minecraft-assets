@@ -39,3 +39,5 @@ entity.dhsn:volleyball.name=Volleyball
 tile.myname:pile_of_paper.name=Chaotische Schreibtischdeko 
 tile.myname:papers.name=Chaotische Zettel
 item.dhsn:certificate=Zeugnis
+entity.dhsn:ersti_coach.name=Ersti Coach
+item.spawn_egg.entity.dhsn:ersti_coach.name=Spawn Ersti Coach
