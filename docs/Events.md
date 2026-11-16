@@ -10,7 +10,7 @@ Quests müssen erkennen, was Spieler tun. Dafür gibt es in [behavior_pack/scrip
 | Block an bestimmtem Ort platzieren | `onBlockPlaced`    | [block-placed.md](events/block-placed.md)         |
 | Raum / Bereich betreten            | `onEnterTerritory` | [enter-territory.md](events/enter-territory.md)   |
 
-Wie man alle Ereignisse im Spiel ausprobiert, steht in [Testparcours](events/test.md).
+Wie man alle Ereignisse im Spiel ausprobiert, steht in [Testparcours](events/test.md). Das Sortieren in die eigenen Bücherregale prüft der [Bibliotheks-Test](events/test-library.md). Eine vollständige Quest auf Basis der Bausteine ist die [Bibliotheks-Quest](quests/library-quest.md).
 
 ## Gemeinsames Muster
 
@@ -54,7 +54,9 @@ Außerdem exportiert `index.js` `SHELF_TYPES` (alle unterstützten Regal-Blöcke
 | `events/item-pickup.js` …   | Je ein Ereignis, siehe Tabelle oben.                                                               |
 | `events/shelf-contents.js`  | Zählt den Inhalt von Regalen mit, Grundlage für `onItemInShelf`. Siehe [item-in-shelf.md](events/item-in-shelf.md#für-entwickler-shelf-contentsjs). |
 | `events/area.js`            | Gemeinsame Hilfsfunktionen, siehe unten.                                                           |
-| `events/test.js`            | Testparcours, siehe [test.md](events/test.md).                                                     |
+| `events/test.js`            | Testparcours für alle Ereignisse, siehe [test.md](events/test.md).                                 |
+| `events/test-library.js`    | Test-Quest „Bücher sortieren“ für die eigenen Bücherregale, siehe [test-library.md](events/test-library.md). |
+| `custom_bookshelf.js`       | Macht unsere eigenen Bücherregale benutzbar (liegt direkt in `behavior_pack/scripts/`). Siehe [item-in-shelf.md](events/item-in-shelf.md#eigene-bücherregale). |
 
 ## Hilfsfunktionen in `area.js`
 

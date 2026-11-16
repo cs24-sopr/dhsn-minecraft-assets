@@ -29,7 +29,11 @@
                 }
             },
             "minecraft:map_color": "#7d7d7d",
-            "tag:minecraft:is_pickaxe_item_destructible": {}
+            "tag:minecraft:is_pickaxe_item_destructible": {},
+            "dhsn:bookshelf": {
+                "capacity": 6,
+                "accepts": ["myname:niia_book"]
+            }
         },
         "permutations": [
             {

@@ -1,13 +1,71 @@
 # Item ins Regal – `onItemInShelf`
 
-Dateien: [item-in-shelf.js](../../behavior_pack/scripts/events/item-in-shelf.js), [shelf-contents.js](../../behavior_pack/scripts/events/shelf-contents.js) · [Übersicht](../Events.md)
+Dateien: [item-in-shelf.js](../../behavior_pack/scripts/events/item-in-shelf.js), [shelf-contents.js](../../behavior_pack/scripts/events/shelf-contents.js), [custom_bookshelf.js](../../behavior_pack/scripts/custom_bookshelf.js) · [Übersicht](../Events.md)
 
 Löst aus, wenn ein Spieler ein passendes Item per Rechtsklick in ein Regal stellt. Mit der Option `amount` löst es erst aus, wenn ein Regal eine bestimmte Anzahl passender Items enthält. Unterstützt werden:
 
 - die Shelf-Blöcke aller Holzarten (`minecraft:oak_shelf`, `minecraft:spruce_shelf`, …). Sie nehmen jedes Item auf.
 - `minecraft:chiseled_bookshelf`. Es nimmt nur Bücher auf.
+- unsere eigenen Bücherregale der fünf Studiengänge (`myname:*_bookshelf`), siehe [Eigene Bücherregale](#eigene-bücherregale).
 
-Die vollständige Liste ist als `SHELF_TYPES` exportiert. Unsere eigenen Bücherregale (`myname:*_bookshelf`) sind reine Deko ohne Inventar und zählen nicht.
+Die vollständige Liste ist als `SHELF_TYPES` exportiert, getrennt auch als `VANILLA_SHELF_TYPES` und `DHSN_SHELF_TYPES` in `shelf-contents.js`.
+
+## Eigene Bücherregale
+
+Die fünf Regale waren ursprünglich reine Deko. [custom_bookshelf.js](../../behavior_pack/scripts/custom_bookshelf.js) macht sie benutzbar:
+
+| Regal | Block-ID | Nimmt nur |
+| --- | --- | --- |
+| Informatik | `myname:computer_science_bookshelf` | `myname:cs_book` |
+| Controlling | `myname:controlling_bookshelf` | `myname:cofi_book` |
+| Immobilienwirtschaft | `myname:immobilienwirtschaft_bookshelf` | `myname:immo_book` |
+| Nachhaltige Ingenieurwissenschaften | `myname:nachhaltige_ingenieurwissenschaften_bookshelf` | `myname:niia_book` |
+| Steuerberatung | `myname:steuerberatung_bookshelf` | `myname:stwp_book` |
+
+- **Einstellen:** Rechtsklick mit dem Buch des eigenen Studiengangs stellt **ein** Buch hinein. Außer im Kreativmodus wird es aus der Hand genommen. Im Chat erscheint `Buch einsortiert (3/6)`.
+- **Herausnehmen:** Rechtsklick mit leerer Hand gibt ein Buch zurück in die Hand.
+- **Andere Items und Bücher anderer Studiengänge:** Sie werden abgelehnt: `Das passt nicht in dieses Regal.`
+- **Volles Regal:** `Das Regal ist voll (6/6).`
+- **Abbauen:** Alle Bücher fallen heraus.
+- **Kreativmodus:** Die Erkennung funktioniert bei diesen Regalen auch dort, weil das Skript das Einstellen selbst steuert.
+
+Jedes Regal nimmt nur das Buch seines Studiengangs an, ein Buch ins falsche Regal zu stellen ist also nicht möglich. Eine Quest erkennt das Einsortieren über `itemType` und `shelfType`:
+
+```js
+onItemInShelf(
+    { itemType: "myname:cs_book", shelfType: "myname:computer_science_bookshelf" },
+    ({ player }) => player.sendMessage("Richtig einsortiert!")
+);
+```
+
+**Konfiguration im Block-JSON:** Jedes Regal hat in `behavior_pack/blocks/<regal>.block.json` unter `components` den Eintrag:
+
+```json
+"dhsn:bookshelf": {
+    "capacity": 6,
+    "accepts": ["myname:cs_book"]
+}
+```
+
+(hier am Beispiel des Informatik-Regals)
+
+| Parameter  | Eingestellt            | Ohne Angabe                    | Bedeutung                                |
+| ---------- | ---------------------- | ------------------------------ | ---------------------------------------- |
+| `capacity` | `6`                    | `6`                            | So viele Bücher passen insgesamt hinein. |
+| `accepts`  | das eigene Buch        | alle fünf DHSN-Bücher und Buch | Item-IDs, die das Regal annimmt.         |
+
+> **Wo die Kapazität definiert ist:**
+> - **Maßgeblich:** `capacity` im Block-JSON jedes Regals, `behavior_pack/blocks/<regal>.block.json` unter `components` → `dhsn:bookshelf`. Jedes der fünf Regale hat dort seinen eigenen Wert, derzeit überall `6`.
+> - **Nur als Rückfall:** `DEFAULT_CAPACITY` in `behavior_pack/scripts/custom_bookshelf.js` (ebenfalls `6`). Er greift nur, wenn im Block-JSON kein `capacity` steht.
+> - **Nach einer Änderung:** die Welt neu betreten. `/reload` lädt Block-Definitionen nicht neu.
+> - **Für die [Bibliotheks-Quest](../quests/library-quest.md):** Jede ihrer zwei Runden lässt pro Spieler ein Buch in jedem Regal. Bei `6` ist ein Regal also nach drei Spielern voll. Für die echte Map sollte der Wert höher sein.
+
+Soll ein Regal mehrere Bücher annehmen, z. B. für eine Quest, in der man auch falsch sortieren kann, kommen weitere IDs in `accepts`, etwa `["myname:cs_book", "myname:cofi_book"]`. Ein weiteres Block-Modell bekommt das Verhalten, indem man diesen Eintrag ergänzt und die Block-ID in `DHSN_SHELF_TYPES` aufnimmt.
+
+**Grenzen:**
+- **Aussehen:** Das Modell zeigt nicht, wie viele Bücher drin sind. Dafür bräuchte es Modell-Varianten vom Asset-Team.
+- **Reihenfolge beim Herausnehmen:** Welches Buch beim Herausnehmen zurückkommt, ist nicht festgelegt.
+- **Sounds:** `insert.chiseled_bookshelf` und `pickup.chiseled_bookshelf` sind ungeprüft. Gibt es sie nicht, bleibt es still.
 
 ## Optionen
 
@@ -100,7 +158,7 @@ Gespeichert wird je Regal eine Dynamic Property `dhsn:shelf_contents:<Dimension>
 
 ## Einschränkungen
 
-- **Nur Überlebens- oder Abenteuermodus.** Regale geben ihr Inventar nicht an Skripte heraus (für Shelf-Blöcke im Spiel geprüft). Deshalb gilt ein Item als eingestellt, wenn es nach dem Rechtsklick aus der Hand verschwunden ist oder weniger geworden ist. Im Kreativmodus werden Items nicht verbraucht, dort wird nichts erkannt.
+- **Vanilla-Regale nur im Überlebens- oder Abenteuermodus.** Regale geben ihr Inventar nicht an Skripte heraus (für Shelf-Blöcke im Spiel geprüft). Deshalb gilt ein Item als eingestellt, wenn es nach dem Rechtsklick aus der Hand verschwunden ist oder weniger geworden ist. Im Kreativmodus werden Items nicht verbraucht, dort wird nichts erkannt.
 - **Tausch gegen Gleiches:** Liegt im Shelf schon dasselbe Item und wird getauscht, ändert sich die Hand nicht. Das wird nicht erkannt.
 - **Ganze Stapel:** Ein Shelf legt den ganzen Stapel aus der Hand in einen Slot, das Ereignis meldet ihn einmal. Ein Item pro Slot lässt sich per Skript nicht erzwingen, weil Shelf-Blöcke ihr Inventar nicht an Skripte herausgeben (im Spiel geprüft).
 - **Nur Spieler-Klicks werden gezählt.** Items, die schon vor diesem Update im Regal standen oder durch Befehle, Strukturen oder Trichter hineinkommen, kennt der Zähler nicht. Regale für Quests sollten deshalb leer platziert werden. Wird ein Regal per Befehl ersetzt statt abgebaut, bleibt der alte Stand stehen.
@@ -128,6 +186,8 @@ Im [Testparcours](test.md) bekommt der Spieler ein Eichenregal, ein Chiseled Boo
    ```
 
 6. Zur Prüfung des Herausnehmens 4 Bücher herausnehmen, bis noch 2 drin sind. Dabei **jedes Mal einen leeren Hotbar-Slot auswählen**, damit das Buch in der Hand landet (siehe Einschränkungen). Dann ein Buch wieder hineinstellen: Bei 3 Büchern kommt die Meldung „3 Bücher …“ erneut.
+
+**Eigene Bücherregale:** Dafür gibt es den eigenen [Bibliotheks-Test](test-library.md) (`/scriptevent dhsn:quest_test_library`). Jedes Buch muss dort ins Regal seines Studiengangs.
 
 Gegenproben:
 
