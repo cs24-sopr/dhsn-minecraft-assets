@@ -3,3 +3,4 @@ import "./rideable_blocks.js";
 import "./frontdoor.js";
 import "./smart_board.js";
 import "./questlog.js";
+import "./volleyball.js";
