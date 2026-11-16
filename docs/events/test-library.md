@@ -25,7 +25,7 @@ Wie die Regale funktionieren, steht unter [Eigene Bücherregale](item-in-shelf.m
 
 3. 3 Blöcke nördlich (−Z) entstehen die fünf Regale in einer Reihe, mit je einem Block Abstand, in der Reihenfolge der Tabelle von West nach Ost. Auf jedem Regal steht ein Schild mit dem Namen seines Studiengangs. 2 Blöcke östlich des letzten Regals steht die Bibliothekarin, über sie startet man die [Bibliotheks-Quest](../quests/library-quest.md). Der Test selbst gibt keine Bücher aus: Man bekommt sie von der Bibliothekarin, wenn man die Quest annimmt.
 
-Im Chat steht anschließend eine Kurzfassung der Bibliotheks-Quest mit ihren vier Schritten und dem Befehl zum Zurücksetzen.
+Im Chat steht anschließend eine Kurzfassung der Bibliotheks-Quest mit ihren fünf Schritten und dem Befehl zum Zurücksetzen.
 
 Der Spielmodus ist egal, die eigenen Regale funktionieren auch im Kreativmodus.
 
@@ -51,7 +51,19 @@ Rechts oben erscheint im Questlog der Eintrag **„Bibliothek: Bücher sortieren
 2. Genauso die anderen vier Bücher in ihre Regale stellen. Welches Regal zu welchem Studiengang gehört, steht auf den Schildern.
 3. Nach dem fünften Buch erscheint `Quest abgeschlossen: Alle Bücher sind richtig sortiert!`, und der Titel im Questlog wird grün mit „(fertig)“.
 
+## Zurücksetzen
+
 Ein erneutes `/scriptevent dhsn:quest_test_library` baut die Regale an der aktuellen Position neu auf, leert ihre Zähler und setzt die Haken zurück. Die Bibliothekarin aus dem vorherigen Durchlauf wird dabei entfernt und neu gesetzt; erkannt wird sie am Tag `dhsn:library_test`.
+
+**Den Fortschritt der Bibliotheks-Quest setzt der Testbefehl nicht zurück.** Dafür gibt es `/scriptevent dhsn:quest_reset_library`. Kompletter Neustart in dieser Reihenfolge:
+
+```text
+/clear
+/scriptevent dhsn:quest_reset_library
+/scriptevent dhsn:quest_test_library
+```
+
+`/clear` entfernt Bücher und Smaragde aus dem Inventar; das ist optional. Hat man sich zwischen zwei Durchläufen bewegt, bleiben die alten Regale stehen, weil der Testbefehl nur an der aktuellen Position aufbaut. Siehe auch [Resetting the test](../quests/library-quest.md#resetting-the-test) (Englisch).
 
 ## Gegenproben
 

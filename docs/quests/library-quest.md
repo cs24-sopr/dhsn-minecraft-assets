@@ -11,6 +11,7 @@ All dialog texts are **placeholders** in German until the story team delivers th
 - [Features](#features)
 - [Customization](#customization)
 - [Testing](#testing)
+  - [Resetting the test](#resetting-the-test)
 - [Known limitations](#known-limitations)
 - [Technical overview](#technical-overview)
 
@@ -242,6 +243,27 @@ Counter-checks:
 - Put a book into the wrong shelf: rejected with `Das passt nicht in dieses Regal.`, no progress.
 - Run `/reload` in the middle of a round: progress and questlog entry are kept.
 - `/scriptevent dhsn:quest_reset_library`: the quest starts again from round 1.
+
+### Resetting the test
+
+Two separate things can be reset; for a complete restart you need both.
+
+| Command | Resets | Does not reset |
+| --- | --- | --- |
+| `/scriptevent dhsn:quest_reset_library` | Your own quest progress: the librarian offers round 1 again, the quest's questlog entry disappears. Only for the player running the command. | Shelves, librarian, inventory |
+| `/scriptevent dhsn:quest_test_library` | The test setup: rebuilds the five shelves with signs at your current position and empties their counters, replaces the librarian from the previous run, resets the test's own questlog entry. | **Your quest progress.** Without the reset command the quest continues where you left off, or the librarian only thanks you if it is already finished. |
+
+Complete restart, in this order:
+
+```text
+/clear
+/scriptevent dhsn:quest_reset_library
+/scriptevent dhsn:quest_test_library
+```
+
+`/clear` removes books and emeralds from the inventory. It is optional but keeps the test clear.
+
+If you moved between two runs, the shelves of the previous run stay where they were; the test command only builds at your current position. Break the old shelves, or stand on the same spot before rebuilding.
 
 ## Known limitations
 
