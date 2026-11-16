@@ -1,0 +1,29 @@
+{
+    "format_version": "1.20.80",
+    "minecraft:client_entity": {
+        "description": {
+            "identifier": "dhsn:volleyball",
+            "materials": {
+                "default": "entity_alphatest"
+            },
+            "textures": {
+                "default": "textures/entity/volleyball"
+            },
+            "geometry": {
+                "default": "geometry.volleyball"
+            },
+            "animations": {
+                "spin": "animation.volleyball.spin",
+                "spin_controller": "controller.animation.volleyball.spin"
+            },
+            "scripts": {
+                "animate": [
+                    "spin_controller"
+                ]
+            },
+            "render_controllers": [
+                "controller.render.default"
+            ]
+        }
+    }
+}

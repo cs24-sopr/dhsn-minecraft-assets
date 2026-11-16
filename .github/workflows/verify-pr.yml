@@ -9,15 +9,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Assert all checkboxes are ticked
-        uses: actions/github-script@v6
+        uses: actions/github-script@v9
         with:
           script: |
-            const body = context.payload.pull_request.body || "";
+            const body = context.payload.pull_request?.body || "";
             // match any line starting with `- [ ]` or `* [ ]`
             const uncheckedPattern = /^\s*[\-\*]\s*\[\s*\]/m;
 
             if (uncheckedPattern.test(body)) {
-              core.set_failed("Merge Blocked: There is at least one unchecked item in the PR description.");
+              core.setFailed("Merge Blocked: There is at least one unchecked item in the PR description.");
             } else {
               console.log("All checkboxes are checked.");
             }
