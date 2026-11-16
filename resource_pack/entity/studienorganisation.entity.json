@@ -7,7 +7,7 @@
                 "default": "npc"
             },
             "textures": {
-                "default": "textures/entity/studienorganisation2"
+                "default": "textures/entity/studienorganisation"
             },
             "geometry": {
                 "default": "geometry.studienorganisation"
