@@ -32,8 +32,8 @@ tile.myname:papers.name=Chaotische Zettel
 
 entity.dhsn:librarian.name=Librarian
 item.spawn_egg.entity.dhsn:librarian.name=Librarian Egg
-entity.myname:studienorganisation.name=Studienorganisation
-item.spawn_egg.entity.myname:studienorganisation.name=Spawn Studienorganisation
+entity.dhsn:studienorganisation.name=Studienorganisation
+item.spawn_egg.entity.dhsn:studienorganisation.name=Studienorganisation Egg
 
 item.myname:cs_book=Buch Informatik
 item.myname:niia_book=Buch Nachhaltige Ingenieurwissenschaft
