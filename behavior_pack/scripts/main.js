@@ -4,3 +4,5 @@ import "./frontdoor.js";
 import "./smart_board.js";
 import "./questlog.js";
 import "./volleyball.js";
+import "./questlog.js";
+import "./events/test.js";
