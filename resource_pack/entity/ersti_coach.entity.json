@@ -10,9 +10,10 @@
                 "default": "textures/entity/ersti_coach"
             },
             "geometry": {
-                "default": "geometry.npc"
+                "default": "geometry.ersti_coach"
             },
             "scripts": {
+                "scale": "0.5",
                 "animate": [
                     {
                         "move": "query.modified_move_speed"
