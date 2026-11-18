@@ -37,10 +37,6 @@ Creating entities requires linking the 3D model, textures, animations, and gamep
 
 **You can use the entitiy structure for the ventilator entity for reference **
 
-Note: Blockbench often stops at the point of exporting the to-be-created entity files into an existing folder. A quick and dirty fix of this would be to
-"export as MC-Addon". Save the Addon-File to any location you like and unzip it afterwards. The unzipped folder will contain all the important files.
-You can move them to the correct folder of the repository. (The MC-Addon has folders that are equivalent to our repository folder. If you are unsure, compare to other finished entities like the ventilator.)
-
 #### Step-by-Step Creation Guide
 
 1. **Create the Project in Blockbench:**
@@ -57,6 +53,17 @@ You can move them to the correct folder of the repository. (The MC-Addon has fol
     - **Behavior Logic:** Create `behavior_pack/entities/<entity_name>.json`
     - **Client Entity Definition:** Create `resource_pack/entity/<entity_name>.entity.json`
     - **Render Controller:** Create `resource_pack/render_controllers/<entity_name>.render_controllers.json`
+
+**Note**: Blockbench often stops at the point of exporting the to-be-created entity files into an existing folder. A quick and dirty fix of this would be to
+**"export as MC-Addon"**:
+
+- Save the Addon-File to any location you like
+- unzip it
+- unzipped folder contains all the important files:
+- move the following files to the repository folder equivalent to the MC-Addon-Folder: `x.behaviour.json`, `x.entity.json`, `x.geo.json`, `x.png`, `x.animation.json`
+- integrate the Translation of `en_US.lang` into the existing one
+
+To open the files in Blockbench, search for the Geometry (located in `resource_pack/models/entity/xxx.geo.json`) - open it with Blockbench. First thing to do is _Save Project as_ and save the project as `.bbmodel_` file in the correct location (`/.bbmodels`). Make sure the texture is saved in the correct folder and everything looks as usual - then you can start working.
 
 ---
 
