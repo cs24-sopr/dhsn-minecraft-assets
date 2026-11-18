@@ -1,0 +1,38 @@
+{
+    "format_version": "1.12.0",
+    "minecraft:client_entity": {
+        "description": {
+            "identifier": "myname:adrian_breun",
+            "materials": {
+                "default": "npc"
+            },
+            "textures": {
+                "default": "textures/entity/adrian_breun"
+            },
+            "geometry": {
+                "default": "geometry.adrian_breun"
+            },
+            "scripts": {
+                "animate": [
+                    {
+                        "move": "query.modified_move_speed"
+                    },
+                    {
+                        "baby_transform": "query.is_baby"
+                    },
+                    "breun_reading"
+                ]
+            },
+            "animations": {
+                "move": "animation.adrian_breun.move",
+                "baby_transform": "animation.adrian_breun.baby_transform",
+                "breun_reading": "animation.adrian_breun.breun_reading"
+            },
+            "render_controllers": ["controller.render.default"],
+            "spawn_egg": {
+                "base_color": "#ff0000",
+                "overlay_color": "#000000"
+            }
+        }
+    }
+}

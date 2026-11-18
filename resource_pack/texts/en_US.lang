@@ -47,3 +47,6 @@ entity.dhsn:volleyball.name=Volleyball
 item.dhsn:certificate=Zeugnis
 
 tile.myname:test_block.name=test_block
+
+entity.myname:adrian_breun.name=adrian_breun
+item.spawn_egg.entity.myname:adrian_breun.name=Adrian Breun
