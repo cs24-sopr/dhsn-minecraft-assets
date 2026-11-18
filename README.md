@@ -37,6 +37,10 @@ Creating entities requires linking the 3D model, textures, animations, and gamep
 
 **You can use the entitiy structure for the ventilator entity for reference **
 
+Note: Blockbench often stops at the point of exporting the to-be-created entity files into an existing folder. A quick and dirty fix of this would be to
+"export as MC-Addon". Save the Addon-File to any location you like and unzip it afterwards. The unzipped folder will contain all the important files.
+You can move them to the correct folder of the repository. (The MC-Addon has folders that are equivalent to our repository folder. If you are unsure, compare to other finished entities like the ventilator.)
+
 #### Step-by-Step Creation Guide
 
 1. **Create the Project in Blockbench:**
