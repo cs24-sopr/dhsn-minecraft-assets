@@ -10,7 +10,7 @@
                 "default": "textures/entity/cafeteria_cook"
             },
             "geometry": {
-                "default": "geometry.npc"
+                "default": "geometry.cafeteria_cook"
             },
             "scripts": {
                 "animate": [
