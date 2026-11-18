@@ -63,8 +63,10 @@ Creating entities requires linking the 3D model, textures, animations, and gamep
 - move the following files to the repository folder equivalent to the MC-Addon-Folder: `x.behaviour.json`, `x.entity.json`, `x.geo.json`, `x.png`, `x.animation.json`
 - integrate the Translation of `en_US.lang` into the existing one
 - integrate the sounds of `sounds.json` into the existing one
+- Change the Identifier from `myname` to `dhsn`
+- open the Geometry - change geometry identifier from NPC to the specific geometry
 
-To open the files in Blockbench, search for the Geometry (located in `resource_pack/models/entity/xxx.geo.json`) - open it with Blockbench. First thing to do is _Save Project as_ and save the project as `.bbmodel_` file in the correct location (`/.bbmodels`). Make sure the texture is saved in the correct folder and everything looks as usual - then you can start working.
+To open the files in Blockbench, search for the Geometry (located in `resource_pack/models/entity/xxx.geo.json`) - open it with Blockbench. First thing to do is _Save Project as_ and save the project as `.bbmodel_` file in the correct location (`dhsn-minecraft-assets/.bbmodels/entity/`). Make sure the texture is saved in the correct folder and everything looks as usual - then you can start working.
 
 ---
 
