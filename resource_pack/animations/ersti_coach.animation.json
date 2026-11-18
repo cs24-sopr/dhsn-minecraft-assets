@@ -1,0 +1,72 @@
+{
+    "format_version": "1.8.0",
+    "animations": {
+        "animation.ersti_coach.baby_transform": {
+            "loop": true,
+            "bones": {
+                "head": {
+                    "scale": 1.5
+                }
+            }
+        },
+        "animation.ersti_coach.get_in_bed": {
+            "loop": true,
+            "bones": {
+                "body": {
+                    "position": [0, 1, -15],
+                    "rotation": [-90, 0, 0]
+                }
+            }
+        },
+        "animation.ersti_coach.move": {
+            "anim_time_update": "query.modified_distance_moved",
+            "loop": true,
+            "bones": {
+                "leg0": {
+                    "rotation": [
+                        "(math.cos(query.anim_time * 38.17) * 40.0) - this",
+                        "-this",
+                        0
+                    ]
+                },
+                "leg1": {
+                    "rotation": [
+                        "(math.cos(query.anim_time * 38.17 + 180) * 40.0) - this",
+                        "-this",
+                        0
+                    ]
+                }
+            }
+        },
+        "animation.ersti_coach.raise_arms": {
+            "loop": true,
+            "bones": {
+                "arms": {
+                    "rotation": ["variable.raise_arms * -15.0", 0, 0]
+                }
+            }
+        },
+        "animation.ersti_coachwaving": {
+            "animation_length": 6,
+            "bones": {
+                "arm_left": {
+                    "rotation": {
+                        "0.0": [0, 0, 0],
+                        "0.375": [-120, 0, 0],
+                        "1.0": [-122.4985, -21.4691, 13.1243],
+                        "1.5": [-120.0246, -2.166, 1.2459],
+                        "2.0": [-126.0427, -31.8227, 20.9884],
+                        "2.5": [-119.9951, -0.0016, 0.0025],
+                        "3.0": [-122.4985, -21.4691, 13.1243],
+                        "3.5": [-120.0009, -0.0011, -0.0047],
+                        "4.0": [-123.69, -25.659, 16.1022],
+                        "4.5": [-120.0233, -2.1659, 1.2483],
+                        "5.0": [-122.4959, -21.4748, 13.1227],
+                        "5.5": [-120.0246, -2.166, 1.2459],
+                        "6.0": [0, 0, 0]
+                    }
+                }
+            }
+        }
+    }
+}
