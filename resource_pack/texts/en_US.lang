@@ -45,5 +45,6 @@ tile.myname:three_eggs_in_mustard_sauce.name=Drei Eier in Senfsoße
 item.dhsn:volleyball=Volleyball
 entity.dhsn:volleyball.name=Volleyball
 item.dhsn:certificate=Zeugnis
-
+entity.dhsn:cafeteria_cook.name=Cafeteria Cook
+item.spawn_egg.entity.dhsn:cafeteria_cook.name=Cafeteria Cook Egg
 tile.myname:test_block.name=test_block
