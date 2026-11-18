@@ -1,42 +1,126 @@
 {
-	"format_version": "1.8.0",
-	"animations": {
-		"animation.adrian_breun.baby_transform": {
-			"loop": true,
-			"bones": {
-				"head": {
-					"scale": 1.5
-				}
-			}
-		},
-		"animation.adrian_breun.get_in_bed": {
-			"loop": true,
-			"bones": {
-				"body": {
-					"position": [0, 1, -15],
-					"rotation": [-90, 0, 0]
-				}
-			}
-		},
-		"animation.adrian_breun.move": {
-			"anim_time_update": "query.modified_distance_moved",
-			"loop": true,
-			"bones": {
-				"leg0": {
-					"rotation": ["(math.cos(query.anim_time * 38.17) * 40.0) - this", "-this", 0]
-				},
-				"leg1": {
-					"rotation": ["(math.cos(query.anim_time * 38.17 + 180) * 40.0) - this", "-this", 0]
-				}
-			}
-		},
-		"animation.adrian_breun.raise_arms": {
-			"loop": true,
-			"bones": {
-				"arms": {
-					"rotation": ["variable.raise_arms * -15.0", 0, 0]
-				}
-			}
-		}
-	}
+    "format_version": "1.8.0",
+    "animations": {
+        "animation.adrian_breun.baby_transform": {
+            "loop": true,
+            "bones": {
+                "head": {
+                    "scale": 1.5
+                }
+            }
+        },
+        "animation.adrian_breun.get_in_bed": {
+            "loop": true,
+            "bones": {
+                "body": {
+                    "position": [0, 1, -15],
+                    "rotation": [-90, 0, 0]
+                }
+            }
+        },
+        "animation.adrian_breun.move": {
+            "anim_time_update": "query.modified_distance_moved",
+            "loop": true,
+            "bones": {
+                "leg0": {
+                    "rotation": [
+                        "(math.cos(query.anim_time * 38.17) * 40.0) - this",
+                        "-this",
+                        0
+                    ]
+                },
+                "leg1": {
+                    "rotation": [
+                        "(math.cos(query.anim_time * 38.17 + 180) * 40.0) - this",
+                        "-this",
+                        0
+                    ]
+                }
+            }
+        },
+        "animation.adrian_breun.raise_arms": {
+            "loop": true,
+            "bones": {
+                "arms": {
+                    "rotation": ["variable.raise_arms * -15.0", 0, 0]
+                }
+            }
+        },
+        "animation.adrian_breun.riding": {
+            "loop": true,
+            "bones": {
+                "leg0": {
+                    "rotation": [-80.0735, 7.2401, 3.0171]
+                },
+                "leg1": {
+                    "rotation": [-80.0091, -9.7024, -3.4542]
+                },
+                "body": {
+                    "position": [0, 0, 0]
+                }
+            }
+        },
+        "animation.adrian_breun.breun_reading": {
+            "loop": true,
+            "animation_length": 4.5417,
+            "bones": {
+                "body": {
+                    "rotation": [17.5, 0, 0]
+                },
+                "head": {
+                    "rotation": {
+                        "0.0": [22.5, 0, 0],
+                        "1.5": [24.1825, 23.7694, 7.982],
+                        "3.0": [32.3629, -26.9167, -14.1246],
+                        "4.5417": [22.5, 0, 0]
+                    }
+                },
+                "left_arm": {
+                    "rotation": {
+                        "0.0": [-45, 0, 12.5],
+                        "2.75": [-40, 0, 5],
+                        "4.5": [-45, 0, 12.5]
+                    }
+                },
+                "right_arm": {
+                    "rotation": {
+                        "0.0": [-35, 0, 0],
+                        "0.7083": [-51.843, 0, -8.4693],
+                        "1.5": [-30, 0, -15],
+                        "2.75": [-32.5, 0, 10],
+                        "4.5": [-35, 0, 0]
+                    }
+                }
+            }
+        },
+        "animation.adrian_breun.reading_while_riding": {
+            "loop": true,
+            "animation_length": 4.5,
+            "bones": {
+                "head": {
+                    "rotation": {
+                        "0.0": [47.5, 0, 0],
+                        "1.5": [44.2109, 19.1174, 12.3229],
+                        "2.5": [49.2959, 1.4548, 1.3822],
+                        "3.5": [50.1031, -10.2749, -8.0523],
+                        "4.5": [47.5, 0, 0]
+                    }
+                },
+                "left_arm": {
+                    "rotation": [27.4786, -0.3262, 7.4929]
+                },
+                "right_arm": {
+                    "rotation": {
+                        "0.0": [-12.5, 0, -10],
+                        "0.4167": [-12.3964, 1.6189, -2.6759],
+                        "3.5417": [-12.4539, -1.0809, -14.882],
+                        "4.5": [-12.5, 0, -10]
+                    }
+                },
+                "adrian_breun": {
+                    "position": [0, -7, 0]
+                }
+            }
+        }
+    }
 }

@@ -20,12 +20,22 @@
                     {
                         "baby_transform": "query.is_baby"
                     },
-                    "breun_reading"
+                    {
+                        "riding": "query.is_riding"
+                    },
+                    {
+                        "reading_while_riding": "query.is_riding"
+                    },
+                    {
+                        "breun_reading": "!query.is_riding"
+                    }
                 ]
             },
             "animations": {
                 "move": "animation.adrian_breun.move",
                 "baby_transform": "animation.adrian_breun.baby_transform",
+                "riding": "animation.adrian_breun.riding",
+                "reading_while_riding": "animation.adrian_breun.reading_while_riding",
                 "breun_reading": "animation.adrian_breun.breun_reading"
             },
             "render_controllers": ["controller.render.default"],
