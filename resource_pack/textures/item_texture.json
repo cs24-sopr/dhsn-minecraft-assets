@@ -1,5 +1,8 @@
 {
     "texture_data": {
+        "studierendenausweis": {
+            "textures": "textures/items/studierendenausweis.png"
+        },
         "doctor_hat": {
             "textures": "textures/items/doctor_hat.png"
         },
