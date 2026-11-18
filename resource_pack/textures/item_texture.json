@@ -1,5 +1,8 @@
 {
     "texture_data": {
+        "builder_helmet": {
+            "textures": "textures/items/builder_helmet.png"
+        },
         "doctor_hat": {
             "textures": "textures/items/doctor_hat.png"
         },
