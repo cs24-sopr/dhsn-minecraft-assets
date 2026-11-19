@@ -16,7 +16,7 @@ jobs:
       should_run: ${{ steps.check.outputs.should_run }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Check file and release version
         id: check
@@ -67,7 +67,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Bundle behaviour- and resource pack
         run: |
