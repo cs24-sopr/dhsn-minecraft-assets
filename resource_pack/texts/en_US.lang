@@ -47,5 +47,7 @@ entity.dhsn:volleyball.name=Volleyball
 item.dhsn:certificate=Zeugnis
 item.dhsn:bamboo_key=bamboo key
 item.dhsn:cherry_key=cherry key
+item.dhsn:crimson_key=crimson key
+item.dhsn:warped_key=warped key
 
 tile.myname:test_block.name=test_block

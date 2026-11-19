@@ -1,5 +1,11 @@
 {
 	"texture_data": {
+		"warped_key": {
+			"textures": "textures/items/warped_key.png"
+		},
+		"crimson_key": {
+			"textures": "textures/items/crimson_key.png"
+		},
 		"cherry_key": {
 			"textures": "textures/items/cherry_key.png"
 		},
