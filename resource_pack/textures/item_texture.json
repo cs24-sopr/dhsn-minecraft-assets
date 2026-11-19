@@ -1,5 +1,8 @@
 {
     "texture_data": {
+        "studierendenausweis": {
+            "textures": "textures/items/studierendenausweis.png"
+        },
         "builder_helmet": {
             "textures": "textures/items/builder_helmet.png"
         },
