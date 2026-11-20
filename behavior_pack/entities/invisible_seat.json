@@ -22,7 +22,7 @@
             "minecraft:damage_sensor": { "triggers": { "deals_damage": "no" } },
             "minecraft:rideable": {
                 "seat_count": 1,
-                "family_types": ["player"],
+                "family_types": ["player", "npc"],
                 "seats": { "position": [0, 0.4, 0] }
             }
         }
