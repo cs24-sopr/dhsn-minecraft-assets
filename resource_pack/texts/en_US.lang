@@ -34,6 +34,10 @@ entity.dhsn:librarian.name=Librarian
 item.spawn_egg.entity.dhsn:librarian.name=Librarian Egg
 entity.dhsn:studienorganisation.name=Studienorganisation
 item.spawn_egg.entity.dhsn:studienorganisation.name=Studienorganisation Egg
+entity.dhsn:cafeteria_cook.name=Cafeteria Cook
+item.spawn_egg.entity.dhsn:cafeteria_cook.name=Cafeteria Cook Egg
+entity.dhsn:ersti_coach.name=Ersti Coach
+item.spawn_egg.entity.dhsn:ersti_coach.name=Ersti Coach Egg
 
 item.myname:cs_book=Buch Informatik
 item.myname:niia_book=Buch Nachhaltige Ingenieurwissenschaft
@@ -45,9 +49,5 @@ tile.myname:three_eggs_in_mustard_sauce.name=Drei Eier in Senfsoße
 item.dhsn:volleyball=Volleyball
 entity.dhsn:volleyball.name=Volleyball
 item.dhsn:certificate=Zeugnis
-entity.dhsn:cafeteria_cook.name=Cafeteria Cook
-item.spawn_egg.entity.dhsn:cafeteria_cook.name=Cafeteria Cook Egg
-entity.dhsn:ersti_coach.name=Ersti Coach
-item.spawn_egg.entity.dhsn:ersti_coach.name=Spawn Ersti Coach
 
 tile.myname:test_block.name=test_block
