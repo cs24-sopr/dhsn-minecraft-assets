@@ -88,7 +88,7 @@ function initializeTriggerZones() {
 
     try {
         if (!npcsReset) {
-            Util.resetNpcs()
+            Debug.resetNpcs()
             npcsReset = true
         }
         const zones = Debug.findTriggerZones()
