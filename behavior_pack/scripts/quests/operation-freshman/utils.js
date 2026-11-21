@@ -1,6 +1,119 @@
 import { EasingType, InputPermissionCategory, system } from '@minecraft/server'
 
 /**
+ * A pending wait in a linear sequence.
+ * @typedef {object} SequenceWait
+ * @property {() => void} update Checks completion on the next game tick.
+ * @property {() => void} cancel Rejects the wait when the sequence is cancelled.
+ */
+
+/** Tick-based waits shared by the steps of one cancellable sequence. */
+export class Sequence {
+    constructor() {
+        /** @type {boolean} Whether this sequence has ended or been interrupted. */
+        this.cancelled = false
+        /** @type {SequenceWait | undefined} The step currently waiting. */
+        this.pendingWait = undefined
+    }
+
+    /**
+     * Prevents a cancelled sequence from starting another action.
+     * @returns {void}
+     */
+    ensureActive() {
+        if (this.cancelled) throw new Error('Sequenz abgebrochen.')
+    }
+
+    /**
+     * Waits for a condition, checking immediately and once per subsequent tick.
+     * Exceptions from the condition reject the wait and reach the sequence owner.
+     * @param {() => boolean} condition Whether the action has completed.
+     * @param {number} [timeoutTicks] Maximum wait duration, if bounded.
+     * @param {string} [timeoutMessage] Error reported when the wait times out.
+     * @returns {Promise<void>} Resolves on completion; rejects on failure or cancel.
+     */
+    waitUntil(
+        condition,
+        timeoutTicks = Infinity,
+        timeoutMessage = 'Zeitüberschreitung in der Sequenz.'
+    ) {
+        this.ensureActive()
+        const startedTick = system.currentTick
+        /** @type {Promise<void>} */
+        const completion = new Promise((resolve, reject) => {
+            /** @returns {void} Checks this wait and settles its promise. */
+            const update = () => {
+                try {
+                    this.ensureActive()
+                    if (condition()) {
+                        this.pendingWait = undefined
+                        resolve()
+                        return
+                    }
+                    if (system.currentTick - startedTick > timeoutTicks) {
+                        throw new Error(timeoutMessage)
+                    }
+                } catch (error) {
+                    this.pendingWait = undefined
+                    reject(error)
+                }
+            }
+            /** @returns {void} Releases this wait when its owner cancels. */
+            const cancel = () => {
+                this.pendingWait = undefined
+                reject(new Error('Sequenz abgebrochen.'))
+            }
+            this.pendingWait = { update, cancel }
+            update()
+        })
+        return completion
+    }
+
+    /**
+     * Waits a fixed number of game ticks without blocking the game.
+     * @param {number} ticks Duration of the pause.
+     * @returns {Promise<void>} Resolves after the pause; rejects on cancellation.
+     */
+    waitTicks(ticks) {
+        const endTick = system.currentTick + ticks
+        return this.waitUntil(() => system.currentTick >= endTick)
+    }
+
+    /**
+     * Advances the current wait from the owner's tick handler.
+     * @returns {void}
+     */
+    update() {
+        this.pendingWait?.update()
+    }
+
+    /**
+     * Cancels the pending wait and prevents later steps from running.
+     * @returns {void}
+     */
+    cancel() {
+        this.cancelled = true
+        this.pendingWait?.cancel()
+    }
+}
+
+/**
+ * Keeps an entity facing a target for a fixed duration.
+ * @param {import('@minecraft/server').Entity} entity Entity to turn.
+ * @param {() => import('@minecraft/server').Vector3} getTarget Current target position.
+ * @param {number} ticks Duration of the look.
+ * @param {Sequence} sequence Owner of the cancellable wait.
+ * @returns {Promise<void>} Resolves after the duration; rejects on cancellation.
+ */
+export function lookAtFor(entity, getTarget, ticks, sequence) {
+    const endTick = system.currentTick + ticks
+    return sequence.waitUntil(() => {
+        entity.lookAt(getTarget())
+        return system.currentTick >= endTick
+    })
+}
+
+/**
  * Input permission state saved before a sequence takes control.
  * @typedef {object} SavedPermission
  * @property {import('@minecraft/server').InputPermissionCategory} category Input category.

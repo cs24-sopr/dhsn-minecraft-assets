@@ -1,10 +1,12 @@
 import { system, world } from '@minecraft/server'
 import { onEnterTerritory } from '../../events/index.js'
 import {
+    Sequence,
     freezePlayer,
     hasLanded,
     holdPlayerPosition,
     initializePlayerCamera,
+    lookAtFor,
     openNpcDialogue,
     panCameraTowards,
     restorePlayerControls,
@@ -53,22 +55,13 @@ const ENCOUNTER = {
 }
 
 /**
- * @typedef {'waiting' | 'jumping' | 'turning' | 'waving' | 'complete'} GreetingPhase
- */
-
-/**
  * The single active encounter between the map's player and Lucas.
  * @typedef {object} Encounter
  * @property {import('@minecraft/server').Player} player Map's player.
  * @property {import('@minecraft/server').Entity} lucas Map's single Lucas.
  * @property {import('@minecraft/server').Vector3} position Frozen player position.
  * @property {import('@minecraft/server').Vector3} cameraPosition Fixed eye-level view.
- * @property {boolean} cameraInitialized Whether the free camera is active.
- * @property {boolean} panStarted Whether native camera easing has started.
- * @property {GreetingPhase} greetingPhase Current stage of Lucas's greeting.
- * @property {number} greetingTick Start of the greeting stage; -1 before it begins.
- * @property {import('./utils.js').JumpState} jump Physical hop progress.
- * @property {import('./utils.js').ApproachState} approach Physical approach progress.
+ * @property {Sequence} sequence Cancellable waits for the linear introduction.
  * @property {string} dimensionId Original player dimension.
  * @property {number} startedTick Sequence start tick.
  * @property {number} revision Intro test revision when this sequence began.
@@ -112,6 +105,7 @@ function finishEncounter() {
     const encounter = activeEncounter
     if (!encounter) return
     activeEncounter = undefined
+    encounter.sequence.cancel()
     stopEntityOnCleanup(encounter.lucas)
     try {
         if (encounter.player.isValid) restorePlayerControls(encounter.player)
@@ -134,98 +128,153 @@ function startEncounter(player) {
     if (player.getDynamicProperty(SEEN_PROPERTY) === revision) return
     const [lucas] = player.dimension.getEntities({ type: 'dhsn:ersti_coach' })
 
-    activeEncounter = {
+    /** @type {Encounter} */
+    const encounter = {
         player,
         lucas,
         position: { ...player.location },
         cameraPosition: { ...player.getHeadLocation() },
-        cameraInitialized: false,
-        panStarted: false,
-        greetingPhase: 'waiting',
-        greetingTick: -1,
-        jump: { startY: lucas.location.y, leftGround: false },
-        approach: {
-            bestDistance: Infinity,
-            lastProgressTick: system.currentTick,
-        },
+        sequence: new Sequence(),
         dimensionId: player.dimension.id,
         startedTick: system.currentTick,
         revision,
     }
+    activeEncounter = encounter
+    void playIntroduction(encounter)
+}
 
+/**
+ * Plays the introduction in story order and always releases its controls.
+ * @param {Encounter} encounter Active introduction.
+ * @returns {Promise<void>} Resolves after completion, failure, or cancellation.
+ */
+async function playIntroduction(encounter) {
+    const { player, lucas, sequence } = encounter
     try {
         freezePlayer(player, ENCOUNTER.timeoutTicks + 20)
         lucas.clearVelocity()
+
+        await panToLucas(encounter)
+        await jumpLucas(encounter)
+        await turnLucasToPlayer(encounter)
+
+        if (LUCAS_SHOULD_WAVE) {
+            await waveLucas(encounter)
+        }
+
+        await approachPlayer(encounter)
+        sequence.ensureActive()
+        openNpcDialogue(player, lucas)
+        player.setDynamicProperty(SEEN_PROPERTY, encounter.revision)
     } catch (error) {
-        finishEncounter()
-        throw error
+        if (!sequence.cancelled) logEncounterError(error)
+    } finally {
+        // An interrupted introduction must not finish a newer one after reset.
+        if (activeEncounter === encounter) finishEncounter()
     }
 }
 
 /**
- * Orders Lucas's hop, landing, turn, and optional existing wave.
- * @param {Encounter} encounter Active sequence.
- * @returns {boolean} Whether Lucas is ready to approach.
+ * Sets up the hidden player's eye-level camera, then pans towards Lucas.
+ * @param {Encounter} encounter Active introduction.
+ * @returns {Promise<void>} Resolves when the native eased pan has finished.
  */
-function updateLucasGreeting(encounter) {
-    const { lucas, player } = encounter
-    const now = system.currentTick
-    if (encounter.greetingTick < 0) encounter.greetingTick = now
+async function panToLucas(encounter) {
+    const { player, lucas, cameraPosition, sequence } = encounter
+    // Let invisibility reach the client before putting the camera in the head.
+    await sequence.waitTicks(2)
+    sequence.ensureActive()
+    initializePlayerCamera(player, cameraPosition)
 
-    if (encounter.greetingPhase === 'waiting') {
-        if (now - encounter.greetingTick > ENCOUNTER.jumpTimeoutTicks) {
-            throw new Error(
-                'Lucas steht für den Begrüßungssprung nicht auf dem Boden.'
-            )
-        }
-        if (!lucas.isOnGround) return false
-        encounter.jump = startJump(lucas, ENCOUNTER.jumpImpulse)
-        encounter.greetingPhase = 'jumping'
-        encounter.greetingTick = now
-        return false
-    }
-
-    if (encounter.greetingPhase === 'jumping') {
-        if (!hasLanded(lucas, encounter.jump)) {
-            if (now - encounter.greetingTick > ENCOUNTER.jumpTimeoutTicks) {
-                throw new Error(
-                    'Lucas konnte den Begrüßungssprung nicht abschließen.'
-                )
-            }
-            return false
-        }
-        encounter.greetingPhase = 'turning'
-        encounter.greetingTick = now
-    }
-
-    lucas.lookAt(player.getHeadLocation())
-    if (encounter.greetingPhase === 'turning') {
-        if (now - encounter.greetingTick < ENCOUNTER.turnTicks) return false
-        if (!LUCAS_SHOULD_WAVE) {
-            encounter.greetingPhase = 'complete'
-            encounter.approach.lastProgressTick = now
-            return true
-        }
-        lucas.playAnimation('animation.ersti_coachwaving')
-        encounter.greetingPhase = 'waving'
-        encounter.greetingTick = now
-        return false
-    }
-    if (encounter.greetingPhase === 'waving') {
-        if (now - encounter.greetingTick < ENCOUNTER.waveTicks) return false
-        encounter.greetingPhase = 'complete'
-        encounter.approach.lastProgressTick = now
-    }
-    return encounter.greetingPhase === 'complete'
+    // Give the free camera two ticks to initialize before native easing.
+    await sequence.waitTicks(2)
+    sequence.ensureActive()
+    panCameraTowards(
+        player,
+        cameraPosition,
+        lucas.getHeadLocation(),
+        ENCOUNTER.panTicks
+    )
+    await sequence.waitTicks(ENCOUNTER.panTicks)
 }
 
 /**
- * Advances camera setup -> pan -> greeting -> approach -> dialogue.
- * @param {Encounter} encounter Active sequence to advance.
+ * Makes Lucas hop once and waits for his actual landing.
+ * @param {Encounter} encounter Active introduction.
+ * @returns {Promise<void>} Resolves once Lucas has taken off and landed.
+ */
+async function jumpLucas(encounter) {
+    const { lucas, sequence } = encounter
+    await sequence.waitUntil(
+        () => lucas.isOnGround,
+        ENCOUNTER.jumpTimeoutTicks,
+        'Lucas steht für den Begrüßungssprung nicht auf dem Boden.'
+    )
+    sequence.ensureActive()
+    const jump = startJump(lucas, ENCOUNTER.jumpImpulse)
+    await sequence.waitUntil(
+        () => hasLanded(lucas, jump),
+        ENCOUNTER.jumpTimeoutTicks,
+        'Lucas konnte den Begrüßungssprung nicht abschließen.'
+    )
+}
+
+/**
+ * Turns Lucas towards the player and pauses before the next action.
+ * @param {Encounter} encounter Active introduction.
+ * @returns {Promise<void>} Resolves after the turning pause.
+ */
+function turnLucasToPlayer(encounter) {
+    return lookAtFor(
+        encounter.lucas,
+        () => encounter.player.getHeadLocation(),
+        ENCOUNTER.turnTicks,
+        encounter.sequence
+    )
+}
+
+/**
+ * Plays the existing wave while Lucas keeps facing the player.
+ * @param {Encounter} encounter Active introduction.
+ * @returns {Promise<void>} Resolves after the full wave duration.
+ */
+async function waveLucas(encounter) {
+    const { lucas, player, sequence } = encounter
+    sequence.ensureActive()
+    lucas.playAnimation('animation.ersti_coachwaving')
+    await lookAtFor(
+        lucas,
+        () => player.getHeadLocation(),
+        ENCOUNTER.waveTicks,
+        sequence
+    )
+}
+
+/**
+ * Walks Lucas towards the frozen player until he reaches talking distance.
+ * @param {Encounter} encounter Active introduction.
+ * @returns {Promise<void>} Resolves at talking distance; rejects if stuck.
+ */
+function approachPlayer(encounter) {
+    const { lucas, player, sequence } = encounter
+    /** @type {import('./utils.js').ApproachState} */
+    const progress = {
+        bestDistance: Infinity,
+        lastProgressTick: system.currentTick,
+    }
+    return sequence.waitUntil(() => {
+        lucas.lookAt(player.getHeadLocation())
+        return updateApproach(lucas, encounter.position, ENCOUNTER, progress)
+    })
+}
+
+/**
+ * Holds the player still, handles interruptions, and advances the current wait.
+ * @param {Encounter} encounter Active introduction.
  * @returns {void}
  */
-function updateEncounter(encounter) {
-    const { player, lucas } = encounter
+function maintainEncounter(encounter) {
+    const { player } = encounter
     if (
         !player.isValid ||
         player.dimension.id !== encounter.dimensionId ||
@@ -240,39 +289,7 @@ function updateEncounter(encounter) {
     }
 
     holdPlayerPosition(player, encounter.position, ENCOUNTER.timeoutTicks + 20)
-    // Let invisibility reach the client before putting the camera in the head.
-    if (elapsed < 2) return
-    if (!encounter.cameraInitialized) {
-        initializePlayerCamera(player, encounter.cameraPosition)
-        encounter.cameraInitialized = true
-    }
-    // Give the free camera two ticks to initialize before native easing.
-    if (elapsed < 4) return
-    if (!encounter.panStarted) {
-        panCameraTowards(
-            player,
-            encounter.cameraPosition,
-            lucas.getHeadLocation(),
-            ENCOUNTER.panTicks
-        )
-        encounter.panStarted = true
-    }
-    if (elapsed < 4 + ENCOUNTER.panTicks) return
-    if (!updateLucasGreeting(encounter)) return
-    if (
-        !updateApproach(
-            lucas,
-            encounter.position,
-            ENCOUNTER,
-            encounter.approach
-        )
-    ) {
-        return
-    }
-
-    openNpcDialogue(player, lucas)
-    player.setDynamicProperty(SEEN_PROPERTY, encounter.revision)
-    finishEncounter()
+    encounter.sequence.update()
 }
 
 /**
@@ -282,7 +299,7 @@ function updateEncounter(encounter) {
 function tickEncounter() {
     if (activeEncounter) {
         try {
-            updateEncounter(activeEncounter)
+            maintainEncounter(activeEncounter)
         } catch (error) {
             logEncounterError(error)
             finishEncounter()
