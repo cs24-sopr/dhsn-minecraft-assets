@@ -91,6 +91,7 @@ function getLookRotation(eye, target) {
 
 /**
  * Pans from the player's current view to a target, then tracks it during the action.
+ * Applies a configured camera-position offset relative to the player's head.
  * The action starts after the initial one-second pan has finished.
  * Synchronizes the player with the last camera direction before restoring normal view.
  * A tracking failure does not cancel the supplied action.
@@ -108,12 +109,28 @@ export async function lookAtUntil(player, getTargetPosition, action) {
     /** @type {number} Duration of the initial eased turn, matching the old sequence. */
     const panTicks = 20
 
+    /** @type {import('@minecraft/server').Vector3} Camera offset from the player's head, in blocks. */
+    const cameraOffset = { x: 0, y: 0.1, z: 0 }
+
+    /**
+     * Gets the camera origin with the configured position offset applied.
+     * @returns {import('@minecraft/server').Vector3} Offset camera position.
+     */
+    function getCameraPosition() {
+        const head = player.getHeadLocation()
+        return {
+            x: head.x + cameraOffset.x,
+            y: head.y + cameraOffset.y,
+            z: head.z + cameraOffset.z,
+        }
+    }
+
     /**
      * Updates the camera from the player's current eye position to the target.
      * @returns {void}
      */
     function updateView() {
-        const eye = player.getHeadLocation()
+        const eye = getCameraPosition()
         const target = getTargetPosition()
         player.camera.setCamera('minecraft:free', {
             location: eye,
@@ -125,7 +142,7 @@ export async function lookAtUntil(player, getTargetPosition, action) {
     try {
         // Let the outer invisibility effect reach the client before entering the head.
         await system.waitTicks(2)
-        const cameraPosition = player.getHeadLocation()
+        const cameraPosition = getCameraPosition()
         player.camera.setCamera('minecraft:free', {
             location: cameraPosition,
             rotation: player.getRotation(),

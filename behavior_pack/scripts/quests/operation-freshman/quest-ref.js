@@ -28,8 +28,6 @@ function logError(error) {
  * @param {import('@minecraft/server').Entity} lucas Lucas
  */
 async function startQuestSequence(player, lucas) {
-    player.sendMessage('startQuestSequence start')
-
     await Util.withEffectStack({
         effects: [
             (action) => Util.freezeUntil(player, action),
@@ -37,10 +35,7 @@ async function startQuestSequence(player, lucas) {
             (action) =>
                 Util.lookAtUntil(player, () => lucas.getHeadLocation(), action),
         ],
-        action: async () => {
-            player.sendMessage('startQuestSequence action')
-            await system.waitTicks(80)
-        },
+        action: () => {},
     })
 }
 
