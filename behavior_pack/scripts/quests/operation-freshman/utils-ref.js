@@ -75,9 +75,24 @@ export async function freezeUntil(player, action) {
 }
 
 /**
+ * Computes the view rotation from an eye position to a target.
+ * @param {import('@minecraft/server').Vector3} eye View origin.
+ * @param {import('@minecraft/server').Vector3} target Location to face.
+ * @returns {import('@minecraft/server').Vector2} Pitch and yaw in degrees.
+ */
+function getLookRotation(eye, target) {
+    const dx = target.x - eye.x
+    const dz = target.z - eye.z
+    return {
+        x: (-Math.atan2(target.y - eye.y, Math.hypot(dx, dz)) * 180) / Math.PI,
+        y: (Math.atan2(-dx, dz) * 180) / Math.PI,
+    }
+}
+
+/**
  * Pans from the player's current view to a target, then tracks it during the action.
  * The action starts after the initial one-second pan has finished.
- * Clears the camera on completion or failure, returning to the normal view.
+ * Synchronizes the player with the last camera direction before restoring normal view.
  * A tracking failure does not cancel the supplied action.
  * @template T
  * @param {import('@minecraft/server').Player} player Player whose view is controlled.
@@ -88,6 +103,8 @@ export async function freezeUntil(player, action) {
 export async function lookAtUntil(player, getTargetPosition, action) {
     /** @type {number | undefined} Handle for the camera tracking interval. */
     let trackingRun
+    /** @type {import('@minecraft/server').Vector2 | undefined} Last completed camera direction. */
+    let lastCameraRotation
     /** @type {number} Duration of the initial eased turn, matching the old sequence. */
     const panTicks = 20
 
@@ -96,10 +113,13 @@ export async function lookAtUntil(player, getTargetPosition, action) {
      * @returns {void}
      */
     function updateView() {
+        const eye = player.getHeadLocation()
+        const target = getTargetPosition()
         player.camera.setCamera('minecraft:free', {
-            location: player.getHeadLocation(),
-            facingLocation: getTargetPosition(),
+            location: eye,
+            facingLocation: target,
         })
+        lastCameraRotation = getLookRotation(eye, target)
     }
 
     try {
@@ -113,21 +133,24 @@ export async function lookAtUntil(player, getTargetPosition, action) {
 
         // Initialize the free camera before sending the eased turn.
         await system.waitTicks(2)
+        const panTarget = { ...getTargetPosition() }
         player.camera.setCamera('minecraft:free', {
             location: cameraPosition,
-            facingLocation: getTargetPosition(),
+            facingLocation: panTarget,
             easeOptions: {
                 easeTime: panTicks / 20,
                 easeType: EasingType.InOutSine,
             },
         })
         await system.waitTicks(panTicks)
+        lastCameraRotation = getLookRotation(cameraPosition, panTarget)
 
         // Per-tick updates start after the pan so they cannot overwrite its easing.
         /** @type {Promise<never>} Rejects if a later camera update fails. */
         const trackingFailure = new Promise((_resolve, reject) => {
             /** @returns {void} Tracks the target or reports an update failure. */
             function trackTarget() {
+                if (trackingRun === undefined) return
                 try {
                     updateView()
                 } catch (error) {
@@ -140,7 +163,18 @@ export async function lookAtUntil(player, getTargetPosition, action) {
         return await Promise.race([action(), trackingFailure])
     } finally {
         if (trackingRun !== undefined) system.clearRun(trackingRun)
-        if (player.isValid) player.camera.clear()
+        trackingRun = undefined
+        try {
+            if (player.isValid && lastCameraRotation) {
+                player.teleport(player.location, {
+                    rotation: lastCameraRotation,
+                })
+            }
+        } finally {
+            // Let the player rotation reach the client before restoring normal view.
+            await system.waitTicks(1)
+            if (player.isValid) player.camera.clear()
+        }
     }
 }
 
