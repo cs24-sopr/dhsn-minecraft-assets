@@ -7,3 +7,4 @@ import "./volleyball.js";
 import "./questlog.js";
 import "./events/test.js";
 import "./ersti_coach_TEST.js"; //can be deleted after testing
+import "./quests/operation-freshman/index.js";
