@@ -6,6 +6,9 @@ import {
 } from '@minecraft/server'
 import { onEnterTerritory } from '../../events/index.js'
 
+/** @type {boolean} Whether Lucas waves before approaching the player. */
+const LUCAS_SHOULD_WAVE = false
+
 /**
  * A quest entry zone, independent of how its coordinates were obtained.
  * @typedef {object} QuestZone
@@ -21,7 +24,10 @@ import { onEnterTerritory } from '../../events/index.js'
  * @property {number} stopDistance Horizontal distance to stop from the player.
  * @property {number} walkSpeed Horizontal movement in blocks per tick.
  * @property {number} panTicks Duration of the camera pan after its setup.
- * @property {number} turnTicks Pause between Lucas facing the player and walking.
+ * @property {number} jumpImpulse Upward impulse for Lucas's greeting hop.
+ * @property {number} jumpTimeoutTicks Maximum wait for takeoff or landing.
+ * @property {number} turnTicks Pause between Lucas facing the player and waving.
+ * @property {number} waveTicks Duration of the existing six-second wave.
  * @property {number} timeoutTicks Maximum total encounter duration.
  * @property {number} stuckTicks Maximum time without approaching the player.
  */
@@ -31,8 +37,12 @@ const ENCOUNTER = {
     searchDistance: 32,
     stopDistance: 2,
     walkSpeed: 0.4,
-    panTicks: 40,
+    panTicks: 20,
+    jumpImpulse: 0.42,
+    jumpTimeoutTicks: 40,
     turnTicks: 8,
+    // Matches animation.ersti_coachwaving without modifying the resource asset.
+    waveTicks: 120,
     timeoutTicks: 400,
     stuckTicks: 40,
 }
@@ -45,6 +55,10 @@ const ENCOUNTER = {
  */
 
 /**
+ * @typedef {'waiting' | 'jumping' | 'turning' | 'waving' | 'complete'} GreetingPhase
+ */
+
+/**
  * A single player's cinematic, with exclusive ownership of one Lucas.
  * @typedef {object} Encounter
  * @property {import('@minecraft/server').Player} player Triggering player.
@@ -53,6 +67,10 @@ const ENCOUNTER = {
  * @property {import('@minecraft/server').Vector3} cameraPosition Fixed camera location.
  * @property {boolean} cameraInitialized Whether the hidden player's eye camera is active.
  * @property {boolean} panStarted Whether the native eased turn has been requested.
+ * @property {GreetingPhase} greetingPhase Current stage of Lucas's greeting.
+ * @property {number} greetingTick Start tick of the greeting stage; -1 before it begins.
+ * @property {number} jumpStartY Lucas's feet height before the greeting hop.
+ * @property {boolean} jumpLeftGround Whether Lucas has visibly taken off.
  * @property {string} dimensionId Original dimension.
  * @property {number} startedTick Encounter start tick.
  * @property {number} lastProgressTick Last tick with meaningful progress.
@@ -122,9 +140,13 @@ function hidePlayerForEncounter(player) {
     if (player.getEffect('invisibility')) return
     // Persist ownership before applying the effect so reloads can clean it up.
     player.setDynamicProperty(VISIBILITY_PROPERTY, true)
-    const effect = player.addEffect('invisibility', ENCOUNTER.timeoutTicks + 20, {
-        showParticles: false,
-    })
+    const effect = player.addEffect(
+        'invisibility',
+        ENCOUNTER.timeoutTicks + 20,
+        {
+            showParticles: false,
+        }
+    )
     if (!effect) {
         throw new Error(
             'Spieler konnte für die Kamerafahrt nicht versteckt werden.'
@@ -238,6 +260,76 @@ function startCameraPan(encounter) {
 }
 
 /**
+ * Runs one hop, waits for landing, turns Lucas, and optionally plays one wave.
+ * When enabled, walking waits for the full wave. Blocked jumps time out through the
+ * normal encounter cleanup, releasing the player's camera and controls.
+ * @param {Encounter} encounter Encounter whose coach should greet the player.
+ * @returns {boolean} Whether Lucas has finished greeting and can approach.
+ */
+function updateLucasGreeting(encounter) {
+    const { lucas, player } = encounter
+    const now = system.currentTick
+    if (encounter.greetingTick < 0) encounter.greetingTick = now
+
+    if (encounter.greetingPhase === 'waiting') {
+        if (now - encounter.greetingTick > ENCOUNTER.jumpTimeoutTicks) {
+            throw new Error(
+                'Lucas steht für den Begrüßungssprung nicht auf dem Boden.'
+            )
+        }
+        if (!lucas.isOnGround) return false
+        encounter.jumpStartY = lucas.location.y
+        lucas.clearVelocity()
+        lucas.applyImpulse({ x: 0, y: ENCOUNTER.jumpImpulse, z: 0 })
+        encounter.greetingPhase = 'jumping'
+        encounter.greetingTick = now
+        return false
+    }
+
+    if (encounter.greetingPhase === 'jumping') {
+        const height = lucas.location.y - encounter.jumpStartY
+        if (!lucas.isOnGround || height > 0.03) {
+            encounter.jumpLeftGround = true
+        }
+        const landed =
+            encounter.jumpLeftGround &&
+            lucas.isOnGround &&
+            Math.abs(height) < 0.1 &&
+            Math.abs(lucas.getVelocity().y) < 0.05
+        if (!landed) {
+            if (now - encounter.greetingTick > ENCOUNTER.jumpTimeoutTicks) {
+                throw new Error(
+                    'Lucas konnte den Begrüßungssprung nicht abschließen.'
+                )
+            }
+            return false
+        }
+        encounter.greetingPhase = 'turning'
+        encounter.greetingTick = now
+    }
+
+    lucas.lookAt(player.getHeadLocation())
+    if (encounter.greetingPhase === 'turning') {
+        if (now - encounter.greetingTick < ENCOUNTER.turnTicks) return false
+        if (!LUCAS_SHOULD_WAVE) {
+            encounter.greetingPhase = 'complete'
+            encounter.lastProgressTick = now
+            return true
+        }
+        lucas.playAnimation('animation.ersti_coachwaving')
+        encounter.greetingPhase = 'waving'
+        encounter.greetingTick = now
+        return false
+    }
+    if (encounter.greetingPhase === 'waving') {
+        if (now - encounter.greetingTick < ENCOUNTER.waveTicks) return false
+        encounter.greetingPhase = 'complete'
+        encounter.lastProgressTick = now
+    }
+    return encounter.greetingPhase === 'complete'
+}
+
+/**
  * Locks player controls and starts the camera from the current eye rotation.
  * Progress is only recorded after the NPC dialogue actually opens.
  * @param {import('@minecraft/server').Player} player Player entering any quest zone.
@@ -262,6 +354,10 @@ function startEncounter(player) {
         cameraPosition: { ...player.getHeadLocation() },
         cameraInitialized: false,
         panStarted: false,
+        greetingPhase: 'waiting',
+        greetingTick: -1,
+        jumpStartY: lucas.location.y,
+        jumpLeftGround: false,
         dimensionId: player.dimension.id,
         startedTick: system.currentTick,
         lastProgressTick: system.currentTick,
@@ -342,7 +438,7 @@ function openLucasDialogue(encounter) {
 }
 
 /**
- * Advances freeze -> camera pan -> facing -> physical approach -> dialogue.
+ * Advances freeze -> camera pan -> hop -> turn -> wave -> approach -> dialogue.
  * Physical impulses preserve collisions and drive the existing walk animation;
  * this is straight-line movement, not native AI pathfinding around obstacles.
  * @param {Encounter} encounter Active encounter to update.
@@ -391,8 +487,7 @@ function updateEncounter(encounter) {
     if (elapsed < 4) return
     if (!encounter.panStarted) startCameraPan(encounter)
     if (elapsed < 4 + ENCOUNTER.panTicks) return
-    lucas.lookAt(player.getHeadLocation())
-    if (elapsed < 4 + ENCOUNTER.panTicks + ENCOUNTER.turnTicks) return
+    if (!updateLucasGreeting(encounter)) return
 
     const location = lucas.location
     const dx = position.x - location.x
