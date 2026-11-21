@@ -1,4 +1,9 @@
-import { InputPermissionCategory, system, world } from '@minecraft/server'
+import {
+    EasingType,
+    InputPermissionCategory,
+    system,
+    world,
+} from '@minecraft/server'
 
 /**
  * A state wrapper that activates before an action and cleans up in finally.
@@ -70,7 +75,8 @@ export async function freezeUntil(player, action) {
 }
 
 /**
- * Keeps an eye-level camera facing a moving target until the action finishes.
+ * Pans from the player's current view to a target, then tracks it during the action.
+ * The action starts after the initial one-second pan has finished.
  * Clears the camera on completion or failure, returning to the normal view.
  * A tracking failure does not cancel the supplied action.
  * @template T
@@ -82,6 +88,8 @@ export async function freezeUntil(player, action) {
 export async function lookAtUntil(player, getTargetPosition, action) {
     /** @type {number | undefined} Handle for the camera tracking interval. */
     let trackingRun
+    /** @type {number} Duration of the initial eased turn, matching the old sequence. */
+    const panTicks = 20
 
     /**
      * Updates the camera from the player's current eye position to the target.
@@ -95,8 +103,27 @@ export async function lookAtUntil(player, getTargetPosition, action) {
     }
 
     try {
-        updateView()
+        // Let the outer invisibility effect reach the client before entering the head.
+        await system.waitTicks(2)
+        const cameraPosition = player.getHeadLocation()
+        player.camera.setCamera('minecraft:free', {
+            location: cameraPosition,
+            rotation: player.getRotation(),
+        })
 
+        // Initialize the free camera before sending the eased turn.
+        await system.waitTicks(2)
+        player.camera.setCamera('minecraft:free', {
+            location: cameraPosition,
+            facingLocation: getTargetPosition(),
+            easeOptions: {
+                easeTime: panTicks / 20,
+                easeType: EasingType.InOutSine,
+            },
+        })
+        await system.waitTicks(panTicks)
+
+        // Per-tick updates start after the pan so they cannot overwrite its easing.
         /** @type {Promise<never>} Rejects if a later camera update fails. */
         const trackingFailure = new Promise((_resolve, reject) => {
             /** @returns {void} Tracks the target or reports an update failure. */

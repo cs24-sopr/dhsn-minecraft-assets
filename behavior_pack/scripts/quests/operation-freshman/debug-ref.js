@@ -1,4 +1,43 @@
-import { BlockVolume, world } from '@minecraft/server'
+import { BlockVolume, InputPermissionCategory, world } from '@minecraft/server'
+
+/**
+ * Player placement used when restarting the temporary development sequence.
+ * @typedef {object} PlayerDefaults
+ * @property {string} dimensionId Dimension containing the starting position.
+ * @property {import('@minecraft/server').Vector3} location Starting position.
+ * @property {import('@minecraft/server').Vector2} rotation Starting pitch and yaw.
+ */
+
+// Temporary development coordinates, matching the active reset in command.js.
+/** @type {PlayerDefaults} */
+const PLAYER_DEFAULTS = {
+    dimensionId: 'minecraft:overworld',
+    location: { x: 0.5, y: -60, z: 0.5 },
+    rotation: { x: 0, y: 270 },
+}
+
+/**
+ * Restores the player's debug position, rotation, normal camera, and input.
+ * @param {import('@minecraft/server').Player} player Player to reset.
+ * @returns {void}
+ * @throws {Error} If a player or destination operation fails.
+ */
+export function resetPlayer(player) {
+    player.camera.clear()
+    player.inputPermissions.setPermissionCategory(
+        InputPermissionCategory.Movement,
+        true
+    )
+    player.inputPermissions.setPermissionCategory(
+        InputPermissionCategory.Camera,
+        true
+    )
+    player.teleport(PLAYER_DEFAULTS.location, {
+        dimension: world.getDimension(PLAYER_DEFAULTS.dimensionId),
+        rotation: PLAYER_DEFAULTS.rotation,
+    })
+    player.clearVelocity()
+}
 
 /**
  * Fixed search bounds for the temporary gold-block debug markers.

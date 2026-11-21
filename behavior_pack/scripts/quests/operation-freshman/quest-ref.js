@@ -77,16 +77,25 @@ function registerTriggerZoneEvents(zones) {
 let zonesRegistered = false
 /** @type {boolean} Whether the debug NPCs have been reset during this script load. */
 let npcsReset = false
+/** @type {Set<string>} Players already reset during this script load. */
+const resetPlayerIds = new Set()
 
 /**
- * Resets debug NPCs and registers zones once a player loads the debug area.
+ * Resets players and debug NPCs, then registers zones in the debug area.
  * World load covers reloads; player spawn covers entering the world initially.
  * @returns {void}
  */
 function initializeTriggerZones() {
-    if (zonesRegistered || world.getAllPlayers().length === 0) return
+    if (zonesRegistered) return
+    const players = world.getAllPlayers()
+    if (players.length === 0) return
 
     try {
+        for (const player of players) {
+            if (resetPlayerIds.has(player.id)) continue
+            Debug.resetPlayer(player)
+            resetPlayerIds.add(player.id)
+        }
         if (!npcsReset) {
             Debug.resetNpcs()
             npcsReset = true
