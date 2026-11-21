@@ -21,7 +21,6 @@ import { onEnterTerritory } from '../../events/index.js'
  * @property {number} stopDistance Horizontal distance to stop from the player.
  * @property {number} walkSpeed Horizontal movement in blocks per tick.
  * @property {number} panTicks Duration of the camera pan after its setup.
- * @property {number} cameraHeight Fixed camera height above the frozen player's feet.
  * @property {number} turnTicks Pause between Lucas facing the player and walking.
  * @property {number} timeoutTicks Maximum total encounter duration.
  * @property {number} stuckTicks Maximum time without approaching the player.
@@ -33,7 +32,6 @@ const ENCOUNTER = {
     stopDistance: 2,
     walkSpeed: 0.4,
     panTicks: 40,
-    cameraHeight: 2.2,
     turnTicks: 8,
     timeoutTicks: 400,
     stuckTicks: 40,
@@ -53,6 +51,7 @@ const ENCOUNTER = {
  * @property {import('@minecraft/server').Entity} lucas Selected coach.
  * @property {import('@minecraft/server').Vector3} position Frozen player position.
  * @property {import('@minecraft/server').Vector3} cameraPosition Fixed camera location.
+ * @property {boolean} cameraInitialized Whether the hidden player's eye camera is active.
  * @property {boolean} panStarted Whether the native eased turn has been requested.
  * @property {string} dimensionId Original dimension.
  * @property {number} startedTick Encounter start tick.
@@ -62,6 +61,7 @@ const ENCOUNTER = {
  */
 
 const RECOVERY_PROPERTY = 'dhsn:operation_freshman_controls'
+const VISIBILITY_PROPERTY = 'dhsn:operation_freshman_invisible'
 const SEEN_PROPERTY = 'dhsn:operation_freshman_intro_shown'
 const REVISION_PROPERTY = 'dhsn:operation_freshman_intro_revision'
 
@@ -112,17 +112,53 @@ function getIntroRevision() {
 }
 
 /**
- * Restores only controls saved by this module, including after script reload.
+ * Hides the player without particles before putting the camera at eye level.
+ * Existing invisibility is left untouched. If it expires during the encounter,
+ * a temporary effect is added and tracked separately for cleanup.
+ * @param {import('@minecraft/server').Player} player Player to hide.
+ * @returns {void}
+ */
+function hidePlayerForEncounter(player) {
+    if (player.getEffect('invisibility')) return
+    // Persist ownership before applying the effect so reloads can clean it up.
+    player.setDynamicProperty(VISIBILITY_PROPERTY, true)
+    const effect = player.addEffect('invisibility', ENCOUNTER.timeoutTicks + 20, {
+        showParticles: false,
+    })
+    if (!effect) {
+        throw new Error(
+            'Spieler konnte für die Kamerafahrt nicht versteckt werden.'
+        )
+    }
+}
+
+/**
+ * Removes only invisibility added by this encounter, including after reload.
+ * @param {import('@minecraft/server').Player} player Player whose model can return.
+ * @returns {void}
+ */
+function restorePlayerVisibility(player) {
+    if (player.getDynamicProperty(VISIBILITY_PROPERTY) !== true) return
+    player.removeEffect('invisibility')
+    player.setDynamicProperty(VISIBILITY_PROPERTY, undefined)
+}
+
+/**
+ * Restores controls and visibility owned by this module after an encounter.
  * The recovery record remains if an API fails, allowing a later retry.
  * @param {import('@minecraft/server').Player} player Player to recover.
  * @returns {void}
  */
 function restorePlayerControls(player) {
     const record = player.getDynamicProperty(RECOVERY_PROPERTY)
-    if (typeof record !== 'string') return
+    if (typeof record !== 'string') {
+        restorePlayerVisibility(player)
+        return
+    }
     /** @type {SavedPermission[]} */
     const permissions = JSON.parse(record)
     player.camera.clear()
+    restorePlayerVisibility(player)
     for (const { category, enabled } of permissions) {
         player.inputPermissions.setPermissionCategory(category, enabled)
     }
@@ -223,11 +259,8 @@ function startEncounter(player) {
         player,
         lucas,
         position,
-        cameraPosition: {
-            x: position.x,
-            y: position.y + ENCOUNTER.cameraHeight,
-            z: position.z,
-        },
+        cameraPosition: { ...player.getHeadLocation() },
+        cameraInitialized: false,
         panStarted: false,
         dimensionId: player.dimension.id,
         startedTick: system.currentTick,
@@ -265,12 +298,9 @@ function startEncounter(player) {
         )
         player.clearVelocity()
         lucas.clearVelocity()
-        // Match the tested fixed camera above the head, then ease after setup.
+        hidePlayerForEncounter(player)
+        // Keep the normal view until invisibility has reached the client.
         player.camera.clear()
-        player.camera.setCamera('minecraft:free', {
-            location: encounter.cameraPosition,
-            rotation: player.getRotation(),
-        })
     } catch (error) {
         finishEncounter(encounter)
         throw error
@@ -347,11 +377,22 @@ function updateEncounter(encounter) {
         player.teleport(position)
     }
     player.clearVelocity()
+    hidePlayerForEncounter(player)
+    // Let invisibility settle before switching to a camera inside the head.
     if (elapsed < 2) return
+    if (!encounter.cameraInitialized) {
+        player.camera.setCamera('minecraft:free', {
+            location: encounter.cameraPosition,
+            rotation: player.getRotation(),
+        })
+        encounter.cameraInitialized = true
+    }
+    // Give the free camera two more ticks to initialize before native easing.
+    if (elapsed < 4) return
     if (!encounter.panStarted) startCameraPan(encounter)
-    if (elapsed < 2 + ENCOUNTER.panTicks) return
+    if (elapsed < 4 + ENCOUNTER.panTicks) return
     lucas.lookAt(player.getHeadLocation())
-    if (elapsed < 2 + ENCOUNTER.panTicks + ENCOUNTER.turnTicks) return
+    if (elapsed < 4 + ENCOUNTER.panTicks + ENCOUNTER.turnTicks) return
 
     const location = lucas.location
     const dx = position.x - location.x
