@@ -1,2 +1,1 @@
-import './command.js'
-import './quest.js'
+import './quest-ref.js'

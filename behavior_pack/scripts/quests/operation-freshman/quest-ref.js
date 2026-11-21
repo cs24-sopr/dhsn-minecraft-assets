@@ -1,8 +1,8 @@
 import { system, world } from '@minecraft/server'
 import { onEnterTerritory } from '../../events/index.js'
-import { createDebugZones } from './debug.js'
 
-import { freezeUntil, lookAtUntil } from './utils-ref.js'
+import * as Util from './utils-ref.js'
+import * as Debug from './debug-ref.js'
 
 /**
  * A quest entry zone, independent of how its coordinates were obtained.
@@ -25,9 +25,23 @@ function logError(error) {
 /**
  * TODO
  * @param {import('@minecraft/server').Player} player Player
+ * @param {import('@minecraft/server').Entity} lucas Lucas
  */
-async function startQuestSequence(player) {
-    freezeUntil(player, async () => {})
+async function startQuestSequence(player, lucas) {
+    player.sendMessage('startQuestSequence start')
+
+    await Util.withEffectStack({
+        effects: [
+            (action) => Util.freezeUntil(player, action),
+            (action) => Util.invisibleUntil(player, action),
+            (action) =>
+                Util.lookAtUntil(player, () => lucas.getHeadLocation(), action),
+        ],
+        action: async () => {
+            player.sendMessage('startQuestSequence action')
+            await system.waitTicks(80)
+        },
+    })
 }
 
 /**
@@ -45,10 +59,12 @@ function registerTriggerZoneEvents(zones) {
                 to: zone.to,
                 interval: 1,
             },
-            (event) => {
+            async (event) => {
                 try {
+                    const lucas = Util.getLucas()
                     unsubscribers.forEach((unsubscripe) => unsubscripe())
-                    startQuestSequence(event.player)
+
+                    await startQuestSequence(event.player, lucas)
                 } catch (error) {
                     logError(error)
                 }
@@ -56,3 +72,36 @@ function registerTriggerZoneEvents(zones) {
         )
     )
 }
+
+/** @type {boolean} Whether the temporary debug zones have been registered. */
+let zonesRegistered = false
+/** @type {boolean} Whether the debug NPCs have been reset during this script load. */
+let npcsReset = false
+
+/**
+ * Resets debug NPCs and registers zones once a player loads the debug area.
+ * World load covers reloads; player spawn covers entering the world initially.
+ * @returns {void}
+ */
+function initializeTriggerZones() {
+    if (zonesRegistered || world.getAllPlayers().length === 0) return
+
+    try {
+        if (!npcsReset) {
+            Util.resetNpcs()
+            npcsReset = true
+        }
+        const zones = Debug.findTriggerZones()
+        if (zones.length === 0) return
+
+        registerTriggerZoneEvents(zones)
+        zonesRegistered = true
+    } catch (error) {
+        logError(error)
+    }
+}
+
+world.afterEvents.worldLoad.subscribe(initializeTriggerZones)
+world.afterEvents.playerSpawn.subscribe(initializeTriggerZones)
+// Also initialize after script startup when players are already present.
+system.run(initializeTriggerZones)

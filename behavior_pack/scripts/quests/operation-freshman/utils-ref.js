@@ -1,4 +1,69 @@
-import { InputPermissionCategory, system } from '@minecraft/server'
+import { InputPermissionCategory, system, world } from '@minecraft/server'
+
+/**
+ * Starting placement for an NPC in the temporary development area.
+ * @typedef {object} NpcPlacement
+ * @property {string} typeId Existing behavior-pack entity identifier.
+ * @property {string} nameTag German display name.
+ * @property {string} dimensionId Dimension containing the NPC.
+ * @property {import('@minecraft/server').Vector3} location Starting position.
+ * @property {import('@minecraft/server').Vector2} rotation Starting pitch and yaw.
+ */
+
+// Temporary development coordinates, matching the reset command in command.js.
+/** @type {NpcPlacement[]} */
+const NPC_PLACEMENTS = [
+    {
+        typeId: 'dhsn:ersti_coach',
+        nameTag: 'Lucas',
+        dimensionId: 'minecraft:overworld',
+        location: { x: 20, y: -60, z: 0.5 },
+        rotation: { x: 0, y: 0 },
+    },
+    {
+        typeId: 'dhsn:studienorganisation',
+        nameTag: 'Frau Sommer',
+        dimensionId: 'minecraft:overworld',
+        location: { x: 22, y: -60, z: 0.5 },
+        rotation: { x: 0, y: 0 },
+    },
+]
+
+/**
+ * Recreates the loaded debug NPCs at their default positions and rotations.
+ * Checks destination chunks before removing any existing NPCs.
+ * @returns {void}
+ * @throws {Error} If a destination is unloaded or an NPC operation fails.
+ */
+export function resetNpcs() {
+    for (const placement of NPC_PLACEMENTS) {
+        const dimension = world.getDimension(placement.dimensionId)
+        if (!dimension.getBlock(placement.location)) {
+            throw new Error(
+                `Debug-Position für ${placement.nameTag} ist noch nicht geladen.`
+            )
+        }
+    }
+
+    const dimensions = new Set(
+        NPC_PLACEMENTS.map((placement) => placement.dimensionId)
+    )
+    const types = new Set(NPC_PLACEMENTS.map((placement) => placement.typeId))
+    for (const dimensionId of dimensions) {
+        const dimension = world.getDimension(dimensionId)
+        for (const type of types) {
+            for (const npc of dimension.getEntities({ type })) npc.remove()
+        }
+    }
+
+    for (const placement of NPC_PLACEMENTS) {
+        const npc = world
+            .getDimension(placement.dimensionId)
+            .spawnEntity(placement.typeId, placement.location)
+        npc.nameTag = placement.nameTag
+        npc.setRotation(placement.rotation)
+    }
+}
 
 /**
  * A state wrapper that activates before an action and cleans up in finally.
@@ -7,20 +72,27 @@ import { InputPermissionCategory, system } from '@minecraft/server'
  */
 
 /**
+ * Effects and the action to run inside them.
+ * @template T
+ * @typedef {object} EffectStackOptions
+ * @property {StateScope<T>[]} effects State wrappers, outermost first.
+ * @property {() => T | Promise<T>} action Action performed with all states active.
+ */
+
+/**
  * Runs an action inside a flat list of state wrappers.
- * States activate in array order and their finally blocks unwind in reverse.
+ * Effects activate in array order and their finally blocks unwind in reverse.
  * Each wrapper remains responsible for its own setup and cleanup.
  * @template T
- * @param {StateScope<T>[]} states State wrappers, outermost first.
- * @param {() => T | Promise<T>} action Action performed with all states active.
+ * @param {EffectStackOptions<T>} options Effects and the action to wrap.
  * @returns {Promise<T>} The action's result; propagates wrapper or action failures.
  */
-export async function withStates(states, action) {
+export async function withEffectStack({ effects, action }) {
     /** @type {() => T | Promise<T>} Action wrapped by the states processed so far. */
     let run = action
 
-    for (let index = states.length - 1; index >= 0; index--) {
-        const state = states[index]
+    for (let index = effects.length - 1; index >= 0; index--) {
+        const state = effects[index]
         const next = run
         /** @returns {Promise<T>} Runs the next action inside this state. */
         run = () => state(next)
@@ -108,4 +180,73 @@ export async function lookAtUntil(player, getTargetPosition, action) {
         if (trackingRun !== undefined) system.clearRun(trackingRun)
         if (player.isValid) player.camera.clear()
     }
+}
+
+/**
+ * Keeps the player invisible until the supplied action finishes.
+ * Leaves existing invisibility untouched until it expires and removes only
+ * invisibility added by this wrapper. Short effects are refreshed internally
+ * so they expire naturally if a script reload interrupts cleanup.
+ * A refresh failure does not cancel the supplied action.
+ * @template T
+ * @param {import('@minecraft/server').Player} player Player to hide.
+ * @param {() => T | Promise<T>} action Action performed while invisible.
+ * @returns {Promise<T>} The action's result; rejects if the action or refresh fails.
+ */
+export async function invisibleUntil(player, action) {
+    /** @type {number | undefined} Handle for the invisibility refresh interval. */
+    let refreshRun
+    /** @type {boolean} Whether this wrapper has applied its own invisibility. */
+    let addedInvisibility = false
+
+    /**
+     * Applies or renews invisibility without replacing a pre-existing effect.
+     * @returns {void}
+     */
+    function maintainInvisibility() {
+        const effect = player.getEffect('invisibility')
+        if (effect && (!addedInvisibility || effect.duration > 20)) return
+        player.addEffect('invisibility', 40, { showParticles: false })
+        addedInvisibility = true
+    }
+
+    try {
+        maintainInvisibility()
+
+        /** @type {Promise<never>} Rejects if a later invisibility refresh fails. */
+        const refreshFailure = new Promise((_resolve, reject) => {
+            /** @returns {void} Maintains invisibility or reports a refresh failure. */
+            function refreshInvisibility() {
+                try {
+                    maintainInvisibility()
+                } catch (error) {
+                    reject(error)
+                }
+            }
+            refreshRun = system.runInterval(refreshInvisibility, 1)
+        })
+
+        return await Promise.race([action(), refreshFailure])
+    } finally {
+        if (refreshRun !== undefined) system.clearRun(refreshRun)
+        if (addedInvisibility && player.isValid) {
+            player.removeEffect('invisibility')
+        }
+    }
+}
+
+/**
+ * Try and fetch the entity of lucas
+ * @returns {import('@minecraft/server').Entity} The entity of lucas
+ */
+export function getLucas() {
+    const entities = world.getDimension('overworld').getEntities({
+        type: 'dhsn:ersti_coach',
+    })
+
+    if (entities.length !== 1) {
+        throw Error('TODO') // TODO
+    }
+
+    return entities[0]
 }
