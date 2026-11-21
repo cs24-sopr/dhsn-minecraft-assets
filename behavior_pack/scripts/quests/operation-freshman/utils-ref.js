@@ -1,0 +1,111 @@
+import { InputPermissionCategory, system } from '@minecraft/server'
+
+/**
+ * A state wrapper that activates before an action and cleans up in finally.
+ * @template T
+ * @typedef {(action: () => T | Promise<T>) => Promise<T>} StateScope
+ */
+
+/**
+ * Runs an action inside a flat list of state wrappers.
+ * States activate in array order and their finally blocks unwind in reverse.
+ * Each wrapper remains responsible for its own setup and cleanup.
+ * @template T
+ * @param {StateScope<T>[]} states State wrappers, outermost first.
+ * @param {() => T | Promise<T>} action Action performed with all states active.
+ * @returns {Promise<T>} The action's result; propagates wrapper or action failures.
+ */
+export async function withStates(states, action) {
+    /** @type {() => T | Promise<T>} Action wrapped by the states processed so far. */
+    let run = action
+
+    for (let index = states.length - 1; index >= 0; index--) {
+        const state = states[index]
+        const next = run
+        /** @returns {Promise<T>} Runs the next action inside this state. */
+        run = () => state(next)
+    }
+
+    return await run()
+}
+
+/**
+ * Keeps the player frozen until the supplied action finishes.
+ * @template T
+ * @param {import('@minecraft/server').Player} player Player to freeze.
+ * @param {() => T | Promise<T>} action Action performed while frozen.
+ * @returns {Promise<T>} The action's result.
+ */
+export async function freezeUntil(player, action) {
+    try {
+        player.inputPermissions.setPermissionCategory(
+            InputPermissionCategory.Movement,
+            false
+        )
+        player.inputPermissions.setPermissionCategory(
+            InputPermissionCategory.Camera,
+            false
+        )
+
+        player.clearVelocity()
+
+        return await action()
+    } finally {
+        player.inputPermissions.setPermissionCategory(
+            InputPermissionCategory.Movement,
+            true
+        )
+        player.inputPermissions.setPermissionCategory(
+            InputPermissionCategory.Camera,
+            true
+        )
+    }
+}
+
+/**
+ * Keeps an eye-level camera facing a moving target until the action finishes.
+ * Clears the camera on completion or failure, returning to the normal view.
+ * A tracking failure does not cancel the supplied action.
+ * @template T
+ * @param {import('@minecraft/server').Player} player Player whose view is controlled.
+ * @param {() => import('@minecraft/server').Vector3} getTargetPosition Current target position.
+ * @param {() => T | Promise<T>} action Action performed while tracking the target.
+ * @returns {Promise<T>} The action's result; rejects if the action or tracking fails.
+ */
+export async function lookAtUntil(player, getTargetPosition, action) {
+    /** @type {number | undefined} Handle for the camera tracking interval. */
+    let trackingRun
+
+    /**
+     * Updates the camera from the player's current eye position to the target.
+     * @returns {void}
+     */
+    function updateView() {
+        player.camera.setCamera('minecraft:free', {
+            location: player.getHeadLocation(),
+            facingLocation: getTargetPosition(),
+        })
+    }
+
+    try {
+        updateView()
+
+        /** @type {Promise<never>} Rejects if a later camera update fails. */
+        const trackingFailure = new Promise((_resolve, reject) => {
+            /** @returns {void} Tracks the target or reports an update failure. */
+            function trackTarget() {
+                try {
+                    updateView()
+                } catch (error) {
+                    reject(error)
+                }
+            }
+            trackingRun = system.runInterval(trackTarget, 1)
+        })
+
+        return await Promise.race([action(), trackingFailure])
+    } finally {
+        if (trackingRun !== undefined) system.clearRun(trackingRun)
+        if (player.isValid) player.camera.clear()
+    }
+}
