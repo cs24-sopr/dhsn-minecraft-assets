@@ -1,10 +1,17 @@
-import {
-    EasingType,
-    InputPermissionCategory,
-    system,
-    world,
-} from '@minecraft/server'
+import { system, world } from '@minecraft/server'
 import { onEnterTerritory } from '../../events/index.js'
+import {
+    freezePlayer,
+    hasLanded,
+    holdPlayerPosition,
+    initializePlayerCamera,
+    openNpcDialogue,
+    panCameraTowards,
+    restorePlayerControls,
+    startJump,
+    stopEntityOnCleanup,
+    updateApproach,
+} from './utils.js'
 
 /** @type {boolean} Whether Lucas waves before approaching the player. */
 const LUCAS_SHOULD_WAVE = false
@@ -18,100 +25,67 @@ const LUCAS_SHOULD_WAVE = false
  */
 
 /**
- * Settings for the introductory encounter, without world coordinates.
+ * Timing and movement settings for the introductory sequence.
  * @typedef {object} EncounterConfig
- * @property {number} searchDistance Maximum distance to the nearest Lucas.
- * @property {number} stopDistance Horizontal distance to stop from the player.
+ * @property {number} stopDistance Horizontal distance at which Lucas stops.
  * @property {number} walkSpeed Horizontal movement in blocks per tick.
- * @property {number} panTicks Duration of the camera pan after its setup.
+ * @property {number} panTicks Duration of the camera pan after setup.
  * @property {number} jumpImpulse Upward impulse for Lucas's greeting hop.
  * @property {number} jumpTimeoutTicks Maximum wait for takeoff or landing.
- * @property {number} turnTicks Pause between Lucas facing the player and waving.
+ * @property {number} turnTicks Pause between turning and waving or approaching.
  * @property {number} waveTicks Duration of the existing six-second wave.
- * @property {number} timeoutTicks Maximum total encounter duration.
- * @property {number} stuckTicks Maximum time without approaching the player.
+ * @property {number} timeoutTicks Maximum total sequence duration.
+ * @property {number} stuckTicks Maximum time without approach progress.
  */
 
 /** @type {EncounterConfig} */
 const ENCOUNTER = {
-    searchDistance: 32,
     stopDistance: 2,
     walkSpeed: 0.4,
     panTicks: 20,
     jumpImpulse: 0.42,
     jumpTimeoutTicks: 40,
     turnTicks: 8,
-    // Matches animation.ersti_coachwaving without modifying the resource asset.
+    // Matches animation.ersti_coachwaving without changing the resource asset.
     waveTicks: 120,
     timeoutTicks: 400,
     stuckTicks: 40,
 }
 
 /**
- * Player permissions saved before this module takes control.
- * @typedef {object} SavedPermission
- * @property {import('@minecraft/server').InputPermissionCategory} category Input category.
- * @property {boolean} enabled Previously enabled state.
- */
-
-/**
  * @typedef {'waiting' | 'jumping' | 'turning' | 'waving' | 'complete'} GreetingPhase
  */
 
 /**
- * A single player's cinematic, with exclusive ownership of one Lucas.
+ * The single active encounter between the map's player and Lucas.
  * @typedef {object} Encounter
- * @property {import('@minecraft/server').Player} player Triggering player.
- * @property {import('@minecraft/server').Entity} lucas Selected coach.
+ * @property {import('@minecraft/server').Player} player Map's player.
+ * @property {import('@minecraft/server').Entity} lucas Map's single Lucas.
  * @property {import('@minecraft/server').Vector3} position Frozen player position.
- * @property {import('@minecraft/server').Vector3} cameraPosition Fixed camera location.
- * @property {boolean} cameraInitialized Whether the hidden player's eye camera is active.
- * @property {boolean} panStarted Whether the native eased turn has been requested.
+ * @property {import('@minecraft/server').Vector3} cameraPosition Fixed eye-level view.
+ * @property {boolean} cameraInitialized Whether the free camera is active.
+ * @property {boolean} panStarted Whether native camera easing has started.
  * @property {GreetingPhase} greetingPhase Current stage of Lucas's greeting.
- * @property {number} greetingTick Start tick of the greeting stage; -1 before it begins.
- * @property {number} jumpStartY Lucas's feet height before the greeting hop.
- * @property {boolean} jumpLeftGround Whether Lucas has visibly taken off.
- * @property {string} dimensionId Original dimension.
- * @property {number} startedTick Encounter start tick.
- * @property {number} lastProgressTick Last tick with meaningful progress.
- * @property {number} bestDistance Closest approach so far.
- * @property {number} revision Intro test revision at the time of entry.
+ * @property {number} greetingTick Start of the greeting stage; -1 before it begins.
+ * @property {import('./utils.js').JumpState} jump Physical hop progress.
+ * @property {import('./utils.js').ApproachState} approach Physical approach progress.
+ * @property {string} dimensionId Original player dimension.
+ * @property {number} startedTick Sequence start tick.
+ * @property {number} revision Intro test revision when this sequence began.
  */
 
-const RECOVERY_PROPERTY = 'dhsn:operation_freshman_controls'
-const VISIBILITY_PROPERTY = 'dhsn:operation_freshman_invisible'
 const SEEN_PROPERTY = 'dhsn:operation_freshman_intro_shown'
 const REVISION_PROPERTY = 'dhsn:operation_freshman_intro_revision'
 
-// Restore parent categories before their individual child categories.
-/** @type {import('@minecraft/server').InputPermissionCategory[]} */
-const INPUT_CATEGORIES = [
-    InputPermissionCategory.Movement,
-    InputPermissionCategory.LateralMovement,
-    InputPermissionCategory.MoveForward,
-    InputPermissionCategory.MoveBackward,
-    InputPermissionCategory.MoveLeft,
-    InputPermissionCategory.MoveRight,
-    InputPermissionCategory.Jump,
-    InputPermissionCategory.Sneak,
-    InputPermissionCategory.Mount,
-    InputPermissionCategory.Dismount,
-    InputPermissionCategory.Camera,
-]
-
-/** @type {Map<string, Encounter>} */
-const encounters = new Map()
-/** @type {Set<string>} */
-const reservedCoaches = new Set()
-/** @type {Array<() => void>} */
+/** @type {Encounter | undefined} One sequence also guards against repeated zone triggers. */
+let activeEncounter
+/** @type {Array<() => void>} Cleanup callbacks for the configured entry zones. */
 let zoneCleanups = []
-/** @type {boolean} */
+/** @type {boolean} Whether zones were already configured during this script load. */
 let zonesConfigured = false
-/** @type {number} */
-let dialogueCounter = 0
 
 /**
- * Logs a failure without throwing out of an event or interval callback.
+ * Reports sequence or recovery failures to the Content Log.
  * @param {unknown} error Failure from a Minecraft API operation.
  * @returns {void}
  */
@@ -121,7 +95,7 @@ function logEncounterError(error) {
 }
 
 /**
- * Reads the persistent intro revision, shared by both entrances.
+ * Reads the persistent intro revision used by the debug reset.
  * @returns {number} Current intro test revision.
  */
 function getIntroRevision() {
@@ -130,77 +104,15 @@ function getIntroRevision() {
 }
 
 /**
- * Hides the player without particles before putting the camera at eye level.
- * Existing invisibility is left untouched. If it expires during the encounter,
- * a temporary effect is added and tracked separately for cleanup.
- * @param {import('@minecraft/server').Player} player Player to hide.
+ * Ends the active sequence on success, cancellation, reset, or failure.
+ * A disconnected player keeps the saved recovery record until returning.
  * @returns {void}
  */
-function hidePlayerForEncounter(player) {
-    if (player.getEffect('invisibility')) return
-    // Persist ownership before applying the effect so reloads can clean it up.
-    player.setDynamicProperty(VISIBILITY_PROPERTY, true)
-    const effect = player.addEffect(
-        'invisibility',
-        ENCOUNTER.timeoutTicks + 20,
-        {
-            showParticles: false,
-        }
-    )
-    if (!effect) {
-        throw new Error(
-            'Spieler konnte für die Kamerafahrt nicht versteckt werden.'
-        )
-    }
-}
-
-/**
- * Removes only invisibility added by this encounter, including after reload.
- * @param {import('@minecraft/server').Player} player Player whose model can return.
- * @returns {void}
- */
-function restorePlayerVisibility(player) {
-    if (player.getDynamicProperty(VISIBILITY_PROPERTY) !== true) return
-    player.removeEffect('invisibility')
-    player.setDynamicProperty(VISIBILITY_PROPERTY, undefined)
-}
-
-/**
- * Restores controls and visibility owned by this module after an encounter.
- * The recovery record remains if an API fails, allowing a later retry.
- * @param {import('@minecraft/server').Player} player Player to recover.
- * @returns {void}
- */
-function restorePlayerControls(player) {
-    const record = player.getDynamicProperty(RECOVERY_PROPERTY)
-    if (typeof record !== 'string') {
-        restorePlayerVisibility(player)
-        return
-    }
-    /** @type {SavedPermission[]} */
-    const permissions = JSON.parse(record)
-    player.camera.clear()
-    restorePlayerVisibility(player)
-    for (const { category, enabled } of permissions) {
-        player.inputPermissions.setPermissionCategory(category, enabled)
-    }
-    player.setDynamicProperty(RECOVERY_PROPERTY, undefined)
-}
-
-/**
- * Releases an encounter on success, cancellation, reset, or error.
- * Invalid/disconnected players retain their recovery record until they return.
- * @param {Encounter} encounter Encounter whose control must be released.
- * @returns {void}
- */
-function finishEncounter(encounter) {
-    encounters.delete(encounter.player.id)
-    reservedCoaches.delete(encounter.lucas.id)
-    try {
-        if (encounter.lucas.isValid) encounter.lucas.clearVelocity()
-    } catch (error) {
-        logEncounterError(error)
-    }
+function finishEncounter() {
+    const encounter = activeEncounter
+    if (!encounter) return
+    activeEncounter = undefined
+    stopEntityOnCleanup(encounter.lucas)
     try {
         if (encounter.player.isValid) restorePlayerControls(encounter.player)
     } catch (error) {
@@ -209,62 +121,51 @@ function finishEncounter(encounter) {
 }
 
 /**
- * Chooses the nearest coach in this player's dimension, without stealing a
- * coach reserved by another encounter. Real entrance assignments can be added
- * to the zone configuration later.
- * @param {import('@minecraft/server').Player} player Player entering a zone.
- * @returns {import('@minecraft/server').Entity | undefined} Available nearest coach.
+ * Starts the introduction once, across all configured zones.
+ * The map guarantees exactly one Lucas; no NPC selection or availability check
+ * is needed. Resolve him on each start because the debug reset recreates NPCs.
+ * @param {import('@minecraft/server').Player} player Map's player entering a zone.
+ * @returns {void}
  */
-function findLucas(player) {
-    const [lucas] = player.dimension.getEntities({
-        type: 'dhsn:ersti_coach',
-        location: player.location,
-        maxDistance: ENCOUNTER.searchDistance,
-        closest: 1,
-    })
-    if (!lucas || reservedCoaches.has(lucas.id)) return undefined
-    return lucas
-}
+function startEncounter(player) {
+    if (activeEncounter) return
+    restorePlayerControls(player)
+    const revision = getIntroRevision()
+    if (player.getDynamicProperty(SEEN_PROPERTY) === revision) return
+    const [lucas] = player.dimension.getEntities({ type: 'dhsn:ersti_coach' })
 
-/**
- * Computes a view rotation from eye position to a target location.
- * @param {import('@minecraft/server').Vector3} eye View origin.
- * @param {import('@minecraft/server').Vector3} target Location to look at.
- * @returns {import('@minecraft/server').Vector2} Pitch and yaw in degrees.
- */
-function getLookRotation(eye, target) {
-    const dx = target.x - eye.x
-    const dz = target.z - eye.z
-    return {
-        x: (-Math.atan2(target.y - eye.y, Math.hypot(dx, dz)) * 180) / Math.PI,
-        y: (Math.atan2(-dx, dz) * 180) / Math.PI,
+    activeEncounter = {
+        player,
+        lucas,
+        position: { ...player.location },
+        cameraPosition: { ...player.getHeadLocation() },
+        cameraInitialized: false,
+        panStarted: false,
+        greetingPhase: 'waiting',
+        greetingTick: -1,
+        jump: { startY: lucas.location.y, leftGround: false },
+        approach: {
+            bestDistance: Infinity,
+            lastProgressTick: system.currentTick,
+        },
+        dimensionId: player.dimension.id,
+        startedTick: system.currentTick,
+        revision,
+    }
+
+    try {
+        freezePlayer(player, ENCOUNTER.timeoutTicks + 20)
+        lucas.clearVelocity()
+    } catch (error) {
+        finishEncounter()
+        throw error
     }
 }
 
 /**
- * Requests one native eased turn from the fixed camera position towards Lucas.
- * Minecraft interpolates the view on the client; no per-tick rotations are sent.
- * @param {Encounter} encounter Encounter whose camera should pan.
- * @returns {void}
- */
-function startCameraPan(encounter) {
-    encounter.player.camera.setCamera('minecraft:free', {
-        location: encounter.cameraPosition,
-        facingLocation: encounter.lucas.getHeadLocation(),
-        easeOptions: {
-            easeTime: ENCOUNTER.panTicks / 20,
-            easeType: EasingType.InOutSine,
-        },
-    })
-    encounter.panStarted = true
-}
-
-/**
- * Runs one hop, waits for landing, turns Lucas, and optionally plays one wave.
- * When enabled, walking waits for the full wave. Blocked jumps time out through the
- * normal encounter cleanup, releasing the player's camera and controls.
- * @param {Encounter} encounter Encounter whose coach should greet the player.
- * @returns {boolean} Whether Lucas has finished greeting and can approach.
+ * Orders Lucas's hop, landing, turn, and optional existing wave.
+ * @param {Encounter} encounter Active sequence.
+ * @returns {boolean} Whether Lucas is ready to approach.
  */
 function updateLucasGreeting(encounter) {
     const { lucas, player } = encounter
@@ -278,25 +179,14 @@ function updateLucasGreeting(encounter) {
             )
         }
         if (!lucas.isOnGround) return false
-        encounter.jumpStartY = lucas.location.y
-        lucas.clearVelocity()
-        lucas.applyImpulse({ x: 0, y: ENCOUNTER.jumpImpulse, z: 0 })
+        encounter.jump = startJump(lucas, ENCOUNTER.jumpImpulse)
         encounter.greetingPhase = 'jumping'
         encounter.greetingTick = now
         return false
     }
 
     if (encounter.greetingPhase === 'jumping') {
-        const height = lucas.location.y - encounter.jumpStartY
-        if (!lucas.isOnGround || height > 0.03) {
-            encounter.jumpLeftGround = true
-        }
-        const landed =
-            encounter.jumpLeftGround &&
-            lucas.isOnGround &&
-            Math.abs(height) < 0.1 &&
-            Math.abs(lucas.getVelocity().y) < 0.05
-        if (!landed) {
+        if (!hasLanded(lucas, encounter.jump)) {
             if (now - encounter.greetingTick > ENCOUNTER.jumpTimeoutTicks) {
                 throw new Error(
                     'Lucas konnte den Begrüßungssprung nicht abschließen.'
@@ -313,7 +203,7 @@ function updateLucasGreeting(encounter) {
         if (now - encounter.greetingTick < ENCOUNTER.turnTicks) return false
         if (!LUCAS_SHOULD_WAVE) {
             encounter.greetingPhase = 'complete'
-            encounter.lastProgressTick = now
+            encounter.approach.lastProgressTick = now
             return true
         }
         lucas.playAnimation('animation.ersti_coachwaving')
@@ -324,136 +214,24 @@ function updateLucasGreeting(encounter) {
     if (encounter.greetingPhase === 'waving') {
         if (now - encounter.greetingTick < ENCOUNTER.waveTicks) return false
         encounter.greetingPhase = 'complete'
-        encounter.lastProgressTick = now
+        encounter.approach.lastProgressTick = now
     }
     return encounter.greetingPhase === 'complete'
 }
 
 /**
- * Locks player controls and starts the camera from the current eye rotation.
- * Progress is only recorded after the NPC dialogue actually opens.
- * @param {import('@minecraft/server').Player} player Player entering any quest zone.
- * @returns {void}
- */
-function startEncounter(player) {
-    if (encounters.has(player.id)) return
-    restorePlayerControls(player)
-    const revision = getIntroRevision()
-    if (player.getDynamicProperty(SEEN_PROPERTY) === revision) return
-    const lucas = findLucas(player)
-    if (!lucas) return
-
-    const position = { ...player.location }
-    // The scripted approach is for a clear route on the same floor.
-    if (Math.abs(lucas.location.y - position.y) > 1.25) return
-    /** @type {Encounter} */
-    const encounter = {
-        player,
-        lucas,
-        position,
-        cameraPosition: { ...player.getHeadLocation() },
-        cameraInitialized: false,
-        panStarted: false,
-        greetingPhase: 'waiting',
-        greetingTick: -1,
-        jumpStartY: lucas.location.y,
-        jumpLeftGround: false,
-        dimensionId: player.dimension.id,
-        startedTick: system.currentTick,
-        lastProgressTick: system.currentTick,
-        bestDistance: Infinity,
-        revision,
-    }
-    encounters.set(player.id, encounter)
-    reservedCoaches.add(lucas.id)
-
-    try {
-        /** @type {SavedPermission[]} */
-        const permissions = []
-        for (const category of INPUT_CATEGORIES) {
-            permissions.push({
-                category,
-                enabled:
-                    player.inputPermissions.isPermissionCategoryEnabled(
-                        category
-                    ),
-            })
-        }
-        // Persist before disabling anything, so reloads can recover the player.
-        player.setDynamicProperty(
-            RECOVERY_PROPERTY,
-            JSON.stringify(permissions)
-        )
-        player.inputPermissions.setPermissionCategory(
-            InputPermissionCategory.Movement,
-            false
-        )
-        player.inputPermissions.setPermissionCategory(
-            InputPermissionCategory.Camera,
-            false
-        )
-        player.clearVelocity()
-        lucas.clearVelocity()
-        hidePlayerForEncounter(player)
-        // Keep the normal view until invisibility has reached the client.
-        player.camera.clear()
-    } catch (error) {
-        finishEncounter(encounter)
-        throw error
-    }
-}
-
-/**
- * Opens the selected coach's existing NPC dialogue for exactly this player.
- * This does not add replacement quest text or complete the welcome dialogue.
- * The native dialogue UI takes over; our cinematic input lock is released.
- * @param {Encounter} encounter Encounter that has reached talking distance.
- * @returns {void}
- */
-function openLucasDialogue(encounter) {
-    const { player, lucas } = encounter
-    const tag = `of_dialogue_${Date.now()}_${dialogueCounter++}`
-    lucas.clearVelocity()
-    lucas.lookAt(player.getHeadLocation())
-    // Synchronize the normal player view once before the cinematic is cleared.
-    player.teleport(player.location, {
-        rotation: getLookRotation(
-            player.getHeadLocation(),
-            lucas.getHeadLocation()
-        ),
-    })
-    lucas.addTag(tag)
-    try {
-        const result = player.runCommand(
-            `dialogue open @e[type=dhsn:ersti_coach,tag=${tag},c=1] @s`
-        )
-        if (result.successCount < 1) {
-            throw new Error('Lucas’ Dialog konnte nicht geöffnet werden.')
-        }
-        player.setDynamicProperty(SEEN_PROPERTY, encounter.revision)
-    } finally {
-        lucas.removeTag(tag)
-    }
-    finishEncounter(encounter)
-}
-
-/**
- * Advances freeze -> camera pan -> hop -> turn -> wave -> approach -> dialogue.
- * Physical impulses preserve collisions and drive the existing walk animation;
- * this is straight-line movement, not native AI pathfinding around obstacles.
- * @param {Encounter} encounter Active encounter to update.
+ * Advances camera setup -> pan -> greeting -> approach -> dialogue.
+ * @param {Encounter} encounter Active sequence to advance.
  * @returns {void}
  */
 function updateEncounter(encounter) {
-    const { player, lucas, position } = encounter
+    const { player, lucas } = encounter
     if (
         !player.isValid ||
-        !lucas.isValid ||
         player.dimension.id !== encounter.dimensionId ||
-        lucas.dimension.id !== encounter.dimensionId ||
         player.getComponent('minecraft:health')?.currentValue === 0
     ) {
-        finishEncounter(encounter)
+        finishEncounter()
         return
     }
     const elapsed = system.currentTick - encounter.startedTick
@@ -461,114 +239,72 @@ function updateEncounter(encounter) {
         throw new Error('Zeitüberschreitung beim Annähern von Lucas.')
     }
 
-    // Also stop drift, gravity, or pushing while the cinematic owns the player.
-    const drift = player.location
-    if (
-        Math.hypot(
-            drift.x - position.x,
-            drift.y - position.y,
-            drift.z - position.z
-        ) > 0.03
-    ) {
-        player.teleport(position)
-    }
-    player.clearVelocity()
-    hidePlayerForEncounter(player)
-    // Let invisibility settle before switching to a camera inside the head.
+    holdPlayerPosition(player, encounter.position, ENCOUNTER.timeoutTicks + 20)
+    // Let invisibility reach the client before putting the camera in the head.
     if (elapsed < 2) return
     if (!encounter.cameraInitialized) {
-        player.camera.setCamera('minecraft:free', {
-            location: encounter.cameraPosition,
-            rotation: player.getRotation(),
-        })
+        initializePlayerCamera(player, encounter.cameraPosition)
         encounter.cameraInitialized = true
     }
-    // Give the free camera two more ticks to initialize before native easing.
+    // Give the free camera two ticks to initialize before native easing.
     if (elapsed < 4) return
-    if (!encounter.panStarted) startCameraPan(encounter)
+    if (!encounter.panStarted) {
+        panCameraTowards(
+            player,
+            encounter.cameraPosition,
+            lucas.getHeadLocation(),
+            ENCOUNTER.panTicks
+        )
+        encounter.panStarted = true
+    }
     if (elapsed < 4 + ENCOUNTER.panTicks) return
     if (!updateLucasGreeting(encounter)) return
-
-    const location = lucas.location
-    const dx = position.x - location.x
-    const dz = position.z - location.z
-    const distance = Math.hypot(dx, dz)
-    if (Math.abs(position.y - location.y) > 1.25) {
-        throw new Error(
-            'Lucas und Spieler sind nicht mehr auf derselben Ebene.'
+    if (
+        !updateApproach(
+            lucas,
+            encounter.position,
+            ENCOUNTER,
+            encounter.approach
         )
-    }
-    if (distance <= ENCOUNTER.stopDistance) {
-        openLucasDialogue(encounter)
+    ) {
         return
     }
-    if (distance < encounter.bestDistance - 0.02) {
-        encounter.bestDistance = distance
-        encounter.lastProgressTick = system.currentTick
-    }
-    if (
-        system.currentTick - encounter.lastProgressTick >
-        ENCOUNTER.stuckTicks
-    ) {
-        throw new Error('Lucas kann den Spieler nicht erreichen.')
-    }
 
-    const speed = Math.min(
-        ENCOUNTER.walkSpeed,
-        distance - ENCOUNTER.stopDistance
-    )
-    const velocity = lucas.getVelocity()
-    // Correct horizontal velocity rather than adding speed on every tick.
-    lucas.applyImpulse({
-        x: (dx / distance) * speed - velocity.x,
-        y: 0,
-        z: (dz / distance) * speed - velocity.z,
-    })
+    openNpcDialogue(player, lucas)
+    player.setDynamicProperty(SEEN_PROPERTY, encounter.revision)
+    finishEncounter()
 }
 
 /**
- * Updates each independent encounter and recovers interrupted input locks.
+ * Updates the one active sequence or recovers the returning map player.
  * @returns {void}
  */
-function tickEncounters() {
-    for (const encounter of encounters.values()) {
+function tickEncounter() {
+    if (activeEncounter) {
         try {
-            updateEncounter(encounter)
+            updateEncounter(activeEncounter)
         } catch (error) {
             logEncounterError(error)
-            finishEncounter(encounter)
+            finishEncounter()
         }
     }
-    // Recovery also covers reconnects, respawns, and transient cleanup failures.
-    if (system.currentTick % 20 !== 0) return
-    for (const player of world.getAllPlayers()) {
-        if (encounters.has(player.id)) continue
-        try {
-            restorePlayerControls(player)
-        } catch (error) {
-            logEncounterError(error)
-        }
+    if (activeEncounter || system.currentTick % 20 !== 0) return
+    const [player] = world.getAllPlayers()
+    if (!player) return
+    try {
+        restorePlayerControls(player)
+    } catch (error) {
+        logEncounterError(error)
     }
 }
 
 /**
- * Releases the reserved coach immediately when its player disconnects.
- * @param {import('@minecraft/server').PlayerLeaveAfterEvent} event Leave event.
- * @returns {void}
- */
-function onPlayerLeave(event) {
-    const encounter = encounters.get(event.playerId)
-    if (encounter) finishEncounter(encounter)
-}
-
-/**
- * Recovers a player's saved permissions before movement resumes after spawning.
+ * Cancels any interrupted sequence and restores the player after spawning.
  * @param {import('@minecraft/server').PlayerSpawnAfterEvent} event Spawn event.
  * @returns {void}
  */
 function onPlayerSpawn(event) {
-    const encounter = encounters.get(event.player.id)
-    if (encounter) finishEncounter(encounter)
+    finishEncounter()
     try {
         restorePlayerControls(event.player)
     } catch (error) {
@@ -577,13 +313,13 @@ function onPlayerSpawn(event) {
 }
 
 /**
- * Registers player entry detection for a configured quest zone.
- * @param {QuestZone} zone Zone whose entry should be detected.
- * @returns {() => void} Stops detecting entry into this zone.
+ * Connects a configured entry zone to the introduction.
+ * @param {QuestZone} zone Zone to monitor.
+ * @returns {() => void} Stops entry detection for this zone.
  */
 function registerQuestZone(zone) {
     /**
-     * Starts the encounter once per player across all entrance zones.
+     * Starts the introduction when the player enters.
      * @param {import('../../events/enter-territory.js').TerritoryEvent} event Entry event.
      * @returns {void}
      */
@@ -607,16 +343,14 @@ function registerQuestZone(zone) {
 }
 
 /**
- * Replaces zones and cancels active cinematics, including during /dhsn:r.
- * Reconfiguring zones after startup restarts this intro test for all players,
- * matching the debug reset's shared NPC recreation. The revision survives
- * reloads, so merely reconnecting/reloading does not repeat a shown intro.
- * An empty array removes all current zones.
- * @param {QuestZone[]} zones Zones to monitor for player entry.
+ * Replaces entry zones and cancels the active sequence, including on /dhsn:r.
+ * Reconfiguration after startup restarts the intro test for the map player.
+ * Reloading alone preserves progress through the existing revision properties.
+ * @param {QuestZone[]} zones Zones to monitor; an empty array removes them all.
  * @returns {void}
  */
 export function setQuestZones(zones) {
-    for (const encounter of encounters.values()) finishEncounter(encounter)
+    finishEncounter()
     for (const cleanup of zoneCleanups) cleanup()
     zoneCleanups = []
     if (zonesConfigured) {
@@ -628,6 +362,6 @@ export function setQuestZones(zones) {
     }
 }
 
-world.afterEvents.playerLeave.subscribe(onPlayerLeave)
+world.afterEvents.playerLeave.subscribe(finishEncounter)
 world.afterEvents.playerSpawn.subscribe(onPlayerSpawn)
-system.runInterval(tickEncounters, 1)
+system.runInterval(tickEncounter, 1)
