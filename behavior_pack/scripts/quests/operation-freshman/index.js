@@ -1,1 +1,1 @@
-import './quest-ref.js'
+import './quest.js'
