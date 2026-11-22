@@ -4,7 +4,7 @@ Source: [behavior_pack/scripts/quests/awakening-quest.js](../../behavior_pack/sc
 
 The first quest of the game. The player wakes up in the start building because of an alarm clock, looks out of the window, which starts a camera ride around the university, searches a chest for a backpack and food, leaves the building, takes the portal to the campus island and talks to the professor in front of the main entrance.
 
-All dialog texts and the music are **placeholders** until the story team delivers the real ones. All chat output is **yellow**.
+All dialog texts are **placeholders** until the story team delivers the real ones. All chat output is **yellow**.
 
 ## Contents
 
@@ -82,7 +82,7 @@ The quest knows nothing about the map. Everything it needs is one `LAYOUT` objec
 4. **World spawn point:** set it at the bed (`/setworldspawn`). The player is not moved when the quest starts on the first join (`AUTO_START`).
 5. **Camera path:** fly the path once with `/scriptevent dhsn:quest_awakening_ride` and adjust `cameraPath` until it looks right. The ride can be replayed as often as needed without changing any progress.
 6. **Delete the test setup:** remove `behavior_pack/scripts/events/test-awakening.js` and its import in `main.js`. The quest itself does not import it. If the file is missing, `startAwakening` and the commands of the quest still work.
-7. **Replace the placeholders:** texts, music, the backpack item, the university name and the hooks for the side quest and the follow-up quest (see [Customization](#customization)).
+7. **Replace the placeholders:** texts, the music if needed, the backpack item, the university name and the hooks for the side quest and the follow-up quest (see [Customization](#customization)).
 
 Then remove any test layout that is still saved in the world with `/scriptevent dhsn:quest_test_awakening_clear`. The test layout takes precedence over `LAYOUT`, so a world in which the test was run **ignores `LAYOUT` until it is cleared**.
 
@@ -133,7 +133,7 @@ At the top of `awakening-quest.js`:
 | `LAYOUT` | The places of the quest, see above. |
 | `AUTO_START` | `true`: a player without progress who joins the world starts the quest automatically (needs a layout). |
 | `ALARM_SOUND` | Sound of the alarm clock. `note.pling` is one of the note block sounds. |
-| `INTRO_MUSIC`, `INTRO_MUSIC_VOLUME` | Music of the camera ride. **Placeholder:** the vanilla music disc `record.otherside`. Empty string for no music. Custom music needs a sound definition in the resource pack. |
+| `INTRO_MUSIC`, `INTRO_MUSIC_VOLUME` | Music of the camera ride. `dhsn.intro_music`, defined in `resource_pack/sounds/sound_definitions.json` (file `resource_pack/sounds/intro_music.ogg`). Empty string for no music. |
 | `BACKPACK_ITEM`, `CHEST_LOOT` | What the chest hands out. **Placeholder:** `minecraft:bundle` as the backpack, 3 bread, 2 apples. If the inventory is full, the rest drops at the player's feet. |
 | `PROFESSOR_TAG` | The tag that marks the professor NPC. |
 | `TEXTS` | All texts, including the university name of the title (`universityName`, `universitySubtitle`; **placeholder**) and the professor's dialog. Chat texts must not contain color codes. |
@@ -181,7 +181,7 @@ All need cheats to be enabled.
 ## Known limitations
 
 - **Tested in game:** the whole quest was played through in the game (test setup, flat world) and works. Not covered by that test: the real map, because the layout there is still missing.
-- **Placeholders:** texts, the music (a vanilla disc), the backpack (a bundle), the professor (an existing NPC entity in the test) and the university name in the title.
+- **Placeholders:** texts, the backpack (a bundle), the professor (an existing NPC entity in the test) and the university name in the title.
 - **Map not ready:** without `LAYOUT` the quest works only in a world where the test setup ran.
 - **Shared questlog:** the same entries for all players, each with the player's name when several are online (see #105).
 - **Professor editing:** an entity with the tag opens the quest dialog instead of the NPC editor, also in creative mode.
@@ -203,3 +203,13 @@ All need cheats to be enabled.
 | Layout | `getLayout()`; `setAwakeningTestLayout(layout)` | The saved test layout (`dhsn:awakening_test_layout`) takes precedence over `LAYOUT`. The listeners are registered again whenever the layout changes. |
 | Questlog | `behavior_pack/scripts/questlog.js` | One entry per player, `order: 1`. |
 | Progress | World dynamic property `dhsn:quest_awakening:<player id>` | JSON, see [Progress storage](#progress-storage). |
+
+## Music
+
+The ride plays `resource_pack/sounds/intro_music.ogg` (about 1:48, longer than the ride; it is stopped with `stopsound` when the ride ends). It is defined as `dhsn.intro_music` in `resource_pack/sounds/sound_definitions.json`. To replace it, convert the new file and keep the name:
+
+```bash
+ffmpeg -i new.mp3 -c:a libvorbis -q:a 4 resource_pack/sounds/intro_music.ogg
+```
+
+Resources are cached: after changing the file, leave the world and open it again (sometimes restart the game). Check the sound with `/playsound dhsn.intro_music @s`. The license of the track has to be clarified before the map is published.

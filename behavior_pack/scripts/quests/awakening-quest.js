@@ -87,9 +87,9 @@ const AUTO_START = true;
 // Sound of the alarm clock: two beeps per second until the player switches it off or looks out of the window.
 const ALARM_SOUND = "note.pling";
 
-// Music of the camera ride. Placeholder: a vanilla music disc until the real music is in the resource pack.
+// Music of the camera ride: resource_pack/sounds/intro_music.ogg, defined in sound_definitions.json.
 // Empty string means no music.
-const INTRO_MUSIC = "record.otherside";
+const INTRO_MUSIC = "dhsn.intro_music";
 const INTRO_MUSIC_VOLUME = 0.8;
 
 // What the chest hands out. Placeholder for the backpack: the bundle, until there is a backpack item of our own.
