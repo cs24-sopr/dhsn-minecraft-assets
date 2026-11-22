@@ -180,7 +180,7 @@ All need cheats to be enabled.
 
 ## Known limitations
 
-- **Not tested in game.** The logic was run against a stand-in for the game API (a script that fakes `@minecraft/server`), which covers the flow of the steps, but not how it looks and sounds. In particular unverified: the camera ride in the game (shots, easing, the free camera needing a moment to take effect), the `hud` and `inputpermission` commands, the sound ids, the bed placed by script (falls back to wool if its block states are not accepted), and whether the NPC placeholder reacts as the librarian does.
+- **Tested in game:** the whole quest was played through in the game (test setup, flat world) and works. Not covered by that test: the real map, because the layout there is still missing.
 - **Placeholders:** texts, the music (a vanilla disc), the backpack (a bundle), the professor (an existing NPC entity in the test) and the university name in the title.
 - **Map not ready:** without `LAYOUT` the quest works only in a world where the test setup ran.
 - **Shared questlog:** the same entries for all players, each with the player's name when several are online (see #105).
