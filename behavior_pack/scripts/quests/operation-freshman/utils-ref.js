@@ -7,14 +7,14 @@ import {
 
 /**
  * Checks a condition once per tick
- * @param {() => boolean} predicate Condition that completes the wait.
  * @param {number} timeoutTicks Server ticks until timeout
  * @param {string} timeoutMessage Error message if the condition is not reached.
+ * @param {(elapsedTicks: number) => boolean} predicate Condition that completes the wait.
  * @returns {Promise<void>} Resolves when the condition is met.
  */
-async function waitUntil(predicate, timeoutTicks, timeoutMessage) {
+async function waitUntil(timeoutTicks, timeoutMessage, predicate) {
     for (let elapsed = 0; elapsed <= timeoutTicks; elapsed++) {
-        if (predicate()) return
+        if (predicate(elapsed)) return
         if (elapsed < timeoutTicks) await system.waitTicks(1)
     }
 
@@ -318,9 +318,9 @@ export async function hop(entity, impulse = 0.42) {
     const timeoutTicks = 40
 
     await waitUntil(
-        entityIsReady,
         timeoutTicks,
-        'Die Entität steht für den Sprung nicht auf dem Boden.'
+        'Die Entität steht für den Sprung nicht auf dem Boden.',
+        entityIsReady
     )
 
     const startY = entity.location.y
@@ -342,10 +342,72 @@ export async function hop(entity, impulse = 0.42) {
     // Let physics advance before checking whether the impulse caused takeoff.
     await system.waitTicks(1)
     await waitUntil(
-        entityHasLanded,
         timeoutTicks,
-        'Die Entität konnte den Sprung nicht abschließen.'
+        'Die Entität konnte den Sprung nicht abschließen.',
+        entityHasLanded
     )
+}
+
+/**
+ * Turns an entity toward the player's head position at the start of the turn.
+ * Eases pitch and yaw over the configured duration, taking the shortest yaw path.
+ * @param {import('@minecraft/server').Player} player Player to face.
+ * @param {import('@minecraft/server').Entity} entity Entity to turn.
+ * @param {number} [turnTicks=8] Positive integer duration of the turn, in server ticks.
+ * @returns {Promise<void>} Resolves after the final rotation has been applied.
+ * @throws {Error} If the duration is invalid, either participant becomes invalid,
+ * or the participants are in different dimensions.
+ */
+export async function turnToPlayer(player, entity, turnTicks = 8) {
+    if (!Number.isInteger(turnTicks) || turnTicks <= 0) {
+        throw new Error(
+            'Die Drehdauer muss eine positive, ganze Tickzahl sein.'
+        )
+    }
+
+    /**
+     * Ensures both participants can still take part in the turn.
+     * @returns {void}
+     * @throws {Error} If a participant is invalid or their dimensions differ.
+     */
+    function checkParticipantsValid() {
+        if (!entity.isValid || !player.isValid) {
+            throw new Error(
+                'Die Entität oder der Spieler ist nicht mehr gültig.'
+            )
+        }
+    }
+
+    checkParticipantsValid()
+    const startRotation = entity.getRotation()
+    const eye = entity.getHeadLocation()
+    const target = player.getHeadLocation()
+    const targetRotation = getLookRotation(eye, target)
+
+    // Keep the existing yaw when the player is directly above or below the entity.
+    if (Math.hypot(target.x - eye.x, target.z - eye.z) < 0.0001) {
+        targetRotation.y = startRotation.y
+    }
+
+    const yawDifference =
+        ((((targetRotation.y - startRotation.y + 180) % 360) + 360) % 360) - 180
+
+    for (let tick = 1; tick <= turnTicks; tick++) {
+        await system.waitTicks(1)
+        checkParticipantsValid()
+
+        const progress = (1 - Math.cos((tick / turnTicks) * Math.PI)) / 2
+        entity.setRotation({
+            x:
+                startRotation.x +
+                (targetRotation.x - startRotation.x) * progress,
+            y:
+                ((((startRotation.y + yawDifference * progress + 180) % 360) +
+                    360) %
+                    360) -
+                180,
+        })
+    }
 }
 
 /**

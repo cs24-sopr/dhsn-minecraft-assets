@@ -35,8 +35,11 @@ async function startQuestSequence(player, lucas) {
             (action) =>
                 Util.lookAtUntil(player, () => lucas.getHeadLocation(), action),
         ],
+
         action: async () => {
             await Util.hop(lucas, 0.35)
+            await Util.turnToPlayer(player, lucas, 20)
+
             await system.waitTicks(40)
         },
     })
