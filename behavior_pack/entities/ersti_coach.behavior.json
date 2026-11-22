@@ -13,9 +13,10 @@
                 "minecraft:behavior.follow_mob": {
                     "priority": 0,
                     "control_flags": ["move", "look", "jump"],
-                    "speed_multiplier": 0.5,
-                    "search_range": 32,
+                    "speed_multiplier": 0.75,
+                    "search_range": 128,
                     "stop_distance": 2,
+                    "preferred_actor_type": "minecraft:player",
                     "filters": {
                         "test": "has_tag",
                         "subject": "other",
@@ -25,6 +26,11 @@
             }
         },
         "components": {
+            "minecraft:follow_range": {
+                "value": 128,
+                "max": 128
+            },
+
             "minecraft:damage_sensor": {
                 "triggers": {
                     "cause": "all",
