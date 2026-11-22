@@ -1,376 +1,165 @@
-import { EasingType, InputPermissionCategory, system } from '@minecraft/server'
+import {
+    EasingType,
+    InputPermissionCategory,
+    system,
+    world,
+} from '@minecraft/server'
 
 /**
- * A pending wait in a linear sequence.
- * @typedef {object} SequenceWait
- * @property {() => void} update Checks completion on the next game tick.
- * @property {() => void} cancel Rejects the wait when the sequence is cancelled.
+ * Outcomes of a walk; invalid arguments and unexpected API failures still reject.
+ * @typedef {'arrived' | 'interrupted' | 'cancelled'} WalkToOutcome
  */
 
-/** Tick-based waits shared by the steps of one cancellable sequence. */
-export class Sequence {
-    constructor() {
-        /** @type {boolean} Whether this sequence has ended or been interrupted. */
-        this.cancelled = false
-        /** @type {SequenceWait | undefined} The step currently waiting. */
-        this.pendingWait = undefined
+/**
+ * Reasons a walk cannot start or continue.
+ * @typedef {'entity_invalid' | 'target_invalid' | 'dimension_mismatch' | 'dimension_changed' | 'timeout'} WalkToCancellationReason
+ */
+
+/** Reports a walk's outcome and lets callers require a particular outcome. */
+export class WalkToResult {
+    /**
+     * Creates a result for a completed, interrupted, or cancelled walk.
+     * @param {WalkToOutcome} outcome Outcome reported by the walk.
+     * @param {WalkToCancellationReason} [reason] Reason for a cancelled outcome.
+     */
+    constructor(outcome, reason) {
+        /** @type {WalkToOutcome} @readonly Outcome of this walk. */
+        this.outcome = outcome
+        /** @type {WalkToCancellationReason | undefined} @readonly Present only for cancellation. */
+        this.reason = outcome === 'cancelled' ? reason : undefined
     }
 
     /**
-     * Prevents a cancelled sequence from starting another action.
+     * Requires this result to have the expected outcome.
+     * @param {WalkToOutcome} expectedOutcome Outcome required by the caller.
+     * @param {string} message Error message if the outcome does not match.
      * @returns {void}
+     * @throws {Error} With the supplied message if the outcome does not match.
      */
-    ensureActive() {
-        if (this.cancelled) throw new Error('Sequenz abgebrochen.')
-    }
-
-    /**
-     * Waits for a condition, checking immediately and once per subsequent tick.
-     * Exceptions from the condition reject the wait and reach the sequence owner.
-     * @param {() => boolean} condition Whether the action has completed.
-     * @param {number} [timeoutTicks] Maximum wait duration, if bounded.
-     * @param {string} [timeoutMessage] Error reported when the wait times out.
-     * @returns {Promise<void>} Resolves on completion; rejects on failure or cancel.
-     */
-    waitUntil(
-        condition,
-        timeoutTicks = Infinity,
-        timeoutMessage = 'Zeitüberschreitung in der Sequenz.'
-    ) {
-        this.ensureActive()
-        const startedTick = system.currentTick
-        /** @type {Promise<void>} */
-        const completion = new Promise((resolve, reject) => {
-            /** @returns {void} Checks this wait and settles its promise. */
-            const update = () => {
-                try {
-                    this.ensureActive()
-                    if (condition()) {
-                        this.pendingWait = undefined
-                        resolve()
-                        return
-                    }
-                    if (system.currentTick - startedTick > timeoutTicks) {
-                        throw new Error(timeoutMessage)
-                    }
-                } catch (error) {
-                    this.pendingWait = undefined
-                    reject(error)
-                }
-            }
-            /** @returns {void} Releases this wait when its owner cancels. */
-            const cancel = () => {
-                this.pendingWait = undefined
-                reject(new Error('Sequenz abgebrochen.'))
-            }
-            this.pendingWait = { update, cancel }
-            update()
-        })
-        return completion
-    }
-
-    /**
-     * Waits a fixed number of game ticks without blocking the game.
-     * @param {number} ticks Duration of the pause.
-     * @returns {Promise<void>} Resolves after the pause; rejects on cancellation.
-     */
-    waitTicks(ticks) {
-        const endTick = system.currentTick + ticks
-        return this.waitUntil(() => system.currentTick >= endTick)
-    }
-
-    /**
-     * Advances the current wait from the owner's tick handler.
-     * @returns {void}
-     */
-    update() {
-        this.pendingWait?.update()
-    }
-
-    /**
-     * Cancels the pending wait and prevents later steps from running.
-     * @returns {void}
-     */
-    cancel() {
-        this.cancelled = true
-        this.pendingWait?.cancel()
+    expect(expectedOutcome, message) {
+        if (this.outcome !== expectedOutcome) throw new Error(message)
     }
 }
 
+/** @type {Map<string, () => void>} Interruption callbacks for the current walk in each dimension. */
+const activeWalks = new Map()
+
 /**
- * Keeps an entity facing a target for a fixed duration.
- * @param {import('@minecraft/server').Entity} entity Entity to turn.
- * @param {() => import('@minecraft/server').Vector3} getTarget Current target position.
- * @param {number} ticks Duration of the look.
- * @param {Sequence} sequence Owner of the cancellable wait.
- * @returns {Promise<void>} Resolves after the duration; rejects on cancellation.
+ * Checks a condition once per tick
+ * @param {number} timeoutTicks Server ticks until timeout
+ * @param {string} timeoutMessage Error message if the condition is not reached.
+ * @param {(elapsedTicks: number) => boolean} predicate Condition that completes the wait.
+ * @returns {Promise<void>} Resolves when the condition is met.
  */
-export function lookAtFor(entity, getTarget, ticks, sequence) {
-    const endTick = system.currentTick + ticks
-    return sequence.waitUntil(() => {
-        entity.lookAt(getTarget())
-        return system.currentTick >= endTick
-    })
+async function waitUntil(timeoutTicks, timeoutMessage, predicate) {
+    for (let elapsed = 0; elapsed <= timeoutTicks; elapsed++) {
+        if (predicate(elapsed)) return
+        if (elapsed < timeoutTicks) await system.waitTicks(1)
+    }
+
+    throw new Error(timeoutMessage)
 }
 
 /**
- * Input permission state saved before a sequence takes control.
- * @typedef {object} SavedPermission
- * @property {import('@minecraft/server').InputPermissionCategory} category Input category.
- * @property {boolean} enabled Previously enabled state.
+ * Waits for an entity to touch the ground, resolving immediately if already grounded.
+ * Checks once per server tick without changing movement or input permissions.
+ * @param {import('@minecraft/server').Entity} entity Entity whose ground contact to await.
+ * @param {number} [timeoutTicks=100] Positive integer limit for waiting, in server ticks.
+ * @returns {Promise<void>} Resolves when the entity is on the ground.
+ * @throws {Error} If the timeout is invalid, the entity becomes invalid, or landing times out.
  */
-
-/**
- * Physical progress of a single jump.
- * @typedef {object} JumpState
- * @property {number} startY Entity's feet height before takeoff.
- * @property {boolean} leftGround Whether takeoff has been observed.
- */
-
-/**
- * Settings for a straight-line approach.
- * @typedef {object} ApproachOptions
- * @property {number} stopDistance Horizontal distance at which to stop.
- * @property {number} walkSpeed Horizontal movement in blocks per tick.
- * @property {number} stuckTicks Maximum time without meaningful progress.
- */
-
-/**
- * Physical progress of an approach.
- * @typedef {object} ApproachState
- * @property {number} bestDistance Closest horizontal distance reached.
- * @property {number} lastProgressTick Last tick with meaningful progress.
- */
-
-// Keep the existing keys and permission record format for reload recovery.
-const RECOVERY_PROPERTY = 'dhsn:operation_freshman_controls'
-const VISIBILITY_PROPERTY = 'dhsn:operation_freshman_invisible'
-
-// Restore parent categories before their individual child categories.
-/** @type {import('@minecraft/server').InputPermissionCategory[]} */
-const INPUT_CATEGORIES = [
-    InputPermissionCategory.Movement,
-    InputPermissionCategory.LateralMovement,
-    InputPermissionCategory.MoveForward,
-    InputPermissionCategory.MoveBackward,
-    InputPermissionCategory.MoveLeft,
-    InputPermissionCategory.MoveRight,
-    InputPermissionCategory.Jump,
-    InputPermissionCategory.Sneak,
-    InputPermissionCategory.Mount,
-    InputPermissionCategory.Dismount,
-    InputPermissionCategory.Camera,
-]
-
-/**
- * Hides the player without particles, leaving existing invisibility untouched.
- * If that effect expires, the sequence can supply its own temporary effect.
- * @param {import('@minecraft/server').Player} player Player to hide.
- * @param {number} durationTicks Duration of invisibility added by this module.
- * @returns {void}
- */
-export function hidePlayerForEncounter(player, durationTicks) {
-    if (player.getEffect('invisibility')) return
-    player.setDynamicProperty(VISIBILITY_PROPERTY, true)
-    const effect = player.addEffect('invisibility', durationTicks, {
-        showParticles: false,
-    })
-    if (!effect) {
+export async function onGround(entity, timeoutTicks = 100) {
+    if (!Number.isInteger(timeoutTicks) || timeoutTicks <= 0) {
         throw new Error(
-            'Spieler konnte für die Kamerafahrt nicht versteckt werden.'
+            'Die Wartezeit muss eine positive, ganze Tickzahl sein.'
         )
     }
+
+    await waitUntil(
+        timeoutTicks,
+        'Die Entität hat den Boden nicht rechtzeitig erreicht.',
+        () => {
+            if (!entity.isValid) {
+                throw new Error(
+                    'Die Entität ist beim Warten auf Bodenkontakt nicht mehr gültig.'
+                )
+            }
+            return entity.isOnGround
+        }
+    )
 }
 
 /**
- * Removes only invisibility added by this module, including after reload.
- * @param {import('@minecraft/server').Player} player Player whose model can return.
- * @returns {void}
+ * A state wrapper that activates before an action and cleans up in finally.
+ * @template T
+ * @typedef {(action: () => T | Promise<T>) => Promise<T>} StateScope
  */
-function restorePlayerVisibility(player) {
-    if (player.getDynamicProperty(VISIBILITY_PROPERTY) !== true) return
-    player.removeEffect('invisibility')
-    player.setDynamicProperty(VISIBILITY_PROPERTY, undefined)
+
+/**
+ * Effects and the action to run inside them.
+ * @template T
+ * @typedef {object} EffectStackOptions
+ * @property {StateScope<T>[]} effects State wrappers, outermost first.
+ * @property {() => T | Promise<T>} action Action performed with all states active.
+ */
+
+/**
+ * Runs an action inside a flat list of state wrappers.
+ * Effects activate in array order and their finally blocks unwind in reverse.
+ * Each wrapper remains responsible for its own setup and cleanup.
+ * @template T
+ * @param {EffectStackOptions<T>} options Effects and the action to wrap.
+ * @returns {Promise<T>} The action's result; propagates wrapper or action failures.
+ */
+export async function withEffectStack({ effects, action }) {
+    /** @type {() => T | Promise<T>} Action wrapped by the states processed so far. */
+    let run = action
+
+    for (let index = effects.length - 1; index >= 0; index--) {
+        const state = effects[index]
+        const next = run
+        /** @returns {Promise<T>} Runs the next action inside this state. */
+        run = () => state(next)
+    }
+
+    return await run()
 }
 
 /**
- * Saves input permissions persistently, freezes input, and hides the player.
+ * Keeps the player frozen until the supplied action finishes.
+ * @template T
  * @param {import('@minecraft/server').Player} player Player to freeze.
- * @param {number} invisibilityTicks Duration of the temporary hiding effect.
- * @returns {void}
+ * @param {() => T | Promise<T>} action Action performed while frozen.
+ * @returns {Promise<T>} The action's result.
  */
-export function freezePlayer(player, invisibilityTicks) {
-    /** @type {SavedPermission[]} */
-    const permissions = []
-    for (const category of INPUT_CATEGORIES) {
-        permissions.push({
-            category,
-            enabled:
-                player.inputPermissions.isPermissionCategoryEnabled(category),
-        })
-    }
-    // Save before changing anything, so partial failures and reloads can recover.
-    player.setDynamicProperty(RECOVERY_PROPERTY, JSON.stringify(permissions))
-    player.inputPermissions.setPermissionCategory(
-        InputPermissionCategory.Movement,
-        false
-    )
-    player.inputPermissions.setPermissionCategory(
-        InputPermissionCategory.Camera,
-        false
-    )
-    player.clearVelocity()
-    hidePlayerForEncounter(player, invisibilityTicks)
-    player.camera.clear()
-}
+export async function freezeUntil(player, action) {
+    try {
+        player.inputPermissions.setPermissionCategory(
+            InputPermissionCategory.Movement,
+            false
+        )
+        player.inputPermissions.setPermissionCategory(
+            InputPermissionCategory.Camera,
+            false
+        )
 
-/**
- * Restores saved controls, camera, and owned invisibility after a sequence.
- * Records remain on failure so recovery can retry after a reload or respawn.
- * @param {import('@minecraft/server').Player} player Player to recover.
- * @returns {void}
- */
-export function restorePlayerControls(player) {
-    const record = player.getDynamicProperty(RECOVERY_PROPERTY)
-    if (typeof record !== 'string') {
-        restorePlayerVisibility(player)
-        return
-    }
-    /** @type {SavedPermission[]} */
-    const permissions = JSON.parse(record)
-    player.camera.clear()
-    restorePlayerVisibility(player)
-    for (const { category, enabled } of permissions) {
-        player.inputPermissions.setPermissionCategory(category, enabled)
-    }
-    player.setDynamicProperty(RECOVERY_PROPERTY, undefined)
-}
+        player.clearVelocity()
 
-/**
- * Prevents drift without sending repeated teleports while the player is still.
- * Also maintains temporary invisibility for an eye-level camera.
- * @param {import('@minecraft/server').Player} player Frozen player.
- * @param {import('@minecraft/server').Vector3} position Position to hold.
- * @param {number} invisibilityTicks Duration of any replacement hiding effect.
- * @returns {void}
- */
-export function holdPlayerPosition(player, position, invisibilityTicks) {
-    const drift = player.location
-    if (
-        Math.hypot(
-            drift.x - position.x,
-            drift.y - position.y,
-            drift.z - position.z
-        ) > 0.03
-    ) {
-        player.teleport(position)
-    }
-    player.clearVelocity()
-    hidePlayerForEncounter(player, invisibilityTicks)
-}
-
-/**
- * Initializes a stationary free camera using the current player view rotation.
- * @param {import('@minecraft/server').Player} player Owner of the camera.
- * @param {import('@minecraft/server').Vector3} position Fixed camera position.
- * @returns {void}
- */
-export function initializePlayerCamera(player, position) {
-    player.camera.setCamera('minecraft:free', {
-        location: position,
-        rotation: player.getRotation(),
-    })
-}
-
-/**
- * Sends one native eased camera turn for the client to interpolate.
- * @param {import('@minecraft/server').Player} player Owner of the camera.
- * @param {import('@minecraft/server').Vector3} position Fixed camera position.
- * @param {import('@minecraft/server').Vector3} target Location to face.
- * @param {number} durationTicks Duration of the camera turn.
- * @returns {void}
- */
-export function panCameraTowards(player, position, target, durationTicks) {
-    player.camera.setCamera('minecraft:free', {
-        location: position,
-        facingLocation: target,
-        easeOptions: {
-            easeTime: durationTicks / 20,
-            easeType: EasingType.InOutSine,
-        },
-    })
-}
-
-/**
- * Starts one physical hop.
- * @param {import('@minecraft/server').Entity} entity Entity to jump.
- * @param {number} impulse Upward impulse.
- * @returns {JumpState} State used to observe takeoff and landing.
- */
-export function startJump(entity, impulse) {
-    const startY = entity.location.y
-    entity.clearVelocity()
-    entity.applyImpulse({ x: 0, y: impulse, z: 0 })
-    return { startY, leftGround: false }
-}
-
-/**
- * Observes actual takeoff and landing without confusing the apex with landing.
- * @param {import('@minecraft/server').Entity} entity Jumping entity.
- * @param {JumpState} jump Mutable physical jump progress.
- * @returns {boolean} Whether the entity has landed after taking off.
- */
-export function hasLanded(entity, jump) {
-    const height = entity.location.y - jump.startY
-    if (!entity.isOnGround || height > 0.03) jump.leftGround = true
-    return (
-        jump.leftGround &&
-        entity.isOnGround &&
-        Math.abs(height) < 0.1 &&
-        Math.abs(entity.getVelocity().y) < 0.05
-    )
-}
-
-/**
- * Advances a physical straight-line approach, preserving block collisions.
- * @param {import('@minecraft/server').Entity} entity Entity to move.
- * @param {import('@minecraft/server').Vector3} target Destination to approach.
- * @param {ApproachOptions} options Speed, stopping distance, and stuck timeout.
- * @param {ApproachState} progress Mutable approach progress.
- * @returns {boolean} Whether the entity is within stopping distance.
- * @throws {Error} If movement changes floors or stops making progress.
- */
-export function updateApproach(entity, target, options, progress) {
-    const location = entity.location
-    const dx = target.x - location.x
-    const dz = target.z - location.z
-    const distance = Math.hypot(dx, dz)
-    if (Math.abs(target.y - location.y) > 1.25) {
-        throw new Error(
-            'Lucas und Spieler sind nicht mehr auf derselben Ebene.'
+        return await action()
+    } finally {
+        player.inputPermissions.setPermissionCategory(
+            InputPermissionCategory.Movement,
+            true
+        )
+        player.inputPermissions.setPermissionCategory(
+            InputPermissionCategory.Camera,
+            true
         )
     }
-    if (distance <= options.stopDistance) return true
-    if (distance < progress.bestDistance - 0.02) {
-        progress.bestDistance = distance
-        progress.lastProgressTick = system.currentTick
-    }
-    if (system.currentTick - progress.lastProgressTick > options.stuckTicks) {
-        throw new Error('Lucas kann den Spieler nicht erreichen.')
-    }
-
-    const speed = Math.min(options.walkSpeed, distance - options.stopDistance)
-    const velocity = entity.getVelocity()
-    entity.applyImpulse({
-        x: (dx / distance) * speed - velocity.x,
-        y: 0,
-        z: (dz / distance) * speed - velocity.z,
-    })
-    return false
 }
 
 /**
- * Computes pitch and yaw from eye position to a target location.
+ * Computes the view rotation from an eye position to a target.
  * @param {import('@minecraft/server').Vector3} eye View origin.
  * @param {import('@minecraft/server').Vector3} target Location to face.
  * @returns {import('@minecraft/server').Vector2} Pitch and yaw in degrees.
@@ -385,36 +174,525 @@ function getLookRotation(eye, target) {
 }
 
 /**
- * Opens the map's single NPC of this type for the map's player.
- * Synchronizes the normal player view once before the free camera is cleared.
- * @param {import('@minecraft/server').Player} player Player receiving the dialogue.
- * @param {import('@minecraft/server').Entity} npc Guaranteed map NPC.
- * @returns {void}
+ * Pans from the player's current view to a target, then tracks it during the action.
+ * Applies a configured camera-position offset relative to the player's head.
+ * The action starts after the initial one-second pan has finished.
+ * Tracking updates use short linear easing and settle before normal view resumes.
+ * Synchronizes the player with the last camera direction before restoring normal view.
+ * A tracking failure does not cancel the supplied action.
+ * @template T
+ * @param {import('@minecraft/server').Player} player Player whose view is controlled.
+ * @param {() => import('@minecraft/server').Vector3} getTargetPosition Current target position.
+ * @param {() => T | Promise<T>} action Action performed while tracking the target.
+ * @returns {Promise<T>} The action's result; rejects if the action or tracking fails.
  */
-export function openNpcDialogue(player, npc) {
-    npc.clearVelocity()
-    npc.lookAt(player.getHeadLocation())
-    player.teleport(player.location, {
-        rotation: getLookRotation(
-            player.getHeadLocation(),
-            npc.getHeadLocation()
-        ),
-    })
-    const result = player.runCommand(`dialogue open @e[type=${npc.typeId}] @s`)
-    if (result.successCount < 1) {
-        throw new Error('NPC-Dialog konnte nicht geöffnet werden.')
+export async function lookAtUntil(player, getTargetPosition, action) {
+    /** @type {number | undefined} Handle for the camera tracking interval. */
+    let trackingRun
+    /** @type {import('@minecraft/server').Vector2 | undefined} Destination of the last camera turn. */
+    let lastCameraRotation
+    /** @type {boolean} Whether a tracking transition needs time to finish during cleanup. */
+    let trackingEasePending = false
+    /** @type {number} Duration of the initial eased turn, matching the old sequence. */
+    const panTicks = 20
+    /** @type {number} Duration of each linear tracking transition, in ticks. */
+    const trackingEaseTicks = 2
+
+    /** @type {import('@minecraft/server').Vector3} Camera offset from the player's head, in blocks. */
+    const cameraOffset = { x: 0, y: 0.1, z: 0 }
+
+    /**
+     * Gets the camera origin with the configured position offset applied.
+     * @returns {import('@minecraft/server').Vector3} Offset camera position.
+     */
+    function getCameraPosition() {
+        const head = player.getHeadLocation()
+        return {
+            x: head.x + cameraOffset.x,
+            y: head.y + cameraOffset.y,
+            z: head.z + cameraOffset.z,
+        }
+    }
+
+    /**
+     * Updates the camera from the player's current eye position to the target.
+     * @returns {void}
+     */
+    function updateView() {
+        const eye = getCameraPosition()
+        const target = getTargetPosition()
+        player.camera.setCamera('minecraft:free', {
+            location: eye,
+            facingLocation: target,
+            easeOptions: {
+                easeTime: trackingEaseTicks / 20,
+                easeType: EasingType.Linear,
+            },
+        })
+        lastCameraRotation = getLookRotation(eye, target)
+        trackingEasePending = true
+    }
+
+    try {
+        // Let the outer invisibility effect reach the client before entering the head.
+        await system.waitTicks(2)
+        const cameraPosition = getCameraPosition()
+        player.camera.setCamera('minecraft:free', {
+            location: cameraPosition,
+            rotation: player.getRotation(),
+        })
+
+        // Initialize the free camera before sending the eased turn.
+        await system.waitTicks(2)
+        const panTarget = { ...getTargetPosition() }
+        player.camera.setCamera('minecraft:free', {
+            location: cameraPosition,
+            facingLocation: panTarget,
+            easeOptions: {
+                easeTime: panTicks / 20,
+                easeType: EasingType.InOutSine,
+            },
+        })
+        await system.waitTicks(panTicks)
+        lastCameraRotation = getLookRotation(cameraPosition, panTarget)
+
+        // Per-tick updates start after the pan so they cannot overwrite its easing.
+        /** @type {Promise<never>} Rejects if a later camera update fails. */
+        const trackingFailure = new Promise((_resolve, reject) => {
+            /** @returns {void} Tracks the target or reports an update failure. */
+            function trackTarget() {
+                if (trackingRun === undefined) return
+                try {
+                    updateView()
+                } catch (error) {
+                    reject(error)
+                }
+            }
+            trackingRun = system.runInterval(trackTarget, 1)
+        })
+
+        return await Promise.race([action(), trackingFailure])
+    } finally {
+        if (trackingRun !== undefined) system.clearRun(trackingRun)
+        trackingRun = undefined
+        try {
+            // Stop sending updates, then let the final tracking turn reach its destination.
+            if (trackingEasePending && player.isValid) {
+                await system.waitTicks(trackingEaseTicks)
+            }
+            if (player.isValid && lastCameraRotation) {
+                player.teleport(player.location, {
+                    rotation: lastCameraRotation,
+                })
+            }
+        } finally {
+            // Let the player rotation reach the client before restoring normal view.
+            await system.waitTicks(1)
+            if (player.isValid) player.camera.clear()
+        }
     }
 }
 
 /**
- * Stops remaining motion during cleanup, even if a debug reset removed the NPC.
- * @param {import('@minecraft/server').Entity} entity Sequence's entity reference.
- * @returns {void}
+ * Keeps the player invisible until the supplied action finishes.
+ * Leaves existing invisibility untouched until it expires and removes only
+ * invisibility added by this wrapper. Short effects are refreshed internally
+ * so they expire naturally if a script reload interrupts cleanup.
+ * A refresh failure does not cancel the supplied action.
+ * @template T
+ * @param {import('@minecraft/server').Player} player Player to hide.
+ * @param {() => T | Promise<T>} action Action performed while invisible.
+ * @returns {Promise<T>} The action's result; rejects if the action or refresh fails.
  */
-export function stopEntityOnCleanup(entity) {
-    try {
-        entity.clearVelocity()
-    } catch {
-        // /dhsn:r recreates NPCs before it cancels the old sequence.
+export async function invisibleUntil(player, action) {
+    /** @type {number | undefined} Handle for the invisibility refresh interval. */
+    let refreshRun
+    /** @type {boolean} Whether this wrapper has applied its own invisibility. */
+    let addedInvisibility = false
+
+    /**
+     * Applies or renews invisibility without replacing a pre-existing effect.
+     * @returns {void}
+     */
+    function maintainInvisibility() {
+        const effect = player.getEffect('invisibility')
+        if (effect && (!addedInvisibility || effect.duration > 20)) return
+        player.addEffect('invisibility', 40, { showParticles: false })
+        addedInvisibility = true
     }
+
+    try {
+        maintainInvisibility()
+
+        /** @type {Promise<never>} Rejects if a later invisibility refresh fails. */
+        const refreshFailure = new Promise((_resolve, reject) => {
+            /** @returns {void} Maintains invisibility or reports a refresh failure. */
+            function refreshInvisibility() {
+                try {
+                    maintainInvisibility()
+                } catch (error) {
+                    reject(error)
+                }
+            }
+            refreshRun = system.runInterval(refreshInvisibility, 1)
+        })
+
+        return await Promise.race([action(), refreshFailure])
+    } finally {
+        if (refreshRun !== undefined) system.clearRun(refreshRun)
+        if (addedInvisibility && player.isValid) {
+            player.removeEffect('invisibility')
+        }
+    }
+}
+
+/**
+ * Makes an entity hop once and waits for takeoff followed by an actual landing.
+ * Requires an entity with gravity and a solid surface to land on.
+ * @param {import('@minecraft/server').Entity} entity Entity to make hop.
+ * @param {number} [impulse=0.42] Positive upward impulse applied after clearing velocity.
+ * @returns {Promise<void>} Resolves after landing with near-zero vertical velocity.
+ * @throws {Error} If the impulse is invalid, the entity becomes invalid, or a wait times out.
+ */
+export async function hop(entity, impulse = 0.42) {
+    if (!Number.isFinite(impulse) || impulse <= 0) {
+        throw new Error(
+            'Der Sprungimpuls muss eine positive, endliche Zahl sein.'
+        )
+    }
+
+    /**
+     * Ensures the entity can still participate in the hop.
+     * @returns {void}
+     * @throws {Error} If the entity is no longer valid.
+     */
+    function checkEntityValid() {
+        if (!entity.isValid) {
+            throw new Error('Die Entität ist für den Sprung nicht mehr gültig.')
+        }
+    }
+
+    /**
+     * Checks whether the entity is ready to start the hop.
+     * @returns {boolean} Whether the entity is on the ground.
+     * @throws {Error} If the entity is no longer valid.
+     */
+    function entityIsReady() {
+        checkEntityValid()
+        return entity.isOnGround
+    }
+
+    /** @type {number} Maximum ticks for initial ground contact and, separately, the hop. */
+    const timeoutTicks = 40
+
+    await waitUntil(
+        timeoutTicks,
+        'Die Entität steht für den Sprung nicht auf dem Boden.',
+        entityIsReady
+    )
+
+    const startY = entity.location.y
+    /** @type {boolean} Whether takeoff has been observed since applying the impulse. */
+    let leftGround = false
+
+    entity.clearVelocity()
+    entity.applyImpulse({ x: 0, y: impulse, z: 0 })
+
+    /** @returns {boolean} Whether the entity has landed after an observed takeoff. */
+    function entityHasLanded() {
+        checkEntityValid()
+
+        const onGround = entity.isOnGround
+        if (!onGround || entity.location.y - startY > 0.03) leftGround = true
+        return leftGround && onGround && Math.abs(entity.getVelocity().y) < 0.05
+    }
+
+    // Let physics advance before checking whether the impulse caused takeoff.
+    await system.waitTicks(1)
+    await waitUntil(
+        timeoutTicks,
+        'Die Entität konnte den Sprung nicht abschließen.',
+        entityHasLanded
+    )
+}
+
+/**
+ * Turns an entity toward the player's head position at the start of the turn.
+ * Eases pitch and yaw over the configured duration, taking the shortest yaw path.
+ * @param {import('@minecraft/server').Player} player Player to face.
+ * @param {import('@minecraft/server').Entity} entity Entity to turn.
+ * @param {number} [turnTicks=8] Positive integer duration of the turn, in server ticks.
+ * @returns {Promise<void>} Resolves after the final rotation has been applied.
+ * @throws {Error} If the duration is invalid, either participant becomes invalid,
+ * or the participants are in different dimensions.
+ */
+export async function turnToPlayer(player, entity, turnTicks = 8) {
+    if (!Number.isInteger(turnTicks) || turnTicks <= 0) {
+        throw new Error(
+            'Die Drehdauer muss eine positive, ganze Tickzahl sein.'
+        )
+    }
+
+    /**
+     * Ensures both participants can still take part in the turn.
+     * @returns {void}
+     * @throws {Error} If a participant is invalid or their dimensions differ.
+     */
+    function checkParticipantsValid() {
+        if (!entity.isValid || !player.isValid) {
+            throw new Error(
+                'Die Entität oder der Spieler ist nicht mehr gültig.'
+            )
+        }
+        if (player.dimension.id !== entity.dimension.id) {
+            throw new Error(
+                'Die Entität oder der Spieler sind nicht in derselben Dimension.'
+            )
+        }
+    }
+
+    checkParticipantsValid()
+    const startRotation = entity.getRotation()
+    const eye = entity.getHeadLocation()
+    const target = player.getHeadLocation()
+    const targetRotation = getLookRotation(eye, target)
+
+    // Keep the existing yaw when the player is directly above or below the entity.
+    if (Math.hypot(target.x - eye.x, target.z - eye.z) < 0.0001) {
+        targetRotation.y = startRotation.y
+    }
+
+    const yawDifference =
+        ((((targetRotation.y - startRotation.y + 180) % 360) + 360) % 360) - 180
+
+    for (let tick = 1; tick <= turnTicks; tick++) {
+        await system.waitTicks(1)
+        checkParticipantsValid()
+
+        const progress = (1 - Math.cos((tick / turnTicks) * Math.PI)) / 2
+        entity.setRotation({
+            x:
+                startRotation.x +
+                (targetRotation.x - startRotation.x) * progress,
+            y:
+                ((((startRotation.y + yawDifference * progress + 180) % 360) +
+                    360) %
+                    360) -
+                180,
+        })
+    }
+}
+
+/**
+ * Uses the entity's native follow behavior to walk toward a player or marker entity.
+ * Requires the follow events and target filter configured on dhsn:ersti_coach.
+ * A new walk interrupts the previous walk in the same dimension, since the target
+ * filter uses a shared tag. The timeout starts after the previous follow behavior
+ * has stopped. Arrival allows a small tolerance
+ * around the two-block stop distance configured in the entity JSON.
+ * Clears the shared target tag from loaded entities in the dimension before
+ * assigning it to the new target, including tags left by a previous script load.
+ * Stops following, clears remaining velocity, and removes its own tag in finally.
+ * @todo Replace the total-duration timeout with an inactivity timeout: cancel as
+ * stuck only after no meaningful position change for a configured number of ticks.
+ * Measure displacement from a reference position so slow movement accumulates,
+ * ignore small physics jitter, and allow detours that increase distance to the target.
+ * @todo Investigate the observed roughly two-second pause before movement starts,
+ * even after the hop and turn have finished. The native startup cause is unconfirmed.
+ * Compare enabling the follow behavior beforehand and assigning the target tag only
+ * when walking should begin, to distinguish behavior activation from target acquisition
+ * or navigation startup. If keeping the behavior enabled, ensure cleanup still stops
+ * movement reliably when the target tag is removed.
+ * @param {import('@minecraft/server').Entity} entity Entity that should walk.
+ * @param {import('@minecraft/server').Entity} target Player or marker to approach.
+ * @param {number} arrivalDistance Positive number of distance for for measure of arrival
+ * @param {number} [timeoutTicks=400] Positive integer limit for the active walk.
+ * @returns {Promise<WalkToResult>} Arrival, interruption, or cancellation result, after cleanup.
+ * @throws {Error} If the timeout is invalid, the entity targets itself, or an API operation fails.
+ */
+export async function walkTo(
+    entity,
+    target,
+    arrivalDistance,
+    timeoutTicks = 400
+) {
+    if (!Number.isInteger(timeoutTicks) || timeoutTicks <= 0) {
+        throw new Error(
+            'Die Wartezeit muss eine positive, ganze Tickzahl sein.'
+        )
+    }
+
+    if (entity.id === target.id) {
+        throw new Error(
+            'Die Entität kann sich nicht selbst als Laufziel haben.'
+        )
+    }
+
+    /** @type {boolean} Whether a newer walk has replaced this call. */
+    let interrupted = false
+
+    /**
+     * Reports replacement or world state that prevents starting or continuing.
+     * @param {string} [startDimensionId] Original dimension, once the walk has started.
+     * @returns {WalkToResult | undefined} A terminal result, or undefined while viable.
+     */
+    function getStoppedResult(startDimensionId) {
+        if (interrupted) return new WalkToResult('interrupted')
+        if (!entity.isValid) {
+            return new WalkToResult('cancelled', 'entity_invalid')
+        }
+        if (!target.isValid) {
+            return new WalkToResult('cancelled', 'target_invalid')
+        }
+        const entityDimensionId = entity.dimension.id
+        if (entityDimensionId !== target.dimension.id) {
+            return new WalkToResult('cancelled', 'dimension_mismatch')
+        }
+        if (
+            startDimensionId !== undefined &&
+            entityDimensionId !== startDimensionId
+        ) {
+            return new WalkToResult('cancelled', 'dimension_changed')
+        }
+    }
+
+    // Use the same world-state checks before setup and during the active walk.
+    const startResult = getStoppedResult()
+    if (startResult) return startResult
+    const dimension = entity.dimension
+
+    /** @type {string} Must match the follow_mob filter in ersti_coach.behavior.json. */
+    const targetTag = 'dhsn:lucas_follow_target'
+
+    /** @type {boolean} Whether this call added the target tag. */
+    let addedTargetTag = false
+
+    /** @type {boolean} Whether starting native following was attempted. */
+    let followingStarted = false
+
+    /**
+     * Stops this call's follow behavior and removes its own tag, at most once.
+     * @returns {void}
+     */
+    function cleanup() {
+        try {
+            if (followingStarted) {
+                followingStarted = false
+                if (entity.isValid) {
+                    try {
+                        entity.triggerEvent('dhsn:stop_following')
+                    } finally {
+                        if (entity.isValid) entity.clearVelocity()
+                    }
+                }
+            }
+        } finally {
+            if (addedTargetTag) {
+                addedTargetTag = false
+                if (target.isValid) target.removeTag(targetTag)
+            }
+        }
+    }
+
+    /**
+     * Interrupts this walk and immediately releases its follow behavior and target.
+     * @returns {void}
+     */
+    function interruptWalk() {
+        interrupted = true
+        cleanup()
+    }
+
+    /**
+     * Checks arrival without treating a target on another floor as reached.
+     * Called only after checking that participants remain valid in this dimension.
+     * @returns {boolean} Whether the entity is grounded and within talking distance.
+     */
+    function hasArrived() {
+        const location = entity.location
+        const destination = target.location
+        return (
+            entity.isOnGround &&
+            Math.abs(destination.y - location.y) <= 1 &&
+            Math.hypot(
+                destination.x - location.x,
+                destination.y - location.y,
+                destination.z - location.z
+            ) <= arrivalDistance
+        )
+    }
+
+    /**
+     * Checks arrival, interruption, cancellation, or expiration of the time limit.
+     * Finishes at the limit so a timeout becomes a result instead of an exception.
+     * @param {number} elapsedTicks Server ticks spent waiting for this walk.
+     * @returns {boolean} Whether waiting for this walk should finish.
+     */
+    function hasFinished(elapsedTicks) {
+        return (
+            getStoppedResult(dimension.id) !== undefined ||
+            hasArrived() ||
+            elapsedTicks >= timeoutTicks
+        )
+    }
+
+    const interruptPreviousWalk = activeWalks.get(dimension.id)
+    interruptPreviousWalk?.()
+    activeWalks.set(dimension.id, interruptWalk)
+
+    try {
+        // Allow the previous stop event to apply before starting a new follow goal.
+        if (interruptPreviousWalk) await system.waitTicks(1)
+        const initialResult = getStoppedResult(dimension.id)
+        if (initialResult) return initialResult
+        const arrived = hasArrived()
+
+        for (const candidate of dimension.getEntities({ tags: [targetTag] })) {
+            candidate.removeTag(targetTag)
+        }
+        if (arrived) return new WalkToResult('arrived')
+
+        addedTargetTag = target.addTag(targetTag)
+        entity.clearVelocity()
+        followingStarted = true
+        entity.triggerEvent('dhsn:start_following')
+
+        await waitUntil(
+            timeoutTicks,
+            'Die Entität konnte das Laufziel nicht rechtzeitig erreichen.',
+            hasFinished
+        )
+        const stoppedResult = getStoppedResult(dimension.id)
+        if (stoppedResult) return stoppedResult
+        if (hasArrived()) return new WalkToResult('arrived')
+        return new WalkToResult('cancelled', 'timeout')
+    } finally {
+        // A replaced call must never stop or untag its successor's walk.
+        if (activeWalks.get(dimension.id) === interruptWalk) {
+            try {
+                cleanup()
+                await system.waitTicks(1)
+            } finally {
+                if (activeWalks.get(dimension.id) === interruptWalk) {
+                    activeWalks.delete(dimension.id)
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Try and fetch the entity of lucas
+ * @returns {import('@minecraft/server').Entity} The entity of lucas
+ */
+export function getLucas() {
+    const entities = world.getDimension('overworld').getEntities({
+        type: 'dhsn:ersti_coach',
+    })
+
+    if (entities.length !== 1) {
+        throw Error('TODO') // TODO
+    }
+
+    return entities[0]
 }

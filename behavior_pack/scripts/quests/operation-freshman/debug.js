@@ -1,5 +1,43 @@
-import { BlockVolume, system, world } from '@minecraft/server'
-import { setQuestZones } from './quest.js'
+import { BlockVolume, InputPermissionCategory, world } from '@minecraft/server'
+
+/**
+ * Player placement used when restarting the temporary development sequence.
+ * @typedef {object} PlayerDefaults
+ * @property {string} dimensionId Dimension containing the starting position.
+ * @property {import('@minecraft/server').Vector3} location Starting position.
+ * @property {import('@minecraft/server').Vector2} rotation Starting pitch and yaw.
+ */
+
+// Temporary development coordinates, matching the active reset in command.js.
+/** @type {PlayerDefaults} */
+const PLAYER_DEFAULTS = {
+    dimensionId: 'minecraft:overworld',
+    location: { x: 0.5, y: -60, z: 0.5 },
+    rotation: { x: 0, y: 270 },
+}
+
+/**
+ * Restores the player's debug position, rotation, normal camera, and input.
+ * @param {import('@minecraft/server').Player} player Player to reset.
+ * @returns {void}
+ * @throws {Error} If a player or destination operation fails.
+ */
+export function resetPlayer(player) {
+    player.camera.clear()
+    player.inputPermissions.setPermissionCategory(
+        InputPermissionCategory.Movement,
+        true
+    )
+    player.inputPermissions.setPermissionCategory(
+        InputPermissionCategory.Camera,
+        true
+    )
+    player.teleport(PLAYER_DEFAULTS.location, {
+        dimension: world.getDimension(PLAYER_DEFAULTS.dimensionId),
+        rotation: PLAYER_DEFAULTS.rotation,
+    })
+    player.clearVelocity()
+}
 
 /**
  * Fixed search bounds for the temporary gold-block debug markers.
@@ -18,16 +56,13 @@ const TERRITORY_SCAN = {
     to: { x: 32, y: -58, z: 32 },
 }
 
-/** @type {boolean} Whether this script instance has already started its scan. */
-let territoriesScanned = false
-
 /**
  * Builds a zone array from the currently loaded gold blocks in the debug area.
  * Each marker creates a 1 x 1 x 3 zone directly above it, excluding the block.
  * @returns {import('./quest.js').QuestZone[]} Zones to pass to the quest logic.
  * @throws {Error} If the block query fails.
  */
-function createDebugZones() {
+export function findTriggerZones() {
     const dimension = world.getDimension(TERRITORY_SCAN.dimensionId)
     const markers = dimension.getBlocks(
         new BlockVolume(TERRITORY_SCAN.from, TERRITORY_SCAN.to),
@@ -47,50 +82,66 @@ function createDebugZones() {
 }
 
 /**
- * Rebuilds the debug zone array and gives it to the quest's entry detection.
- * Unloaded chunks are skipped, so stand near the markers when resetting.
- * @returns {void}
- * @throws {Error} If scanning or territory registration fails.
+ * Starting placement for an NPC in the temporary development area.
+ * @typedef {object} NpcPlacement
+ * @property {string} typeId Existing behavior-pack entity identifier.
+ * @property {string} nameTag German display name.
+ * @property {string} dimensionId Dimension containing the NPC.
+ * @property {import('@minecraft/server').Vector3} location Starting position.
+ * @property {import('@minecraft/server').Vector2} rotation Starting pitch and yaw.
  */
-export function rescanGoldTerritories() {
-    territoriesScanned = true
-    world.afterEvents.playerSpawn.unsubscribe(scanGoldTerritories)
-    world.afterEvents.worldLoad.unsubscribe(initializeWhenPlayersAvailable)
 
-    // Build the array first so a failed scan leaves the previous zones active.
-    const zones = createDebugZones()
-    setQuestZones(zones)
-    console.warn(
-        `[Operation Erstsemester] ${zones.length} Goldblock-Debug-Bereiche registriert (nur geladene Chunks).`
-    )
-}
+// Temporary development coordinates, matching the reset command in command.js.
+/** @type {NpcPlacement[]} */
+const NPC_PLACEMENTS = [
+    {
+        typeId: 'dhsn:ersti_coach',
+        nameTag: 'Lucas',
+        dimensionId: 'minecraft:overworld',
+        location: { x: 20, y: -60, z: 0.5 },
+        rotation: { x: 0, y: 0 },
+    },
+    {
+        typeId: 'dhsn:studienorganisation',
+        nameTag: 'Frau Sommer',
+        dimensionId: 'minecraft:overworld',
+        location: { x: 22, y: -60, z: 0.5 },
+        rotation: { x: 0, y: 0 },
+    },
+]
 
 /**
- * Finds gold markers automatically once per script load.
- * Later block edits require /dhsn:r or /reload to refresh the territories.
+ * Recreates the loaded debug NPCs at their default positions and rotations.
+ * Checks destination chunks before removing any existing NPCs.
  * @returns {void}
+ * @throws {Error} If a destination is unloaded or an NPC operation fails.
  */
-function scanGoldTerritories() {
-    if (territoriesScanned) return
-    try {
-        rescanGoldTerritories()
-    } catch (error) {
-        const message = error instanceof Error ? error.message : String(error)
-        console.error(
-            `[Operation Erstsemester] Goldblock-Suche fehlgeschlagen: ${message}`
-        )
+export function resetNpcs() {
+    for (const placement of NPC_PLACEMENTS) {
+        const dimension = world.getDimension(placement.dimensionId)
+        if (!dimension.getBlock(placement.location)) {
+            throw new Error(
+                `Debug-Position für ${placement.nameTag} ist noch nicht geladen.`
+            )
+        }
+    }
+
+    const dimensions = new Set(
+        NPC_PLACEMENTS.map((placement) => placement.dimensionId)
+    )
+    const types = new Set(NPC_PLACEMENTS.map((placement) => placement.typeId))
+    for (const dimensionId of dimensions) {
+        const dimension = world.getDimension(dimensionId)
+        for (const type of types) {
+            for (const npc of dimension.getEntities({ type })) npc.remove()
+        }
+    }
+
+    for (const placement of NPC_PLACEMENTS) {
+        const npc = world
+            .getDimension(placement.dimensionId)
+            .spawnEntity(placement.typeId, placement.location)
+        npc.nameTag = placement.nameTag
+        npc.setRotation(placement.rotation)
     }
 }
-
-/**
- * Scans with existing players on reload, or waits for the first player spawn.
- * @returns {void}
- */
-function initializeWhenPlayersAvailable() {
-    if (world.getAllPlayers().length > 0) scanGoldTerritories()
-}
-
-world.afterEvents.worldLoad.subscribe(initializeWhenPlayersAvailable)
-world.afterEvents.playerSpawn.subscribe(scanGoldTerritories)
-// Also cover script reloads where players are already present.
-system.run(initializeWhenPlayersAvailable)
