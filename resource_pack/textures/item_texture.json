@@ -1,10 +1,13 @@
 {
     "texture_data": {
-        "certificate": {
-            "textures": "textures/items/certificate.png"
+        "studierendenausweis": {
+            "textures": "textures/items/studierendenausweis.png"
         },
-        "volleyball": {
-            "textures": "textures/items/volleyball.png"
+        "builder_helmet": {
+            "textures": "textures/items/builder_helmet.png"
+        },
+        "doctor_hat": {
+            "textures": "textures/items/doctor_hat.png"
         },
         "stwp_book": {
             "textures": "textures/items/stwp_book.png"
@@ -20,6 +23,12 @@
         },
         "cs_book": {
             "textures": "textures/items/cs_book.png"
+        },
+        "certificate": {
+            "textures": "textures/items/certificate.png"
+        },
+        "volleyball": {
+            "textures": "textures/items/volleyball.png"
         }
     }
 }
