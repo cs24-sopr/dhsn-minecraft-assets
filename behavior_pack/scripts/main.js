@@ -7,6 +7,8 @@ import "./volleyball.js";
 import "./questlog.js";
 import "./custom_bookshelf.js";
 import "./quests/library-quest.js";
+import "./quests/awakening-quest.js";
 import "./events/test.js";
 import "./events/test-library.js";
+import "./events/test-awakening.js"; // test setup for the awakening quest, NOT part of the real map
 import "./ersti_coach_TEST.js"; //can be deleted after testing
