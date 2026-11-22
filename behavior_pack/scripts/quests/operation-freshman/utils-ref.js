@@ -109,6 +109,7 @@ function getLookRotation(eye, target) {
  * Pans from the player's current view to a target, then tracks it during the action.
  * Applies a configured camera-position offset relative to the player's head.
  * The action starts after the initial one-second pan has finished.
+ * Tracking updates use short linear easing and settle before normal view resumes.
  * Synchronizes the player with the last camera direction before restoring normal view.
  * A tracking failure does not cancel the supplied action.
  * @template T
@@ -120,10 +121,14 @@ function getLookRotation(eye, target) {
 export async function lookAtUntil(player, getTargetPosition, action) {
     /** @type {number | undefined} Handle for the camera tracking interval. */
     let trackingRun
-    /** @type {import('@minecraft/server').Vector2 | undefined} Last completed camera direction. */
+    /** @type {import('@minecraft/server').Vector2 | undefined} Destination of the last camera turn. */
     let lastCameraRotation
+    /** @type {boolean} Whether a tracking transition needs time to finish during cleanup. */
+    let trackingEasePending = false
     /** @type {number} Duration of the initial eased turn, matching the old sequence. */
     const panTicks = 20
+    /** @type {number} Duration of each linear tracking transition, in ticks. */
+    const trackingEaseTicks = 2
 
     /** @type {import('@minecraft/server').Vector3} Camera offset from the player's head, in blocks. */
     const cameraOffset = { x: 0, y: 0.1, z: 0 }
@@ -151,8 +156,13 @@ export async function lookAtUntil(player, getTargetPosition, action) {
         player.camera.setCamera('minecraft:free', {
             location: eye,
             facingLocation: target,
+            easeOptions: {
+                easeTime: trackingEaseTicks / 20,
+                easeType: EasingType.Linear,
+            },
         })
         lastCameraRotation = getLookRotation(eye, target)
+        trackingEasePending = true
     }
 
     try {
@@ -198,6 +208,10 @@ export async function lookAtUntil(player, getTargetPosition, action) {
         if (trackingRun !== undefined) system.clearRun(trackingRun)
         trackingRun = undefined
         try {
+            // Stop sending updates, then let the final tracking turn reach its destination.
+            if (trackingEasePending && player.isValid) {
+                await system.waitTicks(trackingEaseTicks)
+            }
             if (player.isValid && lastCameraRotation) {
                 player.teleport(player.location, {
                     rotation: lastCameraRotation,
