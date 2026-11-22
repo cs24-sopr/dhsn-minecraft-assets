@@ -212,4 +212,6 @@ The ride plays `resource_pack/sounds/intro_music.ogg` (about 1:48, longer than t
 ffmpeg -i new.mp3 -c:a libvorbis -q:a 4 resource_pack/sounds/intro_music.ogg
 ```
 
-Resources are cached: after changing the file, leave the world and open it again (sometimes restart the game). Check the sound with `/playsound dhsn.intro_music @s`. The license of the track has to be clarified before the map is published.
+Resources are cached: after changing the file, leave the world and open it again (sometimes restart the game). Check the sound with `/playsound dhsn.intro_music @s`.
+
+**Credits:** the track is ["Epic" by The_Mountain](https://pixabay.com/music/epic-classical-epic-508009/) from Pixabay, which offers it royalty free under the Pixabay license. The license terms have not been checked by us yet; do that before the map is published.
