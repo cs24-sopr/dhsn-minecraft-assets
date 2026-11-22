@@ -6,6 +6,22 @@ import {
 } from '@minecraft/server'
 
 /**
+ * Checks a condition once per tick
+ * @param {() => boolean} predicate Condition that completes the wait.
+ * @param {number} timeoutTicks Server ticks until timeout
+ * @param {string} timeoutMessage Error message if the condition is not reached.
+ * @returns {Promise<void>} Resolves when the condition is met.
+ */
+async function waitUntil(predicate, timeoutTicks, timeoutMessage) {
+    for (let elapsed = 0; elapsed <= timeoutTicks; elapsed++) {
+        if (predicate()) return
+        if (elapsed < timeoutTicks) await system.waitTicks(1)
+    }
+
+    throw new Error(timeoutMessage)
+}
+
+/**
  * A state wrapper that activates before an action and cleans up in finally.
  * @template T
  * @typedef {(action: () => T | Promise<T>) => Promise<T>} StateScope
@@ -246,6 +262,76 @@ export async function invisibleUntil(player, action) {
             player.removeEffect('invisibility')
         }
     }
+}
+
+/**
+ * Makes an entity hop once and waits for takeoff followed by an actual landing.
+ * Requires an entity with gravity and a solid surface to land on.
+ * @param {import('@minecraft/server').Entity} entity Entity to make hop.
+ * @param {number} [impulse=0.42] Positive upward impulse applied after clearing velocity.
+ * @returns {Promise<void>} Resolves after landing with near-zero vertical velocity.
+ * @throws {Error} If the impulse is invalid, the entity becomes invalid, or a wait times out.
+ */
+export async function hop(entity, impulse = 0.42) {
+    if (!Number.isFinite(impulse) || impulse <= 0) {
+        throw new Error(
+            'Der Sprungimpuls muss eine positive, endliche Zahl sein.'
+        )
+    }
+
+    /**
+     * Ensures the entity can still participate in the hop.
+     * @returns {void}
+     * @throws {Error} If the entity is no longer valid.
+     */
+    function checkEntityValid() {
+        if (!entity.isValid) {
+            throw new Error('Die Entität ist für den Sprung nicht mehr gültig.')
+        }
+    }
+
+    /**
+     * Checks whether the entity is ready to start the hop.
+     * @returns {boolean} Whether the entity is on the ground.
+     * @throws {Error} If the entity is no longer valid.
+     */
+    function entityIsReady() {
+        checkEntityValid()
+        return entity.isOnGround
+    }
+
+    /** @type {number} Maximum ticks for initial ground contact and, separately, the hop. */
+    const timeoutTicks = 40
+
+    await waitUntil(
+        entityIsReady,
+        timeoutTicks,
+        'Die Entität steht für den Sprung nicht auf dem Boden.'
+    )
+
+    const startY = entity.location.y
+    /** @type {boolean} Whether takeoff has been observed since applying the impulse. */
+    let leftGround = false
+
+    entity.clearVelocity()
+    entity.applyImpulse({ x: 0, y: impulse, z: 0 })
+
+    /** @returns {boolean} Whether the entity has landed after an observed takeoff. */
+    function entityHasLanded() {
+        checkEntityValid()
+
+        const onGround = entity.isOnGround
+        if (!onGround || entity.location.y - startY > 0.03) leftGround = true
+        return leftGround && onGround && Math.abs(entity.getVelocity().y) < 0.05
+    }
+
+    // Let physics advance before checking whether the impulse caused takeoff.
+    await system.waitTicks(1)
+    await waitUntil(
+        entityHasLanded,
+        timeoutTicks,
+        'Die Entität konnte den Sprung nicht abschließen.'
+    )
 }
 
 /**
