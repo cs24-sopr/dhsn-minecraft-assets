@@ -6,6 +6,45 @@ import {
 } from '@minecraft/server'
 
 /**
+ * Outcomes of a walk; invalid arguments and unexpected API failures still reject.
+ * @typedef {'arrived' | 'interrupted' | 'cancelled'} WalkToOutcome
+ */
+
+/**
+ * Reasons a walk cannot start or continue.
+ * @typedef {'entity_invalid' | 'target_invalid' | 'dimension_mismatch' | 'dimension_changed' | 'timeout'} WalkToCancellationReason
+ */
+
+/** Reports a walk's outcome and lets callers require a particular outcome. */
+export class WalkToResult {
+    /**
+     * Creates a result for a completed, interrupted, or cancelled walk.
+     * @param {WalkToOutcome} outcome Outcome reported by the walk.
+     * @param {WalkToCancellationReason} [reason] Reason for a cancelled outcome.
+     */
+    constructor(outcome, reason) {
+        /** @type {WalkToOutcome} @readonly Outcome of this walk. */
+        this.outcome = outcome
+        /** @type {WalkToCancellationReason | undefined} @readonly Present only for cancellation. */
+        this.reason = outcome === 'cancelled' ? reason : undefined
+    }
+
+    /**
+     * Requires this result to have the expected outcome.
+     * @param {WalkToOutcome} expectedOutcome Outcome required by the caller.
+     * @param {string} message Error message if the outcome does not match.
+     * @returns {void}
+     * @throws {Error} With the supplied message if the outcome does not match.
+     */
+    expect(expectedOutcome, message) {
+        if (this.outcome !== expectedOutcome) throw new Error(message)
+    }
+}
+
+/** @type {Map<string, () => void>} Interruption callbacks for the current walk in each dimension. */
+const activeWalks = new Map()
+
+/**
  * Checks a condition once per tick
  * @param {number} timeoutTicks Server ticks until timeout
  * @param {string} timeoutMessage Error message if the condition is not reached.
@@ -376,6 +415,11 @@ export async function turnToPlayer(player, entity, turnTicks = 8) {
                 'Die Entität oder der Spieler ist nicht mehr gültig.'
             )
         }
+        if (player.dimension.id !== entity.dimension.id) {
+            throw new Error(
+                'Die Entität oder der Spieler sind nicht in derselben Dimension.'
+            )
+        }
     }
 
     checkParticipantsValid()
@@ -407,6 +451,195 @@ export async function turnToPlayer(player, entity, turnTicks = 8) {
                     360) -
                 180,
         })
+    }
+}
+
+/**
+ * Uses the entity's native follow behavior to walk toward a player or marker entity.
+ * Requires the follow events and target filter configured on dhsn:ersti_coach.
+ * A new walk interrupts the previous walk in the same dimension, since the target
+ * filter uses a shared tag. The timeout starts after the previous follow behavior
+ * has stopped. Arrival allows a small tolerance
+ * around the two-block stop distance configured in the entity JSON.
+ * Clears the shared target tag from loaded entities in the dimension before
+ * assigning it to the new target, including tags left by a previous script load.
+ * Stops following, clears remaining velocity, and removes its own tag in finally.
+ * @todo Replace the total-duration timeout with an inactivity timeout: cancel as
+ * stuck only after no meaningful position change for a configured number of ticks.
+ * Measure displacement from a reference position so slow movement accumulates,
+ * ignore small physics jitter, and allow detours that increase distance to the target.
+ * @param {import('@minecraft/server').Entity} entity Entity that should walk.
+ * @param {import('@minecraft/server').Entity} target Player or marker to approach.
+ * @param {number} [timeoutTicks=400] Positive integer limit for the active walk.
+ * @returns {Promise<WalkToResult>} Arrival, interruption, or cancellation result, after cleanup.
+ * @throws {Error} If the timeout is invalid, the entity targets itself, or an API operation fails.
+ */
+export async function walkTo(entity, target, timeoutTicks = 400) {
+    if (!Number.isInteger(timeoutTicks) || timeoutTicks <= 0) {
+        throw new Error(
+            'Die Wartezeit muss eine positive, ganze Tickzahl sein.'
+        )
+    }
+
+    if (entity.id === target.id) {
+        throw new Error(
+            'Die Entität kann sich nicht selbst als Laufziel haben.'
+        )
+    }
+
+    /** @type {boolean} Whether a newer walk has replaced this call. */
+    let interrupted = false
+
+    /**
+     * Reports replacement or world state that prevents starting or continuing.
+     * @param {string} [startDimensionId] Original dimension, once the walk has started.
+     * @returns {WalkToResult | undefined} A terminal result, or undefined while viable.
+     */
+    function getStoppedResult(startDimensionId) {
+        if (interrupted) return new WalkToResult('interrupted')
+        if (!entity.isValid) {
+            return new WalkToResult('cancelled', 'entity_invalid')
+        }
+        if (!target.isValid) {
+            return new WalkToResult('cancelled', 'target_invalid')
+        }
+        const entityDimensionId = entity.dimension.id
+        if (entityDimensionId !== target.dimension.id) {
+            return new WalkToResult('cancelled', 'dimension_mismatch')
+        }
+        if (
+            startDimensionId !== undefined &&
+            entityDimensionId !== startDimensionId
+        ) {
+            return new WalkToResult('cancelled', 'dimension_changed')
+        }
+    }
+
+    // Use the same world-state checks before setup and during the active walk.
+    const startResult = getStoppedResult()
+    if (startResult) return startResult
+    const dimension = entity.dimension
+
+    /** @type {string} Must match the follow_mob filter in ersti_coach.behavior.json. */
+    const targetTag = 'dhsn:lucas_follow_target'
+
+    /** @type {number} Two-block JSON stop distance plus tolerance for native navigation. */
+    const arrivalDistance = 2.1
+
+    /** @type {boolean} Whether this call added the target tag. */
+    let addedTargetTag = false
+
+    /** @type {boolean} Whether starting native following was attempted. */
+    let followingStarted = false
+
+    /**
+     * Stops this call's follow behavior and removes its own tag, at most once.
+     * @returns {void}
+     */
+    function cleanup() {
+        try {
+            if (followingStarted) {
+                followingStarted = false
+                if (entity.isValid) {
+                    try {
+                        entity.triggerEvent('dhsn:stop_following')
+                    } finally {
+                        if (entity.isValid) entity.clearVelocity()
+                    }
+                }
+            }
+        } finally {
+            if (addedTargetTag) {
+                addedTargetTag = false
+                if (target.isValid) target.removeTag(targetTag)
+            }
+        }
+    }
+
+    /**
+     * Interrupts this walk and immediately releases its follow behavior and target.
+     * @returns {void}
+     */
+    function interruptWalk() {
+        interrupted = true
+        cleanup()
+    }
+
+    /**
+     * Checks arrival without treating a target on another floor as reached.
+     * Called only after checking that participants remain valid in this dimension.
+     * @returns {boolean} Whether the entity is grounded and within talking distance.
+     */
+    function hasArrived() {
+        const location = entity.location
+        const destination = target.location
+        return (
+            entity.isOnGround &&
+            Math.abs(destination.y - location.y) <= 1 &&
+            Math.hypot(
+                destination.x - location.x,
+                destination.y - location.y,
+                destination.z - location.z
+            ) <= arrivalDistance
+        )
+    }
+
+    /**
+     * Checks arrival, interruption, cancellation, or expiration of the time limit.
+     * Finishes at the limit so a timeout becomes a result instead of an exception.
+     * @param {number} elapsedTicks Server ticks spent waiting for this walk.
+     * @returns {boolean} Whether waiting for this walk should finish.
+     */
+    function hasFinished(elapsedTicks) {
+        return (
+            getStoppedResult(dimension.id) !== undefined ||
+            hasArrived() ||
+            elapsedTicks >= timeoutTicks
+        )
+    }
+
+    const interruptPreviousWalk = activeWalks.get(dimension.id)
+    interruptPreviousWalk?.()
+    activeWalks.set(dimension.id, interruptWalk)
+
+    try {
+        // Allow the previous stop event to apply before starting a new follow goal.
+        if (interruptPreviousWalk) await system.waitTicks(1)
+        const initialResult = getStoppedResult(dimension.id)
+        if (initialResult) return initialResult
+        const arrived = hasArrived()
+
+        for (const candidate of dimension.getEntities({ tags: [targetTag] })) {
+            candidate.removeTag(targetTag)
+        }
+        if (arrived) return new WalkToResult('arrived')
+
+        addedTargetTag = target.addTag(targetTag)
+        entity.clearVelocity()
+        followingStarted = true
+        entity.triggerEvent('dhsn:start_following')
+
+        await waitUntil(
+            timeoutTicks,
+            'Die Entität konnte das Laufziel nicht rechtzeitig erreichen.',
+            hasFinished
+        )
+        const stoppedResult = getStoppedResult(dimension.id)
+        if (stoppedResult) return stoppedResult
+        if (hasArrived()) return new WalkToResult('arrived')
+        return new WalkToResult('cancelled', 'timeout')
+    } finally {
+        // A replaced call must never stop or untag its successor's walk.
+        if (activeWalks.get(dimension.id) === interruptWalk) {
+            try {
+                cleanup()
+                await system.waitTicks(1)
+            } finally {
+                if (activeWalks.get(dimension.id) === interruptWalk) {
+                    activeWalks.delete(dimension.id)
+                }
+            }
+        }
     }
 }
 

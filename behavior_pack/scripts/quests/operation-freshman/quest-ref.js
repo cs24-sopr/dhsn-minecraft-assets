@@ -39,6 +39,7 @@ async function startQuestSequence(player, lucas) {
         action: async () => {
             await Util.hop(lucas, 0.35)
             await Util.turnToPlayer(player, lucas, 20)
+            await Util.walkTo(lucas, player, 20 * 60)
 
             await system.waitTicks(40)
         },
