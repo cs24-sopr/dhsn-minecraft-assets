@@ -1,5 +1,5 @@
 {
-    "format_version": "1.26.50",
+    "format_version": "1.19.30",
     "minecraft:entity": {
         "description": {
             "identifier": "dhsn:ersti_coach",
@@ -34,7 +34,7 @@
             "minecraft:type_family": {
                 "family": ["npc", "mob"]
             },
-            "minecraft:fire_immune": true,
+            "minecraft:fire_immune": {},
             "minecraft:movement": {
                 "value": 0.5
             },
