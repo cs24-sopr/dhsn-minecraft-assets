@@ -22,11 +22,12 @@ Die fünf Regale waren ursprünglich reine Deko. [custom_bookshelf.js](../../beh
 | Nachhaltige Ingenieurwissenschaften | `myname:nachhaltige_ingenieurwissenschaften_bookshelf` | `myname:niia_book` |
 | Steuerberatung | `myname:steuerberatung_bookshelf` | `myname:stwp_book` |
 
-- **Einstellen:** Rechtsklick mit dem Buch des eigenen Studiengangs stellt **ein** Buch hinein. Außer im Kreativmodus wird es aus der Hand genommen. Im Chat erscheint `Buch einsortiert (3/6)`.
-- **Herausnehmen:** Rechtsklick mit leerer Hand gibt ein Buch zurück in die Hand.
+- **Einstellen:** Rechtsklick mit dem Buch des eigenen Studiengangs stellt **ein** Buch hinein. Außer im Kreativmodus wird es aus der Hand genommen. Das Regal selbst schreibt dabei nichts in den Chat; Quests melden den Fortschritt selbst (z. B. die Bibliotheks-Quest mit `Buch einsortiert: Informatik (1/9)`).
+- **Herausnehmen:** bei den fünf Regalen **abgeschaltet** (`allow_take_out: false`), weil es in der Bibliotheks-Quest verwirrend war. Ein Rechtsklick mit leerer Hand zeigt nur `In diesem Regal stehen 3 Bücher. Herausnehmen geht nicht.` (oder `Dieses Regal ist leer.`). Mit `allow_take_out: true` gibt ein Rechtsklick mit leerer Hand ein Buch zurück in die Hand.
 - **Andere Items und Bücher anderer Studiengänge:** Sie werden abgelehnt: `Das passt nicht in dieses Regal.`
 - **Volles Regal:** `Das Regal ist voll (6/6).`
 - **Abbauen:** Alle Bücher fallen heraus.
+- **Chat:** Alle Meldungen der Regale sind gelb.
 - **Kreativmodus:** Die Erkennung funktioniert bei diesen Regalen auch dort, weil das Skript das Einstellen selbst steuert.
 
 Jedes Regal nimmt nur das Buch seines Studiengangs an, ein Buch ins falsche Regal zu stellen ist also nicht möglich. Eine Quest erkennt das Einsortieren über `itemType` und `shelfType`:
@@ -43,29 +44,55 @@ onItemInShelf(
 ```json
 "dhsn:bookshelf": {
     "capacity": 6,
-    "accepts": ["myname:cs_book"]
+    "accepts": ["myname:cs_book"],
+    "allow_take_out": false
 }
 ```
 
 (hier am Beispiel des Informatik-Regals)
 
-| Parameter  | Eingestellt            | Ohne Angabe                    | Bedeutung                                |
-| ---------- | ---------------------- | ------------------------------ | ---------------------------------------- |
-| `capacity` | `6`                    | `6`                            | So viele Bücher passen insgesamt hinein. |
-| `accepts`  | das eigene Buch        | alle fünf DHSN-Bücher und Buch | Item-IDs, die das Regal annimmt.         |
+| Parameter        | Eingestellt     | Ohne Angabe                    | Bedeutung                                              |
+| ---------------- | --------------- | ------------------------------ | ------------------------------------------------------ |
+| `capacity`       | `6`             | `6`                            | So viele Bücher passen insgesamt hinein.               |
+| `accepts`        | das eigene Buch | alle fünf DHSN-Bücher und Buch | Item-IDs, die das Regal annimmt.                       |
+| `allow_take_out` | `false`         | `true`                         | Ob man mit leerer Hand ein Buch herausnehmen kann.     |
 
 > **Wo die Kapazität definiert ist:**
 > - **Maßgeblich:** `capacity` im Block-JSON jedes Regals, `behavior_pack/blocks/<regal>.block.json` unter `components` → `dhsn:bookshelf`. Jedes der fünf Regale hat dort seinen eigenen Wert, derzeit überall `6`.
 > - **Nur als Rückfall:** `DEFAULT_CAPACITY` in `behavior_pack/scripts/custom_bookshelf.js` (ebenfalls `6`). Er greift nur, wenn im Block-JSON kein `capacity` steht.
 > - **Nach einer Änderung:** die Welt neu betreten. `/reload` lädt Block-Definitionen nicht neu.
-> - **Für die [Bibliotheks-Quest](../quests/library-quest.md):** Jede ihrer zwei Runden lässt pro Spieler ein Buch in jedem Regal. Bei `6` ist ein Regal also nach drei Spielern voll. Für die echte Map sollte der Wert höher sein.
+> - **Für die [Bibliotheks-Quest](../quests/library-quest.md):** Die Bibliothekarin trägt die Bücher einer Runde beim Abgeben wieder aus den Regalen aus. Die Kapazität reicht also für beliebig viele Runden.
 
 Soll ein Regal mehrere Bücher annehmen, z. B. für eine Quest, in der man auch falsch sortieren kann, kommen weitere IDs in `accepts`, etwa `["myname:cs_book", "myname:cofi_book"]`. Ein weiteres Block-Modell bekommt das Verhalten, indem man diesen Eintrag ergänzt und die Block-ID in `DHSN_SHELF_TYPES` aufnimmt.
 
+### Mitreden für Quests: `setShelfInsertCheck` und `onShelfRejected`
+
+Beide werden aus `custom_bookshelf.js` importiert und gelten nur für die eigenen Regale.
+
+| Funktion | Bedeutung |
+| --- | --- |
+| `setShelfInsertCheck(check)` | `check({ player, block, itemStack })` läuft, bevor ein angenommenes Buch ins Regal kommt. Gibt sie `false` zurück, bleibt das Buch in der Hand und `onShelfRejected` wird mit `reason: "blocked"` aufgerufen. Es gibt nur **einen** Check; ein neuer ersetzt den alten, `undefined` entfernt ihn. |
+| `onShelfRejected(listener)` | `listener({ player, block, itemStack, reason })` läuft, wenn ein Regal etwas ablehnt. `reason` ist `"wrong_shelf"` (Regal nimmt das Item nicht an), `"full"` oder `"blocked"`. Gibt ein Listener `true` zurück, hat er dem Spieler selbst geantwortet, und das Regal schickt seine eigene Meldung nicht. Gibt eine Funktion zum Abmelden zurück. |
+
+Die Bibliotheks-Quest nutzt beides: „ein Buch pro Regal und Runde“ über den Check, und bei falschem Regal antwortet die Bibliothekarin statt des Regals:
+
+```js
+import { onShelfRejected, setShelfInsertCheck } from "../custom_bookshelf.js";
+
+setShelfInsertCheck(({ block }) => !bereitsBenutzt(block)); // bereitsBenutzt: eigene Funktion der Quest
+
+onShelfRejected(({ player, reason }) => {
+    if (reason !== "wrong_shelf") return false;
+    player.sendMessage("§eBibliothekarin: Halt! Das ist das falsche Regal.");
+    return true;
+});
+```
+
 **Grenzen:**
 - **Aussehen:** Das Modell zeigt nicht, wie viele Bücher drin sind. Dafür bräuchte es Modell-Varianten vom Asset-Team.
-- **Reihenfolge beim Herausnehmen:** Welches Buch beim Herausnehmen zurückkommt, ist nicht festgelegt.
+- **Reihenfolge beim Herausnehmen** (nur mit `allow_take_out: true`): Welches Buch zurückkommt, ist nicht festgelegt.
 - **Sounds:** `insert.chiseled_bookshelf` und `pickup.chiseled_bookshelf` sind ungeprüft. Gibt es sie nicht, bleibt es still.
+- **Abenteuermodus:** Ob die Regale dort auf Rechtsklicks reagieren, ist noch nicht im Spiel geprüft. Die Map läuft im Abenteuermodus, deshalb ist das der erste Test im [Bibliotheks-Test](test-library.md).
 
 ## Optionen
 
@@ -187,7 +214,7 @@ Im [Testparcours](test.md) bekommt der Spieler ein Eichenregal, ein Chiseled Boo
 
 6. Zur Prüfung des Herausnehmens 4 Bücher herausnehmen, bis noch 2 drin sind. Dabei **jedes Mal einen leeren Hotbar-Slot auswählen**, damit das Buch in der Hand landet (siehe Einschränkungen). Dann ein Buch wieder hineinstellen: Bei 3 Büchern kommt die Meldung „3 Bücher …“ erneut.
 
-**Eigene Bücherregale:** Dafür gibt es den eigenen [Bibliotheks-Test](test-library.md) (`/scriptevent dhsn:quest_test_library`). Jedes Buch muss dort ins Regal seines Studiengangs.
+**Eigene Bücherregale:** Dafür gibt es den eigenen [Bibliotheks-Test](test-library.md) (`/scriptevent dhsn:quest_test_library`). Jedes Buch muss dort in ein Regal seines Studiengangs.
 
 Gegenproben:
 

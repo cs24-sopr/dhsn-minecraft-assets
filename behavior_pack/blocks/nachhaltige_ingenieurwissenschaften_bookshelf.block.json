@@ -32,7 +32,8 @@
             "tag:minecraft:is_pickaxe_item_destructible": {},
             "dhsn:bookshelf": {
                 "capacity": 6,
-                "accepts": ["myname:niia_book"]
+                "accepts": ["myname:niia_book"],
+                "allow_take_out": false
             }
         },
         "permutations": [

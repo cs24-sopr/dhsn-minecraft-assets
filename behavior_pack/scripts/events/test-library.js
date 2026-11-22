@@ -1,24 +1,33 @@
-import { BlockPermutation, SignSide, system } from "@minecraft/server";
+import { BlockPermutation, BlockVolume, SignSide, system } from "@minecraft/server";
+import { setLibraryTestSetup } from "../quests/library-quest.js";
 import { clearShelfContents } from "./shelf-contents.js";
 
-// Test setup for the library quest (see quests/library-quest.js). Stand on flat ground and run
+// Test setup for the library quest (see quests/library-quest.js). Stand on flat ground
+// (best: flat world, adventure mode, cheats on) and run
 //   /scriptevent dhsn:quest_test_library
-// It only builds the scene: the five bookshelves of the study programs in a row 3 blocks north
-// of you, each with a sign on top that names its study program, and the librarian at the east end
-// of the row. It starts nothing: the quest, its books and its questlog entry only begin when you
-// talk to the librarian. A short summary of the quest is written to the chat.
-// Running the command again rebuilds the scene at your new position.
+// It builds a small library around you:
+// - one row of bookshelves per study program, north of you (Informatik has 4 shelves, the others 3),
+//   with a sign on the last shelf of each row that names the study program,
+// - an oak plank floor that marks the library area (leaving it during a round starts the countdown),
+// - the librarian east of the rows and the highscore sign of the challenge.
+// The library area and the sign are saved in the world (see setLibraryTestSetup), so they survive
+// /reload and restarting the world. /scriptevent dhsn:quest_test_library_clear removes them again.
+// It starts nothing: the quest, its books and its questlog entry only begin when you talk to the librarian.
+// Running the command again clears the area and rebuilds the library at your new position.
 
 const TEST_COMMAND = "dhsn:quest_test_library";
 
-// sign: text on the sign above the shelf. Signs are narrow, so long names are split by hand.
-const SHELVES = [
-    { shelf: "myname:computer_science_bookshelf", sign: "Informatik" },
-    { shelf: "myname:controlling_bookshelf", sign: "Controlling" },
-    { shelf: "myname:immobilienwirtschaft_bookshelf", sign: "Immobilien-\nwirtschaft" },
-    { shelf: "myname:nachhaltige_ingenieurwissenschaften_bookshelf", sign: "Nachhaltige\nIngenieur-\nwissenschaften" },
-    { shelf: "myname:steuerberatung_bookshelf", sign: "Steuer-\nberatung" },
+// One row per study program, from south (closest to the player) to north.
+// sign: text on the sign at the end of the row. Signs are narrow, so long names are split by hand.
+const ROWS = [
+    { shelf: "myname:computer_science_bookshelf", count: 4, sign: "Informatik" },
+    { shelf: "myname:controlling_bookshelf", count: 3, sign: "Controlling" },
+    { shelf: "myname:immobilienwirtschaft_bookshelf", count: 3, sign: "Immobilien-\nwirtschaft" },
+    { shelf: "myname:nachhaltige_ingenieurwissenschaften_bookshelf", count: 3, sign: "Nachhaltige\nIngenieur-\nwissenschaften" },
+    { shelf: "myname:steuerberatung_bookshelf", count: 3, sign: "Steuer-\nberatung" },
 ];
+
+const FLOOR_BLOCK = "minecraft:oak_planks";
 
 const LIBRARIAN = "dhsn:librarian";
 // Marks the librarian spawned by this test, so running the test again replaces her instead of adding another one.
@@ -26,14 +35,18 @@ const LIBRARIAN_TAG = "dhsn:library_test";
 
 // Rough outline of the library quest, shown in the chat when the test starts.
 const QUEST_SUMMARY = [
-    "§6Bibliotheks-Quest \"Aushilfe in der Bibliothek\" in Kürze:§r",
-    " 1. Bibliothekarin (am Ende der Regalreihe) per Rechtsklick ansprechen und Hilfe annehmen.",
-    " 2. Du bekommst 5 Bücher, je eins pro Studiengang.",
-    " 3. Jedes Buch ins Regal seines Studiengangs stellen (steht auf den Schildern).",
-    " 4. Zurück zur Bibliothekarin: Runde abgeben, sie bietet eine zweite Runde mit neuen Büchern an.",
-    " 5. Nach der zweiten Runde ist die Quest abgeschlossen.",
-    "§7Neu starten: /scriptevent dhsn:quest_reset_library§r",
+    "Bibliotheks-Quest \"Aushilfe in der Bibliothek\" in Kürze:",
+    " 1. Bibliothekarin (östlich der Regale) per Rechtsklick ansprechen und Hilfe annehmen.",
+    " 2. Du bekommst pro Studiengang 1 bis so viele Bücher, wie er Regale hat.",
+    " 3. Jedes Buch in ein Regal seines Studiengangs stellen, pro Regal nur ein Buch.",
+    " 4. Zurück zur Bibliothekarin: Runde abgeben, danach folgt Runde 2, dann die Challenge auf Zeit.",
+    " 5. Den Holzboden während einer Runde nicht verlassen, sonst ist die Runde nach 5 s zurückgesetzt.",
+    "Neu starten: /scriptevent dhsn:quest_reset_library",
 ];
+
+function say(player, text) {
+    player.sendMessage(`§e${text}`);
+}
 
 /**
  * Places a waxed oak sign with the text on both sides, so it is readable whichever way it turned out.
@@ -54,28 +67,51 @@ function buildScene(player) {
     const dimension = player.dimension;
     const x = Math.floor(player.location.x);
     const y = Math.floor(player.location.y);
-    const z = Math.floor(player.location.z) - 3;
+    const z = Math.floor(player.location.z);
 
-    SHELVES.forEach(({ shelf, sign }, index) => {
-        const location = { x: x - 4 + index * 2, y, z };
-        // The shelves face south, towards the player. Placed by hand, a shelf gets the
-        // direction the player looks at, which is north here.
-        dimension.setBlockPermutation(location, BlockPermutation.resolve(shelf, { "minecraft:cardinal_direction": "north" }));
+    // The library: from 2 blocks south of the player to 2 blocks behind the last row,
+    // from the floor to 4 blocks above the feet, so jumping does not count as leaving.
+    const area = {
+        from: { x: x - 4, y: y - 1, z: z - 3 - 2 * (ROWS.length - 1) - 2 },
+        to: { x: x + 6, y: y + 4, z: z + 2 },
+        dimension: dimension.id,
+    };
 
-        // A shelf placed by script is not seen by the counter, so reset leftovers from earlier runs.
-        const block = dimension.getBlock(location);
-        if (block) clearShelfContents(block);
+    // Clear the room (removes shelves and signs of an earlier run at the same place) and lay the floor.
+    dimension.fillBlocks(new BlockVolume({ ...area.from, y }, area.to), "minecraft:air");
+    dimension.fillBlocks(new BlockVolume(area.from, { ...area.to, y: y - 1 }), FLOOR_BLOCK);
 
-        placeSign(dimension, { x: location.x, y: location.y + 1, z: location.z }, sign);
+    ROWS.forEach(({ shelf, count, sign }, rowIndex) => {
+        // Rows 3, 5, 7, … blocks north of the player, with a walkway between them.
+        const rowZ = z - 3 - rowIndex * 2;
+        for (let i = 0; i < count; i++) {
+            const location = { x: x - 2 + i, y, z: rowZ };
+            // The shelves face south, towards the player. Placed by hand, a shelf gets the
+            // direction the player looks at, which is north here.
+            dimension.setBlockPermutation(location, BlockPermutation.resolve(shelf, { "minecraft:cardinal_direction": "north" }));
+
+            // A shelf placed by script is not seen by the counter, so reset leftovers from earlier runs.
+            const block = dimension.getBlock(location);
+            if (block) clearShelfContents(block);
+
+            // Only the last shelf of the row gets a sign.
+            if (i === count - 1) placeSign(dimension, { x: location.x, y: y + 1, z: rowZ }, sign);
+        }
     });
 
     for (const librarian of dimension.getEntities({ type: LIBRARIAN, tags: [LIBRARIAN_TAG] })) librarian.remove();
-    const librarian = dimension.spawnEntity(LIBRARIAN, { x: x + 6.5, y, z: z + 0.5 });
+    const librarian = dimension.spawnEntity(LIBRARIAN, { x: x + 4.5, y, z: z - 2.5 });
     librarian.addTag(LIBRARIAN_TAG);
     librarian.nameTag = "Bibliothekarin";
 
-    player.sendMessage("§aBibliotheks-Test aufgebaut. Sprich die Bibliothekarin an, um die Quest zu starten.");
-    for (const line of QUEST_SUMMARY) player.sendMessage(line);
+    // Highscore sign of the challenge, east of the rows. Its text is written by the quest.
+    const signLocation = { x: x + 4, y, z: z - 6 };
+    placeSign(dimension, signLocation, "");
+    setLibraryTestSetup(area, signLocation);
+
+    say(player, "Bibliotheks-Test aufgebaut. Sprich die Bibliothekarin an, um die Quest zu starten.");
+    say(player, `Bibliothek (Holzboden): ${area.from.x} ${area.from.y} ${area.from.z} bis ${area.to.x} ${area.to.y} ${area.to.z}`);
+    for (const line of QUEST_SUMMARY) say(player, line);
 }
 
 system.afterEvents.scriptEventReceive.subscribe(({ id, sourceEntity }) => {

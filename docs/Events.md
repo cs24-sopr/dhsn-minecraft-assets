@@ -55,7 +55,7 @@ Außerdem exportiert `index.js` `SHELF_TYPES` (alle unterstützten Regal-Blöcke
 | `events/shelf-contents.js`  | Zählt den Inhalt von Regalen mit, Grundlage für `onItemInShelf`. Siehe [item-in-shelf.md](events/item-in-shelf.md#für-entwickler-shelf-contentsjs). |
 | `events/area.js`            | Gemeinsame Hilfsfunktionen, siehe unten.                                                           |
 | `events/test.js`            | Testparcours für alle Ereignisse, siehe [test.md](events/test.md).                                 |
-| `events/test-library.js`    | Test-Quest „Bücher sortieren“ für die eigenen Bücherregale, siehe [test-library.md](events/test-library.md). |
+| `events/test-library.js`    | Testaufbau (kleine Bibliothek) für die Bibliotheks-Quest, siehe [test-library.md](events/test-library.md). |
 | `custom_bookshelf.js`       | Macht unsere eigenen Bücherregale benutzbar (liegt direkt in `behavior_pack/scripts/`). Siehe [item-in-shelf.md](events/item-in-shelf.md#eigene-bücherregale). |
 
 ## Hilfsfunktionen in `area.js`
