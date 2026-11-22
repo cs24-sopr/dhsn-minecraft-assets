@@ -92,7 +92,7 @@ Outside a round, the shelves behave as described in [Own bookshelves](../events/
 | --- | --- |
 | Player declines an offer | The librarian answers "Kein Problem, komm einfach wieder …". The round stays offered; the next talk offers it again. |
 | Player talks to her during a round | She tells the progress ("Du hast schon 2 von 9 Büchern einsortiert …"). |
-| Player lost books (dropped, put in a chest) | When talking to her during a round or challenge, she hands out again every missing book: handed out − sorted − in the inventory, per program. |
+| Player lost books (dropped, put in a chest) | When talking to her during a round or challenge, she hands out again every missing book: handed out − sorted − in the inventory, per program. At that moment, **all books of the quest lying on the ground** (dropped item entities in the player's dimension, loaded area) **disappear**, so they cannot be picked up as extra copies. If nothing is missing, nothing is removed. |
 | Player rejoins the world | Progress is kept; the questlog entry is shown again (unless the round is reset because the player is outside, see above). |
 
 ### Questlog
@@ -314,6 +314,7 @@ Test environment: **flat world, adventure mode** (like the map), **cheats on**, 
 3. Right-click the librarian and accept. You get 1–4 Informatik books and 1–3 of every other program; `/scriptevent dhsn:quest_library_state` shows the numbers. The questlog shows `Runde 1/2` and `Bücher sortiert: 0/<total>`.
 4. Put a book into the shelf of another program: refused, the librarian names the shelf. Put two books of the same program into the same shelf: the second is refused.
 5. Right-click a shelf with an empty hand: nothing comes out.
+   Drop two books (`Q`) and talk to her: she hands them out again, and the two books on the ground disappear.
 6. Walk off the plank floor and come back within 2 seconds: the countdown appears and disappears, the round goes on.
 7. Walk off and stay outside: after 5 seconds the books are gone from the inventory, the questlog entry disappears. Talk to the librarian: round 1 is offered again, with newly rolled books.
 8. Sort all books. The chat shows `Buch einsortiert: … (n/<total>)` (only this line, the shelf itself writes nothing), at the end "Alle Bücher sind einsortiert …".

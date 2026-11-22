@@ -573,13 +573,32 @@ async function offerRound(player, roundIndex) {
 
 /** Gives back books the player lost, e.g. dropped or put into a chest. */
 function returnMissingBooks(player, run) {
-    let returned = false;
+    /** @type {[string, number][]} */
+    const missing = [];
     for (const [book, amount] of Object.entries(run.books)) {
-        const missing = amount - sortedCount(run, book) - countInInventory(player, book);
-        for (let i = 0; i < missing; i++) giveItem(player, book);
-        if (missing > 0) returned = true;
+        const count = amount - sortedCount(run, book) - countInInventory(player, book);
+        if (count > 0) missing.push([book, count]);
     }
-    return returned;
+    if (missing.length === 0) return false;
+
+    // Books lying on the ground would be duplicates of the new ones, so they disappear.
+    removeQuestBooksOnGround(player.dimension);
+    for (const [book, count] of missing) {
+        for (let i = 0; i < count; i++) giveItem(player, book);
+    }
+    return true;
+}
+
+/** Removes every book of the library quest that lies on the ground (item entity) in the dimension. */
+function removeQuestBooksOnGround(dimension) {
+    for (const entity of dimension.getEntities({ type: "minecraft:item" })) {
+        try {
+            const typeId = entity.getComponent("minecraft:item")?.itemStack.typeId;
+            if (typeId && ALL_BOOKS.includes(typeId)) entity.remove();
+        } catch {
+            // The item was picked up or despawned in the meantime.
+        }
+    }
 }
 
 async function progressDialog(player, state) {
