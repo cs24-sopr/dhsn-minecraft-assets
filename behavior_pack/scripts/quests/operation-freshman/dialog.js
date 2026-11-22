@@ -41,6 +41,15 @@ function toDropdownItem(option, index) {
 }
 
 /**
+ *
+ * @param {string} text Text to highlight
+ * @returns {string}
+ */
+function highlight(text) {
+    return `§6${text}§r`
+}
+
+/**
  * Controls that a dialogue page can display in addition to its text.
  * @typedef {'name' | 'course'} LucasDialogControl
  */
@@ -58,7 +67,7 @@ const lucasDialogPages = [
         text: 'Halt, halt! Nicht so schnell, Erstsemester! Herzlich Willkommen an unserer Dualen Hochschule Sachsen in Leipzig! Schön, dass du es bis hierher geschafft hast. Das ist schon mal eine Leistung, die man nicht unterschätzen sollte.',
     },
     {
-        text: 'Ich bin Lucas (mit c), dein Ersti-Coach und sozusagen dein ganz persönlicher Wegweiser durch den Hochschulalltag. Und glaub mir, ich habe einiges zu zeigen! Bevor du dich allerdings direkt ins Getümmel stürzt, sollten wir ein paar Dinge klären.',
+        text: `Ich bin ${highlight('Lucas (mit c)')}, dein Ersti-Coach und sozusagen dein ganz persönlicher Wegweiser durch den Hochschulalltag. Und glaub mir, ich habe einiges zu zeigen! Bevor du dich allerdings direkt ins Getümmel stürzt, sollten wir ein paar Dinge klären.`,
     },
     {
         text: 'Dafür zunächst ein paar organisatorische Hinweise:\nAuf deinem Weg über den Campus wirst du in verschiedenen Etagen, in Räumen und Gebieten die eine oder andere Aufgabe entdecken, die dir unseren Hochschulalltag näherbringen soll',
@@ -74,11 +83,20 @@ const lucasDialogPages = [
         show: ['name'],
     },
     {
-        text: 'Wie schön dich kennenzulernen {{playerName}}. Und sag mal, für welchen Studiengang hast du dich eigentlich entschieden?',
+        text: `Wie schön dich kennenzulernen ${highlight('{{playerName}}')}. Und sag mal, für welchen Studiengang hast du dich eigentlich entschieden?`,
         show: ['course'],
     },
     {
         text: 'Ach wie genial! Dann sind wir ja tatsächlich im selben Studiengang! Ich bin sogar bereits im 5. Semester.  Du kannst dir also vorstellen, dass ich hier mittlerweile den ein oder anderen Winkel kenne. Wenn du also mal Fragen hast oder irgendwo nicht weiterkommst, kannst du jederzeit zu mir kommen. Ich helfe dir gerne weiter.',
+    },
+    {
+        text: `So! Und jetzt will ich dich auch gar nicht länger aufhalten. Es gibt schließlich noch einiges zu entdecken! Als Nächstes solltest du deinen Studentenausweis bei der Studienorganisation in ${highlight('Raum {{playerRoom}}')} abholen.`,
+    },
+    {
+        text: 'Ach und bevor ich es vergesse: Hier, nimm diesen Gebäudeplan! Damit findest du dich auf dem Campus hoffentlich etwas leichter zurecht. Und vielleicht entdeckst du dabei ja auch schon den einen oder anderen Ort, den ich dir noch gar nicht gezeigt habe.',
+    },
+    {
+        text: `Also dann, ${highlight('{{playerName}}')}: Ich wünsche dir einen fantastischen Studienstart und ganz viel Spaß an der DHSN. Und denk dran: Immer schön neugierig bleiben!`,
     },
 ]
 
@@ -106,6 +124,22 @@ function showsCourseInput(page) {
 }
 
 /**
+ * Checks whether a page requests the course dropdown.
+ * @param {import('./persist.js').PlayerCourse} playerCourse Player course
+ * @returns {'113' | '114'}
+ */
+function getPlayerRoom(playerCourse) {
+    if (
+        playerCourse === 'computer-science' ||
+        playerCourse === 'sustainable-engineering'
+    ) {
+        return '113'
+    }
+
+    return '114'
+}
+
+/**
  * Replaces all supported markers with their persistently stored values.
  * Missing values leave their markers unchanged; inserted text is not processed again.
  * @param {import('@minecraft/server').Player} player Player whose values to read.
@@ -114,11 +148,12 @@ function showsCourseInput(page) {
  * @throws {Error} If reading persistent player storage fails.
  */
 export function replaceMarkers(player, text) {
+    const playerName = Persist.readPlayerName(player)
+    const playerCourse = Persist.readPlayerCourse(player)
+    const playerRoom = getPlayerRoom(playerCourse)
+
     /** @type {{ playerName: string | undefined, playerCourse: string | undefined }} */
-    const values = {
-        playerName: Persist.readPlayerName(player),
-        playerCourse: Persist.readPlayerCourse(player),
-    }
+    const values = { playerName, playerCourse, playerRoom }
 
     /**
      * Supplies a literal replacement for one matched marker.
@@ -130,7 +165,10 @@ export function replaceMarkers(player, text) {
         return values[key] ?? marker
     }
 
-    return text.replace(/\{\{(playerName|playerCourse)\}\}/g, replaceMarker)
+    return text.replace(
+        /\{\{(playerName|playerCourse|playerRoom)\}\}/g,
+        replaceMarker
+    )
 }
 
 /**

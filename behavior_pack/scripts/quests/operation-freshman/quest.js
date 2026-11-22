@@ -3,6 +3,7 @@ import { onEnterTerritory } from '../../events/index.js'
 
 import * as Util from './utils.js'
 import * as Debug from './debug.js'
+import { showLucasDialog } from './dialog.js'
 
 /**
  * A quest entry zone, independent of how its coordinates were obtained.
@@ -41,17 +42,17 @@ async function startQuestSequence(player, lucas) {
                         action
                     ),
             ],
-
             action: async () => {
                 await Promise.all([
                     Util.hop(lucas, 0.35),
                     Util.turnToPlayer(player, lucas, 20),
                 ])
-
-                player.sendMessage('turned')
+                // TODO better error handling
                 await Util.walkTo(lucas, player, 2.5, 20 * 20).then((result) =>
                     result.expect('arrived', 'Lucas did not arrive')
                 )
+
+                await showLucasDialog(player)
             },
         })
     })
