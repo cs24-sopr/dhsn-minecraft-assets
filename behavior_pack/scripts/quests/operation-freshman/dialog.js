@@ -126,19 +126,69 @@ export async function initialLucasDialog(player) {
 
 /**
  * Checks the world's saved dialogue result once per tick until it is confirmed.
- * Cancellation leaves this pending; a later initialLucasDialog call can complete it.
- * NPC interaction handling is intentionally not registered here yet.
+ * While waiting, interaction with Lucas resumes the saved page with confirmed input.
+ * Repeated interactions cannot open overlapping attempts. The listener is removed
+ * when the dialogue completes or waiting fails.
  * @returns {Promise<LucasDialogResult>} Confirmed result, immediately if already finished.
- * @throws {Error} If storage fails or no player remains in the world while waiting.
+ * @throws {Error} If storage or a retry fails, or no player remains while waiting.
  */
 export async function completedLucasDialog() {
-    while (true) {
-        const result = Persist.readLucasDialogResult()
-        if (result?.confirmed) return result
-        if (world.getAllPlayers().length === 0) {
-            throw new Error('Player left before the Lucas dialogue completed.')
+    const savedResult = Persist.readLucasDialogResult()
+    if (savedResult?.confirmed) return savedResult
+
+    /** @type {boolean} Whether this checkpoint is still waiting for completion. */
+    let waiting = true
+    /** @type {boolean} Whether a retry is scheduled or showing its form. */
+    let retryActive = false
+    /** @type {Error | undefined} Failure to propagate through the awaited checkpoint. */
+    let retryError
+
+    /**
+     * Runs one retry and forwards failures to the checkpoint's polling loop.
+     * @param {import('@minecraft/server').Player} player Player interacting with Lucas.
+     * @returns {Promise<void>} Resolves after this attempt has closed or failed.
+     */
+    async function retryDialog(player) {
+        try {
+            if (waiting) await initialLucasDialog(player)
+        } catch (error) {
+            retryError = error instanceof Error ? error : new Error(String(error))
+        } finally {
+            retryActive = false
         }
-        await system.waitTicks(1)
+    }
+
+    /**
+     * Cancels Lucas's default interaction and schedules a retry outside restricted execution.
+     * @param {import('@minecraft/server').PlayerInteractWithEntityBeforeEvent} event Interaction to inspect.
+     * @returns {void}
+     */
+    function onLucasInteraction(event) {
+        if (event.target.typeId !== 'dhsn:ersti_coach') return
+        event.cancel = true
+        if (!waiting || retryActive || retryError) return
+
+        retryActive = true
+        const player = event.player
+        system.run(() => {
+            void retryDialog(player)
+        })
+    }
+
+    world.beforeEvents.playerInteractWithEntity.subscribe(onLucasInteraction)
+    try {
+        while (true) {
+            if (retryError) throw retryError
+            const result = Persist.readLucasDialogResult()
+            if (result?.confirmed) return result
+            if (world.getAllPlayers().length === 0) {
+                throw new Error('Player left before the Lucas dialogue completed.')
+            }
+            await system.waitTicks(1)
+        }
+    } finally {
+        waiting = false
+        world.beforeEvents.playerInteractWithEntity.unsubscribe(onLucasInteraction)
     }
 }
 

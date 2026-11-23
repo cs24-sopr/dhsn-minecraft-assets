@@ -1,7 +1,7 @@
 import { onEnterTerritory } from '../../events/index.js'
 
 import * as Util from './utils.js'
-import { showLucasDialog } from './dialog.js'
+import { completedLucasDialog, initialLucasDialog } from './dialog.js'
 
 /**
  * A quest entry zone, independent of how its coordinates were obtained.
@@ -27,7 +27,7 @@ function logError(error) {
  * @param {import('@minecraft/server').Entity} lucas Lucas
  */
 async function startQuestSequence(player, lucas) {
-    return Util.freezeUntil(player, async () => {
+    await Util.freezeUntil(player, async () => {
         await Util.onGround(player)
 
         return Util.withEffectStack({
@@ -45,15 +45,19 @@ async function startQuestSequence(player, lucas) {
                     Util.hop(lucas, 0.35),
                     Util.turnToPlayer(player, lucas, 20),
                 ])
+
                 // TODO better error handling
                 await Util.walkTo(lucas, player, 2.5, 20 * 20).then((result) =>
                     result.expect('arrived', 'Lucas did not arrive')
                 )
 
-                await showLucasDialog(player)
+                await initialLucasDialog(player)
             },
         })
     })
+
+    await completedLucasDialog()
+    player.sendMessage('Done')
 }
 
 /**
@@ -84,4 +88,3 @@ export function registerTriggerZoneEvents(zones) {
         )
     )
 }
-
