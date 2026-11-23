@@ -55,9 +55,6 @@ item.dhsn:cherry_key=cherry key
 item.dhsn:crimson_key=crimson key
 item.dhsn:warped_key=warped key
 
-<<<<<<< HEAD
-tile.myname:test_block.name=test_block
-=======
 item.myname:builder_helmet=Builder Helmet
 item.myname:doctor_hat=Doctor Hat
 
@@ -65,4 +62,3 @@ tile.myname:test_block.name=test_block
 
 entity.myname:adrian_breun.name=adrian_breun
 item.spawn_egg.entity.myname:adrian_breun.name=Adrian Breun
->>>>>>> origin/main

@@ -11,8 +11,7 @@
 			"minecraft:max_stack_size": 64,
 			"minecraft:icon": "crimson_key",
 			"minecraft:damage": 1,
-			"minecraft:can_destroy_in_creative": false,
-			"minecraft:hand_equipped": true
+			"minecraft:can_destroy_in_creative": false
 		}
 	}
 }
