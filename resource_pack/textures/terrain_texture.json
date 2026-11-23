@@ -4,6 +4,9 @@
 	"padding": 8,
 	"num_mip_levels": 4,
 	"texture_data": {
+		"logical_not_poster": {
+			"textures": "textures/blocks/logical_not_poster"
+		},
 		"logical_or_poster": {
 			"textures": "textures/blocks/logical_or_poster"
 		},
