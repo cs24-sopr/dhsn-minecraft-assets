@@ -700,20 +700,26 @@ export function getLucas() {
 }
 
 /**
- * Spawns Frau Sommer at the configured overworld placement for a study office.
+ * Reuses or spawns Frau Sommer, then applies the configured study office position and rotation.
  * @param {'113' | '114'} room Study office room whose placement to use.
- * @returns {import('@minecraft/server').Entity} The spawned Frau Sommer entity.
- * @throws {Error} If spawning or configuring the entity fails.
+ * @returns {import('@minecraft/server').Entity} The existing or newly spawned Frau Sommer entity.
+ * @throws {Error} If querying, spawning, or configuring the entity fails.
  */
 export function spawnMrsSommer(room) {
+    const dimension = world.getDimension('overworld')
+
+    const existingSommer = dimension.getEntities({
+        type: 'dhsn:studienorganisation',
+    })[0]
+
     const { position, rotation } = Config.MRS_SOMMER.spawn[room]
 
-    const sommer = world
-        .getDimension('overworld')
-        .spawnEntity('dhsn:studienorganisation', position)
+    const sommer =
+        existingSommer ??
+        dimension.spawnEntity('dhsn:studienorganisation', position)
 
     sommer.nameTag = 'Frau Sommer'
-    sommer.setRotation(rotation)
+    sommer.teleport(position, { rotation })
 
     return sommer
 }

@@ -101,7 +101,13 @@ const lucasDialogPages = [
     },
 ]
 
-/** @type {LucasDialogPage[]} Ordered pages used by the dialogue. */
+/**
+ * Text-only page for Frau Sommer's dialogue.
+ * @typedef {object} MrsSommerDialogPage
+ * @property {string} text Dialogue text displayed on this page.
+ */
+
+/** @type {MrsSommerDialogPage[]} Ordered pages used by Frau Sommer's dialogue. */
 const mrsSommerDialogPages = [
     {
         text: 'Ah, du gehörst wohl zu den neuen Erstsemestern. Herzlich willkommen, ich bin Frau Sommer! Lucas hat dich bereits angekündigt. Dann nehmen wir dich mal offiziell bei uns auf. Keine Sorge, das dauert auch gar nicht lange. Zumindest, wenn die Technik heute mitspielt ',
@@ -212,6 +218,179 @@ export async function completedLucasDialog() {
             onLucasInteraction
         )
     }
+}
+
+/**
+ * Saved page and completion status for Frau Sommer's dialogue.
+ * @typedef {object} MrsSommerDialogResult
+ * @property {boolean} confirmed Whether the final page was explicitly confirmed.
+ * @property {number} page Zero-based page to resume after closing.
+ */
+
+/**
+ * Waits for interaction with Frau Sommer until her dialogue is confirmed.
+ * Each attempt resumes the saved page without an initial approach sequence.
+ * Repeated interactions cannot open overlapping attempts. The listener is removed
+ * when the dialogue completes or waiting fails.
+ * @returns {Promise<MrsSommerDialogResult>} Confirmed result, immediately if already finished.
+ * @throws {Error} If storage or an attempt fails, or no player remains while waiting.
+ */
+export async function completedMrsSommerDialog() {
+    const savedResult = Persist.readMrsSommerDialogResult()
+    if (savedResult?.confirmed) return savedResult
+
+    /** @type {boolean} Whether this checkpoint is still waiting for completion. */
+    let waiting = true
+    /** @type {boolean} Whether an attempt is scheduled or showing its form. */
+    let dialogActive = false
+    /** @type {Error | undefined} Failure to propagate through the checkpoint's polling loop. */
+    let dialogError
+
+    /**
+     * Opens one attempt at the saved page and persists its closing result.
+     * @param {import('@minecraft/server').Player} player Player interacting with Frau Sommer.
+     * @returns {Promise<void>} Resolves after this attempt has closed or failed.
+     */
+    async function runDialog(player) {
+        try {
+            if (!waiting) return
+            const result = Persist.readMrsSommerDialogResult()
+            if (result?.confirmed) return
+            const closedResult = await showMrsSommerDialog(
+                player,
+                result?.page ?? 0
+            )
+            Persist.writeMrsSommerDialogResult(closedResult)
+        } catch (error) {
+            dialogError =
+                error instanceof Error ? error : new Error(String(error))
+        } finally {
+            dialogActive = false
+        }
+    }
+
+    /**
+     * Cancels the default NPC interaction and schedules the dialogue outside restricted execution.
+     * @param {import('@minecraft/server').PlayerInteractWithEntityBeforeEvent} event Interaction to inspect.
+     * @returns {void}
+     */
+    function onMrsSommerInteraction(event) {
+        if (event.target.typeId !== 'dhsn:studienorganisation') return
+        event.cancel = true
+        if (!waiting || dialogActive || dialogError) return
+
+        dialogActive = true
+        const player = event.player
+        system.run(() => {
+            void runDialog(player)
+        })
+    }
+
+    world.beforeEvents.playerInteractWithEntity.subscribe(onMrsSommerInteraction)
+    try {
+        while (true) {
+            if (dialogError) throw dialogError
+            const result = Persist.readMrsSommerDialogResult()
+            if (result?.confirmed) return result
+            if (world.getAllPlayers().length === 0) {
+                throw new Error(
+                    'Player left before the Frau Sommer dialogue completed.'
+                )
+            }
+            await system.waitTicks(1)
+        }
+    } finally {
+        waiting = false
+        world.beforeEvents.playerInteractWithEntity.unsubscribe(
+            onMrsSommerInteraction
+        )
+    }
+}
+
+/**
+ * Displays Frau Sommer's prepared text pages in one updating form without inputs.
+ * Navigation saves the current page; closing does not confirm the dialogue.
+ * @param {import('@minecraft/server').Player} player Player viewing the dialogue.
+ * @param {number} [startPage=0] Zero-based page at which to open the dialogue.
+ * @returns {Promise<MrsSommerDialogResult>} Completion status and last displayed page.
+ * @throws {Error} If the player is invalid, storage fails, or form setup or display fails.
+ */
+export async function showMrsSommerDialog(player, startPage = 0) {
+    if (!player.isValid) throw new Error('Player is no longer available.')
+    if (
+        !Number.isInteger(startPage) ||
+        startPage < 0 ||
+        startPage >= mrsSommerDialogPages.length
+    ) {
+        throw new RangeError('Frau Sommer dialogue start page is out of range.')
+    }
+
+    /** @type {number} Index of the currently displayed page. */
+    let pageIndex = startPage
+    /** @type {boolean} Remains false until the final page is confirmed. */
+    let confirmed = false
+    /** @type {ObservableString} Dialogue text selected by the current page. */
+    const text = new ObservableString('')
+    /** @type {ObservableString} Form title including the current page indicator. */
+    const title = new ObservableString('Frau Sommer')
+    /** @type {ObservableBoolean} Whether the previous button is disabled. */
+    const previousDisabled = new ObservableBoolean(true)
+    /** @type {ObservableString} Next button label, changing on the final page. */
+    const nextLabel = new ObservableString('Weiter')
+    /** @type {CustomForm} One form instance for all prepared pages. */
+    const form = new CustomForm(player, title)
+
+    /** @returns {void} Applies and persists the current page while the form is showing. */
+    function updatePage() {
+        text.setData(replaceMarkers(mrsSommerDialogPages[pageIndex].text))
+        title.setData(
+            `Frau Sommer [${pageIndex + 1} von ${mrsSommerDialogPages.length}]`
+        )
+        previousDisabled.setData(pageIndex === 0)
+        nextLabel.setData(
+            pageIndex === mrsSommerDialogPages.length - 1
+                ? 'Abschließen'
+                : 'Weiter'
+        )
+        if (form.isShowing()) {
+            Persist.writeMrsSommerDialogResult({
+                confirmed: false,
+                page: pageIndex,
+            })
+        }
+    }
+
+    /** @returns {void} Displays the previous prepared page. */
+    function previousPage() {
+        if (!player.isValid || !form.isShowing() || pageIndex === 0) return
+        pageIndex--
+        updatePage()
+    }
+
+    /** @returns {void} Advances to the next page or confirms and closes the dialogue. */
+    function nextPage() {
+        if (!player.isValid || !form.isShowing()) return
+        if (pageIndex < mrsSommerDialogPages.length - 1) {
+            pageIndex++
+            updatePage()
+            return
+        }
+
+        confirmed = true
+        form.close()
+    }
+
+    form.divider()
+        .label(text)
+        .divider()
+        .button('Zurück', previousPage, { disabled: previousDisabled })
+        .button(nextLabel, nextPage)
+
+    updatePage()
+    const closed = form.show()
+    Persist.writeMrsSommerDialogResult({ confirmed: false, page: pageIndex })
+    await closed
+    return { confirmed, page: pageIndex }
 }
 
 /**

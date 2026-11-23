@@ -1,11 +1,11 @@
-import { world } from '@minecraft/server'
+import { ItemStack, world } from '@minecraft/server'
 import { onEnterTerritory } from '../../events/index.js'
 
-import * as Utils from './utils.js'
 import * as Debug from './debug.js'
+import * as Dialog from './dialog.js'
 import * as Persist from './persist.js'
-
-import { completedLucasDialog, initialLucasDialog } from './dialog.js'
+import { questlog } from '../../questlog.js'
+import * as Utils from './utils.js'
 
 /**
  * A quest entry zone, independent of how its coordinates were obtained.
@@ -47,7 +47,7 @@ async function sequenceInitialLucasDialog(player, lucas) {
                     result.expect('arrived', 'Lucas did not arrive')
                 )
 
-                await initialLucasDialog(player)
+                await Dialog.initialLucasDialog(player)
             },
         })
     })
@@ -109,14 +109,36 @@ async function stepInitialLucasDialog() {
  * @throws {Error} If waiting for dialogue completion fails.
  */
 async function stepCompletedLucasDialog() {
-    await completedLucasDialog()
+    await Dialog.completedLucasDialog()
 }
 
 /**
- * Placeholder for the later Frau Sommer dialogue step.
- * @returns {Promise<void>} Resolves without performing enrollment yet.
+ * Waits for Frau Sommer's dialogue to complete, then gives the personalized student ID.
+ * If the inventory is full, the ID is dropped at the player's location.
+ * @returns {Promise<void>} Resolves after dialogue completion and reward delivery.
+ * @throws {Error} If the dialogue fails, the player leaves, the saved name is missing, or inventory or storage access fails.
  */
-async function stepCompletedSummerDialog() {}
+async function stepCompletedSummerDialog() {
+    await Dialog.completedMrsSommerDialog()
+
+    const name = Persist.readPlayerName()
+    if (!name) throw new Error('Player name is missing for the student ID.')
+
+    const player = world.getAllPlayers()[0]
+    if (!player) {
+        throw new Error('Player left before the student ID was delivered.')
+    }
+
+    const inventory = player.getComponent('minecraft:inventory')?.container
+    if (!inventory) throw new Error('Player inventory is unavailable.')
+
+    /** @type {ItemStack} Personalized student ID reward. */
+    const studentId = new ItemStack('dhsn:studierendenausweis', 1)
+    studentId.nameTag = `${name}s Studentenausweis`
+
+    const remainder = inventory.addItem(studentId)
+    if (remainder) player.dimension.spawnItem(remainder, player.location)
+}
 
 /**
  * Resumes the single-player quest at its saved world checkpoint.
@@ -125,6 +147,13 @@ async function stepCompletedSummerDialog() {}
  * @throws {Error} If storage, entrance monitoring, or a quest step fails.
  */
 export async function initializeQuest() {
+    const firstLine = 'mit dem Ersti-Coach Lucas (mit c) gesprochen'
+
+    const questlogEntry = questlog.createEntry({
+        title: 'Operation Erstsemester',
+        lines: [firstLine],
+    })
+
     if (!Persist.readLucasDialogResult()) {
         await stepInitialLucasDialog()
     }
@@ -135,4 +164,13 @@ export async function initializeQuest() {
 
     const mrsSommerRoom = Utils.getMrsSommerRoom(Persist.readPlayerCourse())
     Utils.spawnMrsSommer(mrsSommerRoom)
+
+    const secondLine = `mit Frau Sommer sprechen (Raum ${mrsSommerRoom})`
+    questlogEntry.lines = [`§a${firstLine}§r`, secondLine]
+
+    if (!Persist.readMrsSommerDialogResult()?.confirmed) {
+        await stepCompletedSummerDialog()
+    }
+
+    questlog.removeEntry(questlogEntry)
 }

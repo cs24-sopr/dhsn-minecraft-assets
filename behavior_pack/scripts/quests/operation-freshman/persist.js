@@ -9,6 +9,9 @@ const COURSE_PROPERTY = 'dhsn:operation_freshman_course'
 /** @type {string} Persistent world property containing the last dialogue result. */
 const LUCAS_DIALOG_PROPERTY = 'dhsn:operation_freshman_lucas_dialog'
 
+/** @type {string} Persistent world property containing Frau Sommer's last dialogue result. */
+const MRS_SOMMER_DIALOG_PROPERTY = 'dhsn:operation_freshman_mrs_sommer_dialog'
+
 /**
  * Supported course identifiers for Operation Erstsemester.
  * @typedef {
@@ -104,3 +107,25 @@ export function readLucasDialogResult() {
 export function writeLucasDialogResult(result) {
     world.setDynamicProperty(LUCAS_DIALOG_PROPERTY, JSON.stringify(result))
 }
+
+/**
+ * Reads the world's last Frau Sommer dialogue result.
+ * @returns {import('./dialog.js').MrsSommerDialogResult | undefined} Saved result, if present.
+ * @throws {Error} If reading or parsing the saved result fails.
+ */
+export function readMrsSommerDialogResult() {
+    const value = world.getDynamicProperty(MRS_SOMMER_DIALOG_PROPERTY)
+    if (typeof value !== 'string') return undefined
+    return JSON.parse(value)
+}
+
+/**
+ * Stores Frau Sommer's last page and completion status in the world.
+ * @param {import('./dialog.js').MrsSommerDialogResult} result Result to persist.
+ * @returns {void}
+ * @throws {Error} If writing the saved result fails.
+ */
+export function writeMrsSommerDialogResult(result) {
+    world.setDynamicProperty(MRS_SOMMER_DIALOG_PROPERTY, JSON.stringify(result))
+}
+
