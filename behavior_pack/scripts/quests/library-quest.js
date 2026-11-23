@@ -4,6 +4,7 @@ import { onShelfRejected, setShelfInsertCheck } from "../custom_bookshelf.js";
 import { createArea, isInArea, isSameBlock } from "../events/area.js";
 import { onItemInShelf } from "../events/index.js";
 import { changeShelfContents, DHSN_SHELF_TYPES } from "../events/shelf-contents.js";
+import { addEcts } from "../ects.js";
 import { questlog } from "../questlog.js";
 
 // Library quest "Aushilfe in der Bibliothek", played in rounds (see ROUNDS):
@@ -114,6 +115,7 @@ const TEXTS = {
     returnObjective: "Zurück zur Bibliothekarin",
     questFinished: (player) => `Quest abgeschlossen: ${TEXTS.questTitle} (${player.name})`,
     reward: (amount) => `Als Dankeschön bekommst du ${amount} Smaragde von mir.`,
+    ectsReward: (ects) => `Dafür bekommst du außerdem ${ects} ECTS.`,
     reset: "Aushilfe in der Bibliothek wurde zurückgesetzt.",
     wrongShelf: (shelfName, bookName) => `Halt! Das ist das Regal für ${shelfName}. Das Buch für ${bookName} gehört woanders hin.`,
     shelfUsed: (bookName) => `In dieses Regal hast du schon ein Buch gestellt. Nimm ein anderes ${bookName}-Regal.`,
@@ -161,10 +163,17 @@ function canStartQuest(player) {
 // Reward for finishing the whole quest. Placeholder until the story team decides on the real reward.
 const QUEST_REWARD = { item: "minecraft:emerald", amount: 3 };
 
+// ECTS for finishing the whole quest, in addition to QUEST_REWARD (see ects.js, project#121).
+// Placeholder until the story team decides; all quests together should give 180 (docs/Ects.md).
+// The challenge after the quest gives no ECTS.
+export const QUEST_ECTS = 5;
+
 // Called once after the last round.
 function giveQuestReward(player) {
     giveItem(player, QUEST_REWARD.item, QUEST_REWARD.amount);
     say(player, TEXTS.reward(QUEST_REWARD.amount));
+    say(player, TEXTS.ectsReward(QUEST_ECTS));
+    addEcts(player, QUEST_ECTS);
 }
 
 // Hook for the camera ride (planned by the story team). Called once when the first round is accepted.
