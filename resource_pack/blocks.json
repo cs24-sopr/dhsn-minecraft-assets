@@ -1,5 +1,8 @@
 {
     "format_version": "1.21.0",
+    "dhsn:cracks": {
+        "sound": "packed_mud"
+    },
     "myname:papers": {
         "sound": "stone"
     },
