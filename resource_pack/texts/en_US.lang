@@ -52,7 +52,7 @@ item.dhsn:volleyball=Volleyball
 entity.dhsn:volleyball.name=Volleyball
 item.dhsn:studierendenausweis=Studierendenausweis
 item.dhsn:certificate=Zeugnis
-item.myname:toolbox=Toolbox
+item.dhsn:toolbox=Toolbox
 
 item.myname:builder_helmet=Builder Helmet
 item.myname:doctor_hat=Doctor Hat
