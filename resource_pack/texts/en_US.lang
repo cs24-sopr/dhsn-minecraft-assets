@@ -12,6 +12,7 @@ tile.myname:led_roehre.name=LED Tube
 tile.myname:projector.name=Projector
 tile.myname:smart_board.name=Smart Board
 tile.myname:smart_board_206.name=Smart Board 206
+
 tile.myname:desk.name=Desk
 tile.myname:computer_science_bookshelf.name=Computer Science Bookshelf
 tile.myname:controlling_bookshelf.name=Controlling Bookshelf
@@ -34,20 +35,34 @@ entity.dhsn:librarian.name=Librarian
 item.spawn_egg.entity.dhsn:librarian.name=Librarian Egg
 entity.dhsn:studienorganisation.name=Studienorganisation
 item.spawn_egg.entity.dhsn:studienorganisation.name=Studienorganisation Egg
+entity.dhsn:cafeteria_cook.name=Cafeteria Cook
+item.spawn_egg.entity.dhsn:cafeteria_cook.name=Cafeteria Cook Egg
+entity.dhsn:ersti_coach.name=Ersti Coach
+item.spawn_egg.entity.dhsn:ersti_coach.name=Ersti Coach Egg
 
 item.myname:cs_book=Buch Informatik
 item.myname:niia_book=Buch Nachhaltige Ingenieurwissenschaft
 item.myname:immo_book=Buch Immobilienwirtschaft
 item.myname:cofi_book=Buch Controlling Finance
 item.myname:stwp_book=Buch Steuerberatung Wirtschaftsprüfung
-item.myname:doctor_hat=Doctor Hat
 tile.myname:three_eggs_in_mustard_sauce.name=Drei Eier in Senfsoße
 item.dhsn:volleyball=Volleyball
 entity.dhsn:volleyball.name=Volleyball
+item.dhsn:studierendenausweis=Studierendenausweis
 item.dhsn:certificate=Zeugnis
 item.dhsn:bamboo_key=bamboo key
 item.dhsn:cherry_key=cherry key
 item.dhsn:crimson_key=crimson key
 item.dhsn:warped_key=warped key
 
+<<<<<<< HEAD
 tile.myname:test_block.name=test_block
+=======
+item.myname:builder_helmet=Builder Helmet
+item.myname:doctor_hat=Doctor Hat
+
+tile.myname:test_block.name=test_block
+
+entity.myname:adrian_breun.name=adrian_breun
+item.spawn_egg.entity.myname:adrian_breun.name=Adrian Breun
+>>>>>>> origin/main
