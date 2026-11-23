@@ -1,5 +1,8 @@
 {
 	"format_version": "1.21.0",
+	"dhsn:logical_or_poster": {
+		"sound": "azalea_leaves"
+	},
 	"dhsn:logical_and_poster": {
 		"sound": "azalea_leaves"
 	},
