@@ -7,6 +7,7 @@ import {
 } from '@minecraft/server-ui'
 
 import * as Persist from './persist.js'
+import * as Utils from './utils.js'
 
 /**
  * German dropdown label and its persistent course identifier.
@@ -90,13 +91,29 @@ const lucasDialogPages = [
         text: 'Ach wie genial! Dann sind wir ja tatsächlich im selben Studiengang! Ich bin sogar bereits im 5. Semester.  Du kannst dir also vorstellen, dass ich hier mittlerweile den ein oder anderen Winkel kenne. Wenn du also mal Fragen hast oder irgendwo nicht weiterkommst, kannst du jederzeit zu mir kommen. Ich helfe dir gerne weiter.',
     },
     {
-        text: `So! Und jetzt will ich dich auch gar nicht länger aufhalten. Es gibt schließlich noch einiges zu entdecken! Als Nächstes solltest du deinen Studentenausweis bei der Studienorganisation in ${highlight('Raum {{playerRoom}}')} abholen.`,
+        text: `So! Und jetzt will ich dich auch gar nicht länger aufhalten. Es gibt schließlich noch einiges zu entdecken! Als Nächstes solltest du deinen Studentenausweis bei der Studienorganisation in ${highlight('Raum {{mrsSommerRoom}}')} abholen.`,
     },
     {
         text: 'Ach und bevor ich es vergesse: Hier, nimm diesen Gebäudeplan! Damit findest du dich auf dem Campus hoffentlich etwas leichter zurecht. Und vielleicht entdeckst du dabei ja auch schon den einen oder anderen Ort, den ich dir noch gar nicht gezeigt habe.',
     },
     {
         text: `Also dann, ${highlight('{{playerName}}')}: Ich wünsche dir einen fantastischen Studienstart und ganz viel Spaß an der DHSN. Und denk dran: Immer schön neugierig bleiben!`,
+    },
+]
+
+/** @type {LucasDialogPage[]} Ordered pages used by the dialogue. */
+const mrsSommerDialogPages = [
+    {
+        text: 'Ah, du gehörst wohl zu den neuen Erstsemestern. Herzlich willkommen, ich bin Frau Sommer! Lucas hat dich bereits angekündigt. Dann nehmen wir dich mal offiziell bei uns auf. Keine Sorge, das dauert auch gar nicht lange. Zumindest, wenn die Technik heute mitspielt ',
+    },
+    {
+        text: `Zunächst ist deine Einschreibung abzuschließen. Dazu gehört natürlich auch dein Studentenausweis. Schließlich sollst du auf dem Campus nicht ständig erklären müssen, dass du wirklich hier studierst. Einen kleinen Moment bitte ... Dein Ausweis ist gleich fertig!`,
+    },
+    {
+        text: 'So, bitteschön! Jetzt hast du deinen ganz persönlichen Studentenausweis. Bewahre ihn gut auf. Es ist dein offizieller Nachweis, dass du auf unsere Universität gehst. Damit ist deine Anmeldung bei uns auch schon abgeschlossen. Herzlichen Glückwunsch.',
+    },
+    {
+        text: 'Hab viel Spaß beim Erkunden des Campus und Erfüllen der Aufgaben. Bei weiteren Fragen rund um das Studium wende dich gerne jederzeit wieder an mich.',
     },
 ]
 
@@ -152,7 +169,8 @@ export async function completedLucasDialog() {
         try {
             if (waiting) await initialLucasDialog(player)
         } catch (error) {
-            retryError = error instanceof Error ? error : new Error(String(error))
+            retryError =
+                error instanceof Error ? error : new Error(String(error))
         } finally {
             retryActive = false
         }
@@ -182,13 +200,17 @@ export async function completedLucasDialog() {
             const result = Persist.readLucasDialogResult()
             if (result?.confirmed) return result
             if (world.getAllPlayers().length === 0) {
-                throw new Error('Player left before the Lucas dialogue completed.')
+                throw new Error(
+                    'Player left before the Lucas dialogue completed.'
+                )
             }
             await system.waitTicks(1)
         }
     } finally {
         waiting = false
-        world.beforeEvents.playerInteractWithEntity.unsubscribe(onLucasInteraction)
+        world.beforeEvents.playerInteractWithEntity.unsubscribe(
+            onLucasInteraction
+        )
     }
 }
 
@@ -211,22 +233,6 @@ function showsCourseInput(page) {
 }
 
 /**
- * Checks whether a page requests the course dropdown.
- * @param {import('./persist.js').PlayerCourse} playerCourse Player course
- * @returns {'113' | '114'}
- */
-function getPlayerRoom(playerCourse) {
-    if (
-        playerCourse === 'computer-science' ||
-        playerCourse === 'sustainable-engineering'
-    ) {
-        return '113'
-    }
-
-    return '114'
-}
-
-/**
  * Replaces all supported markers with their persistently stored values.
  * Missing values leave their markers unchanged; inserted text is not processed again.
  * @param {string} text Text containing {{playerName}} or {{playerCourse}} markers.
@@ -236,10 +242,10 @@ function getPlayerRoom(playerCourse) {
 export function replaceMarkers(text) {
     const playerName = Persist.readPlayerName()
     const playerCourse = Persist.readPlayerCourse()
-    const playerRoom = getPlayerRoom(playerCourse)
+    const mrsSommerRoom = Utils.getMrsSommerRoom(playerCourse)
 
-    /** @type {{ playerName: string | undefined, playerCourse: string | undefined }} */
-    const values = { playerName, playerCourse, playerRoom }
+    /** @type {{ playerName: string | undefined, mrsSommerRoom: string | undefined }} */
+    const values = { playerName, playerCourse, mrsSommerRoom }
 
     /**
      * Supplies a literal replacement for one matched marker.
@@ -252,7 +258,7 @@ export function replaceMarkers(text) {
     }
 
     return text.replace(
-        /\{\{(playerName|playerCourse|playerRoom)\}\}/g,
+        /\{\{(playerName|playerCourse|mrsSommerRoom)\}\}/g,
         replaceMarker
     )
 }
@@ -392,7 +398,10 @@ export async function showLucasDialog(player, startPage = 0) {
 
         updateCourseSelection()
         if (form.isShowing()) {
-            Persist.writeLucasDialogResult({ confirmed: false, page: pageIndex })
+            Persist.writeLucasDialogResult({
+                confirmed: false,
+                page: pageIndex,
+            })
         }
     }
 

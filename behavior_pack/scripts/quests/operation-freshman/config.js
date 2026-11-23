@@ -15,12 +15,12 @@
 export const MRS_SOMMER = {
     spawn: {
         113: {
-            position: {},
-            rotation: {},
+            position: { x: 14, y: -60, z: -6 },
+            rotation: { x: 0, y: 0 },
         },
         114: {
-            position: {},
-            rotation: {},
+            position: { x: 14, y: -60, z: -11 },
+            rotation: { x: 0, y: 0 },
         },
     },
 }

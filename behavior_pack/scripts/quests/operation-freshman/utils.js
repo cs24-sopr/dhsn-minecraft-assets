@@ -717,3 +717,19 @@ export function spawnMrsSommer(room) {
 
     return sommer
 }
+
+/**
+ * Checks whether a page requests the course dropdown.
+ * @param {import('./persist.js').PlayerCourse} playerCourse Player course
+ * @returns {'113' | '114'}
+ */
+export function getMrsSommerRoom(playerCourse) {
+    if (
+        playerCourse === 'computer-science' ||
+        playerCourse === 'sustainable-engineering'
+    ) {
+        return '113'
+    }
+
+    return '114'
+}

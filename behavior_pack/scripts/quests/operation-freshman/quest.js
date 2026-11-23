@@ -1,7 +1,7 @@
 import { world } from '@minecraft/server'
 import { onEnterTerritory } from '../../events/index.js'
 
-import * as Util from './utils.js'
+import * as Utils from './utils.js'
 import * as Debug from './debug.js'
 import * as Persist from './persist.js'
 
@@ -23,14 +23,14 @@ import { completedLucasDialog, initialLucasDialog } from './dialog.js'
  * @throws {Error} If the approach, dialogue, or an effect fails.
  */
 async function sequenceInitialLucasDialog(player, lucas) {
-    await Util.freezeUntil(player, async () => {
-        await Util.onGround(player)
+    await Utils.freezeUntil(player, async () => {
+        await Utils.onGround(player)
 
-        return Util.withEffectStack({
+        return Utils.withEffectStack({
             effects: [
-                (action) => Util.invisibleUntil(player, action),
+                (action) => Utils.invisibleUntil(player, action),
                 (action) =>
-                    Util.lookAtUntil(
+                    Utils.lookAtUntil(
                         player,
                         () => lucas.getHeadLocation(),
                         action
@@ -38,12 +38,12 @@ async function sequenceInitialLucasDialog(player, lucas) {
             ],
             action: async () => {
                 await Promise.all([
-                    Util.hop(lucas, 0.35),
-                    Util.turnToPlayer(player, lucas, 20),
+                    Utils.hop(lucas, 0.35),
+                    Utils.turnToPlayer(player, lucas, 20),
                 ])
 
                 // TODO better error handling
-                await Util.walkTo(lucas, player, 2.5, 20 * 20).then((result) =>
+                await Utils.walkTo(lucas, player, 2.5, 20 * 20).then((result) =>
                     result.expect('arrived', 'Lucas did not arrive')
                 )
 
@@ -100,7 +100,7 @@ async function stepInitialLucasDialog() {
         unsubscribers.forEach((unsubscriber) => unsubscriber())
     }
 
-    await sequenceInitialLucasDialog(player, Util.getLucas())
+    await sequenceInitialLucasDialog(player, Utils.getLucas())
 }
 
 /**
@@ -133,5 +133,6 @@ export async function initializeQuest() {
         await stepCompletedLucasDialog()
     }
 
-    // TODO: Resume Frau Sommer's step once its completion state is implemented.
+    const mrsSommerRoom = Utils.getMrsSommerRoom(Persist.readPlayerCourse())
+    Utils.spawnMrsSommer(mrsSommerRoom)
 }
