@@ -91,6 +91,9 @@ export function findTriggerZones() {
  * @property {import('@minecraft/server').Vector2} rotation Starting pitch and yaw.
  */
 
+/** @type {string[]} Entity types removed from the configured dimensions during a debug reset. */
+const NPC_TYPES_TO_REMOVE = ['dhsn:ersti_coach', 'dhsn:studienorganisation']
+
 // Temporary development coordinates, matching the reset command in command.js.
 /** @type {NpcPlacement[]} */
 const NPC_PLACEMENTS = [
@@ -101,17 +104,10 @@ const NPC_PLACEMENTS = [
         location: { x: 20, y: -60, z: 0.5 },
         rotation: { x: 0, y: 0 },
     },
-    {
-        typeId: 'dhsn:studienorganisation',
-        nameTag: 'Frau Sommer',
-        dimensionId: 'minecraft:overworld',
-        location: { x: 22, y: -60, z: 0.5 },
-        rotation: { x: 0, y: 0 },
-    },
 ]
 
 /**
- * Recreates the loaded debug NPCs at their default positions and rotations.
+ * Removes loaded NPCs of the configured types and recreates the debug placements.
  * Checks destination chunks before removing any existing NPCs.
  * @returns {void}
  * @throws {Error} If a destination is unloaded or an NPC operation fails.
@@ -129,10 +125,9 @@ export function resetNpcs() {
     const dimensions = new Set(
         NPC_PLACEMENTS.map((placement) => placement.dimensionId)
     )
-    const types = new Set(NPC_PLACEMENTS.map((placement) => placement.typeId))
     for (const dimensionId of dimensions) {
         const dimension = world.getDimension(dimensionId)
-        for (const type of types) {
+        for (const type of NPC_TYPES_TO_REMOVE) {
             for (const npc of dimension.getEntities({ type })) npc.remove()
         }
     }

@@ -5,6 +5,8 @@ import {
     world,
 } from '@minecraft/server'
 
+import * as Config from './config.js'
+
 /**
  * Outcomes of a walk; invalid arguments and unexpected API failures still reject.
  * @typedef {'arrived' | 'interrupted' | 'cancelled'} WalkToOutcome
@@ -695,4 +697,23 @@ export function getLucas() {
     }
 
     return entities[0]
+}
+
+/**
+ * Spawns Frau Sommer at the configured overworld placement for a study office.
+ * @param {'113' | '114'} room Study office room whose placement to use.
+ * @returns {import('@minecraft/server').Entity} The spawned Frau Sommer entity.
+ * @throws {Error} If spawning or configuring the entity fails.
+ */
+export function spawnMrsSommer(room) {
+    const { position, rotation } = Config.MRS_SOMMER.spawn[room]
+
+    const sommer = world
+        .getDimension('overworld')
+        .spawnEntity('dhsn:studienorganisation', position)
+
+    sommer.nameTag = 'Frau Sommer'
+    sommer.setRotation(rotation)
+
+    return sommer
 }
