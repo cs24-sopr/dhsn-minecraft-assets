@@ -1,6 +1,10 @@
+import { world } from '@minecraft/server'
 import { onEnterTerritory } from '../../events/index.js'
 
 import * as Util from './utils.js'
+import * as Debug from './debug.js'
+import * as Persist from './persist.js'
+
 import { completedLucasDialog, initialLucasDialog } from './dialog.js'
 
 /**
@@ -12,21 +16,13 @@ import { completedLucasDialog, initialLucasDialog } from './dialog.js'
  */
 
 /**
- * TODO
- * @param {unknown} error Failure from a Minecraft API operation.
- * @returns {void}
- */
-function logError(error) {
-    const message = error instanceof Error ? error.message : String(error)
-    console.error(`[Operation Erstsemester]: ${message}`)
-}
-
-/**
- * TODO
+ * Runs Lucas's initial approach and one dialogue attempt inside the effect stack.
  * @param {import('@minecraft/server').Player} player Player
  * @param {import('@minecraft/server').Entity} lucas Lucas
+ * @returns {Promise<void>} Resolves when the initial conversation closes and effects end.
+ * @throws {Error} If the approach, dialogue, or an effect fails.
  */
-async function startQuestSequence(player, lucas) {
+async function sequenceInitialLucasDialog(player, lucas) {
     await Util.freezeUntil(player, async () => {
         await Util.onGround(player)
 
@@ -55,36 +51,87 @@ async function startQuestSequence(player, lucas) {
             },
         })
     })
-
-    await completedLucasDialog()
-    player.sendMessage('Done')
 }
 
 /**
- * TODO
- * @param {QuestZone[]} zones Zones to monitor
- * @returns {void}
+ * Waits for an entrance, then runs the initial approach and dialogue attempt.
+ * Entrance listeners are removed on entry, disconnect, or registration failure.
+ * @returns {Promise<void>} Resolves when the initial dialogue completes or is cancelled.
+ * @throws {Error} If no player remains, zone setup fails, or the sequence fails.
  */
-export function registerTriggerZoneEvents(zones) {
-    /** @type {Array<() => void>} Cleanup callbacks for the configured entry zones. */
-    const unsubscribers = zones.map((zone) =>
-        onEnterTerritory(
-            {
-                dimension: zone.dimensionId,
-                from: zone.from,
-                to: zone.to,
-                interval: 1,
-            },
-            async (event) => {
-                try {
-                    const lucas = Util.getLucas()
-                    unsubscribers.forEach((unsubscripe) => unsubscripe())
+async function stepInitialLucasDialog() {
+    const zones = Debug.findTriggerZones()
 
-                    await startQuestSequence(event.player, lucas)
-                } catch (error) {
-                    logError(error)
-                }
+    if (zones.length === 0) {
+        throw new Error('No trigger zones found')
+    }
+
+    /** @type {Array<() => void>} Cleanup callbacks for the entrance listeners. */
+    const unsubscribers = []
+
+    /** @type {import('@minecraft/server').Player} Player entering either entrance. */
+    let player
+
+    try {
+        player = await new Promise((resolve, reject) => {
+            /** @returns {void} Rejects the entrance wait when the single player leaves. */
+            function onPlayerLeave() {
+                reject(new Error('Player left before entering a quest zone.'))
             }
-        )
-    )
+            world.afterEvents.playerLeave.subscribe(onPlayerLeave)
+            unsubscribers.push(() =>
+                world.afterEvents.playerLeave.unsubscribe(onPlayerLeave)
+            )
+            for (const zone of zones) {
+                unsubscribers.push(
+                    onEnterTerritory(
+                        {
+                            dimension: zone.dimensionId,
+                            from: zone.from,
+                            to: zone.to,
+                            interval: 1,
+                        },
+                        (event) => resolve(event.player)
+                    )
+                )
+            }
+        })
+    } finally {
+        unsubscribers.forEach((unsubscriber) => unsubscriber())
+    }
+
+    await sequenceInitialLucasDialog(player, Util.getLucas())
+}
+
+/**
+ * Waits for interaction retries until Lucas's dialogue is confirmed.
+ * @returns {Promise<void>} Resolves after dialogue completion.
+ * @throws {Error} If waiting for dialogue completion fails.
+ */
+async function stepCompletedLucasDialog() {
+    await completedLucasDialog()
+}
+
+/**
+ * Placeholder for the later Frau Sommer dialogue step.
+ * @returns {Promise<void>} Resolves without performing enrollment yet.
+ */
+async function stepCompletedSummerDialog() {}
+
+/**
+ * Resumes the single-player quest at its saved world checkpoint.
+ * An absent dialogue result means Lucas has not opened his conversation yet.
+ * @returns {Promise<void>} Resolves after the currently implemented quest steps.
+ * @throws {Error} If storage, entrance monitoring, or a quest step fails.
+ */
+export async function initializeQuest() {
+    if (!Persist.readLucasDialogResult()) {
+        await stepInitialLucasDialog()
+    }
+
+    if (!Persist.readLucasDialogResult()?.confirmed) {
+        await stepCompletedLucasDialog()
+    }
+
+    // TODO: Resume Frau Sommer's step once its completion state is implemented.
 }

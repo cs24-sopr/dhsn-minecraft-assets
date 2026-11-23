@@ -1,10 +1,4 @@
-import {
-    BlockVolume,
-    InputPermissionCategory,
-    system,
-    world,
-} from '@minecraft/server'
-import { registerTriggerZoneEvents } from './quest.js'
+import { BlockVolume, InputPermissionCategory, world } from '@minecraft/server'
 
 /**
  * Clears all Operation Erstsemester world dynamic properties for a debug restart.
@@ -36,12 +30,12 @@ const PLAYER_DEFAULTS = {
 }
 
 /**
- * Restores the player's debug position, rotation, normal camera, and input.
- * @param {import('@minecraft/server').Player} player Player to reset.
+ * Restores normal camera and input after a reload interrupts the quest effects.
+ * @param {import('@minecraft/server').Player} player Player whose controls to restore.
  * @returns {void}
- * @throws {Error} If a player or destination operation fails.
+ * @throws {Error} If restoring camera or input fails.
  */
-export function resetPlayer(player) {
+export function resetPlayerControls(player) {
     player.camera.clear()
     player.inputPermissions.setPermissionCategory(
         InputPermissionCategory.Movement,
@@ -51,6 +45,16 @@ export function resetPlayer(player) {
         InputPermissionCategory.Camera,
         true
     )
+}
+
+/**
+ * Restores the player's debug position, rotation, normal camera, and input.
+ * @param {import('@minecraft/server').Player} player Player to reset.
+ * @returns {void}
+ * @throws {Error} If a player or destination operation fails.
+ */
+export function resetPlayer(player) {
+    resetPlayerControls(player)
     player.teleport(PLAYER_DEFAULTS.location, {
         dimension: world.getDimension(PLAYER_DEFAULTS.dimensionId),
         rotation: PLAYER_DEFAULTS.rotation,
@@ -160,52 +164,3 @@ export function resetNpcs() {
     }
 }
 
-/** @type {boolean} Whether the temporary debug zones have been registered. */
-let zonesRegistered = false
-/** @type {boolean} Whether the debug NPCs have been reset during this script load. */
-let npcsReset = false
-/** @type {boolean} Whether persistent quest storage has been reset during this script load. */
-let persistReset = false
-/** @type {Set<string>} Players already reset during this script load. */
-const resetPlayerIds = new Set()
-
-/**
- * Resets quest storage, players, and debug NPCs, then registers debug zones.
- * World load covers reloads; player spawn covers entering the world initially.
- * @returns {void}
- */
-function initializeTriggerZones() {
-    if (zonesRegistered) return
-    const players = world.getAllPlayers()
-    if (players.length === 0) return
-
-    try {
-        if (!persistReset) {
-            resetPersist()
-            persistReset = true
-        }
-        for (const player of players) {
-            if (resetPlayerIds.has(player.id)) continue
-            resetPlayer(player)
-            resetPlayerIds.add(player.id)
-        }
-        if (!npcsReset) {
-            resetNpcs()
-            npcsReset = true
-        }
-        const zones = findTriggerZones()
-        if (zones.length === 0) return
-
-        registerTriggerZoneEvents(zones)
-        zonesRegistered = true
-    } catch (error) {
-        const message = error instanceof Error ? error.message : String(error)
-        console.error(`[Operation Erstsemester]: ${message}`)
-    }
-}
-
-world.afterEvents.worldLoad.subscribe(initializeTriggerZones)
-world.afterEvents.playerSpawn.subscribe(initializeTriggerZones)
-
-// Also initialize after script startup when players are already present.
-system.run(initializeTriggerZones)

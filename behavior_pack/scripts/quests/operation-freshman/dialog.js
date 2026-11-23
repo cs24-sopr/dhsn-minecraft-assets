@@ -391,6 +391,9 @@ export async function showLucasDialog(player, startPage = 0) {
         )
 
         updateCourseSelection()
+        if (form.isShowing()) {
+            Persist.writeLucasDialogResult({ confirmed: false, page: pageIndex })
+        }
     }
 
     /** @returns {void} Displays the previous configured page. */
@@ -472,7 +475,9 @@ export async function showLucasDialog(player, startPage = 0) {
     const courseChanged = course.subscribe(updateCourseSelection)
     try {
         updatePage()
-        await form.show()
+        const closed = form.show()
+        Persist.writeLucasDialogResult({ confirmed: false, page: pageIndex })
+        await closed
         return { ...result, page: pageIndex }
     } finally {
         name.unsubscribe(nameChanged)
