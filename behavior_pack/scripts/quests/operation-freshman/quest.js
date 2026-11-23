@@ -1,8 +1,6 @@
-import { system, world } from '@minecraft/server'
 import { onEnterTerritory } from '../../events/index.js'
 
 import * as Util from './utils.js'
-import * as Debug from './debug.js'
 import { showLucasDialog } from './dialog.js'
 
 /**
@@ -63,7 +61,7 @@ async function startQuestSequence(player, lucas) {
  * @param {QuestZone[]} zones Zones to monitor
  * @returns {void}
  */
-function registerTriggerZoneEvents(zones) {
+export function registerTriggerZoneEvents(zones) {
     /** @type {Array<() => void>} Cleanup callbacks for the configured entry zones. */
     const unsubscribers = zones.map((zone) =>
         onEnterTerritory(
@@ -87,44 +85,3 @@ function registerTriggerZoneEvents(zones) {
     )
 }
 
-/** @type {boolean} Whether the temporary debug zones have been registered. */
-let zonesRegistered = false
-/** @type {boolean} Whether the debug NPCs have been reset during this script load. */
-let npcsReset = false
-/** @type {Set<string>} Players already reset during this script load. */
-const resetPlayerIds = new Set()
-
-/**
- * Resets players and debug NPCs, then registers zones in the debug area.
- * World load covers reloads; player spawn covers entering the world initially.
- * @returns {void}
- */
-function initializeTriggerZones() {
-    if (zonesRegistered) return
-    const players = world.getAllPlayers()
-    if (players.length === 0) return
-
-    try {
-        for (const player of players) {
-            if (resetPlayerIds.has(player.id)) continue
-            Debug.resetPlayer(player)
-            resetPlayerIds.add(player.id)
-        }
-        if (!npcsReset) {
-            Debug.resetNpcs()
-            npcsReset = true
-        }
-        const zones = Debug.findTriggerZones()
-        if (zones.length === 0) return
-
-        registerTriggerZoneEvents(zones)
-        zonesRegistered = true
-    } catch (error) {
-        logError(error)
-    }
-}
-
-world.afterEvents.worldLoad.subscribe(initializeTriggerZones)
-world.afterEvents.playerSpawn.subscribe(initializeTriggerZones)
-// Also initialize after script startup when players are already present.
-system.run(initializeTriggerZones)

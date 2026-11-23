@@ -1,4 +1,23 @@
-import { BlockVolume, InputPermissionCategory, world } from '@minecraft/server'
+import {
+    BlockVolume,
+    InputPermissionCategory,
+    system,
+    world,
+} from '@minecraft/server'
+import { registerTriggerZoneEvents } from './quest.js'
+
+/**
+ * Clears all Operation Erstsemester world dynamic properties for a debug restart.
+ * @returns {void}
+ * @throws {Error} If reading or clearing world storage fails.
+ */
+export function resetPersist() {
+    for (const propertyId of world.getDynamicPropertyIds()) {
+        if (propertyId.startsWith('dhsn:operation_freshman_')) {
+            world.setDynamicProperty(propertyId, undefined)
+        }
+    }
+}
 
 /**
  * Player placement used when restarting the temporary development sequence.
@@ -140,3 +159,53 @@ export function resetNpcs() {
         npc.setRotation(placement.rotation)
     }
 }
+
+/** @type {boolean} Whether the temporary debug zones have been registered. */
+let zonesRegistered = false
+/** @type {boolean} Whether the debug NPCs have been reset during this script load. */
+let npcsReset = false
+/** @type {boolean} Whether persistent quest storage has been reset during this script load. */
+let persistReset = false
+/** @type {Set<string>} Players already reset during this script load. */
+const resetPlayerIds = new Set()
+
+/**
+ * Resets quest storage, players, and debug NPCs, then registers debug zones.
+ * World load covers reloads; player spawn covers entering the world initially.
+ * @returns {void}
+ */
+function initializeTriggerZones() {
+    if (zonesRegistered) return
+    const players = world.getAllPlayers()
+    if (players.length === 0) return
+
+    try {
+        if (!persistReset) {
+            resetPersist()
+            persistReset = true
+        }
+        for (const player of players) {
+            if (resetPlayerIds.has(player.id)) continue
+            resetPlayer(player)
+            resetPlayerIds.add(player.id)
+        }
+        if (!npcsReset) {
+            resetNpcs()
+            npcsReset = true
+        }
+        const zones = findTriggerZones()
+        if (zones.length === 0) return
+
+        registerTriggerZoneEvents(zones)
+        zonesRegistered = true
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error)
+        console.error(`[Operation Erstsemester]: ${message}`)
+    }
+}
+
+world.afterEvents.worldLoad.subscribe(initializeTriggerZones)
+world.afterEvents.playerSpawn.subscribe(initializeTriggerZones)
+
+// Also initialize after script startup when players are already present.
+system.run(initializeTriggerZones)
