@@ -1,4 +1,64 @@
-import { BlockVolume, InputPermissionCategory, world } from '@minecraft/server'
+import {
+    BlockVolume,
+    CommandPermissionLevel,
+    CustomCommandStatus,
+    InputPermissionCategory,
+    system,
+    world,
+} from '@minecraft/server'
+
+/**
+ * Resets the temporary quest environment from a scheduled command callback.
+ * Script reload remains a separate action to restart the running quest sequence.
+ * @returns {void}
+ */
+function resetQuestEnvironment() {
+    try {
+        resetNpcs()
+        for (const player of world.getAllPlayers()) {
+            resetPlayer(player)
+            player.removeTag('dhsn:lucas_follow_target')
+        }
+        resetPersist()
+        world.sendMessage(
+            'Operation Erstsemester zurückgesetzt. Bitte jetzt /reload ausführen, um den Questablauf neu zu starten.'
+        )
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error)
+        console.error(`[Operation Erstsemester]: ${message}`)
+        world.sendMessage(`Quest-Reset fehlgeschlagen: ${message}`)
+    }
+}
+
+/**
+ * Schedules the debug reset outside the custom command's restricted execution.
+ * @returns {import('@minecraft/server').CustomCommandResult} Scheduling status.
+ */
+function resetQuestCommand() {
+    system.run(resetQuestEnvironment)
+    return {
+        status: CustomCommandStatus.Success,
+        message: 'Quest-Reset eingeplant.',
+    }
+}
+
+/**
+ * Registers the operator-only quest reset command during script startup.
+ * @param {import('@minecraft/server').StartupEvent} event Command registry access.
+ * @returns {void}
+ */
+function registerDebugCommands(event) {
+    event.customCommandRegistry.registerCommand(
+        {
+            name: 'dhsn:reset',
+            description: 'Setzt Quest-Speicher, Spieler und Debug-NPCs zurück.',
+            permissionLevel: CommandPermissionLevel.GameDirectors,
+        },
+        resetQuestCommand
+    )
+}
+
+system.beforeEvents.startup.subscribe(registerDebugCommands)
 
 /**
  * Clears all Operation Erstsemester world dynamic properties for a debug restart.
@@ -163,4 +223,3 @@ export function resetNpcs() {
         npc.setRotation(placement.rotation)
     }
 }
-
