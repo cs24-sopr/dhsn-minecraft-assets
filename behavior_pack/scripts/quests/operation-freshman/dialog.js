@@ -1,10 +1,10 @@
+import { system, world } from '@minecraft/server'
 import {
     CustomForm,
     ObservableBoolean,
     ObservableNumber,
     ObservableString,
 } from '@minecraft/server-ui'
-// import { readPlayerCourse, readPlayerName, writePlayerName } from './persist.js'
 
 import * as Persist from './persist.js'
 
@@ -102,8 +102,45 @@ const lucasDialogPages = [
 
 /**
  * Result of the configured dialogue, without completing the quest.
- * @typedef {{ confirmed: true, name?: string } | { confirmed: false }} LucasDialogResult
+ * @typedef {{ confirmed: true, page: number, name?: string } | { confirmed: false, page: number }} LucasDialogResult
  */
+
+/**
+ * Shows one attempt at the world's saved page and persists its result on closing.
+ * An already confirmed dialogue returns without opening another form.
+ * Only confirmed input is restored from persistent storage on a new attempt.
+ * @param {import('@minecraft/server').Player} player Player viewing the dialogue.
+ * @returns {Promise<LucasDialogResult>} Result when this attempt finishes or closes.
+ * @throws {Error} If the player is invalid, storage fails, or the dialogue fails.
+ */
+export async function initialLucasDialog(player) {
+    if (!player.isValid) throw new Error('Player is no longer available.')
+
+    const savedResult = Persist.readLucasDialogResult()
+    if (savedResult?.confirmed) return savedResult
+
+    const result = await showLucasDialog(player, savedResult?.page ?? 0)
+    Persist.writeLucasDialogResult(result)
+    return result
+}
+
+/**
+ * Checks the world's saved dialogue result once per tick until it is confirmed.
+ * Cancellation leaves this pending; a later initialLucasDialog call can complete it.
+ * NPC interaction handling is intentionally not registered here yet.
+ * @returns {Promise<LucasDialogResult>} Confirmed result, immediately if already finished.
+ * @throws {Error} If storage fails or no player remains in the world while waiting.
+ */
+export async function completedLucasDialog() {
+    while (true) {
+        const result = Persist.readLucasDialogResult()
+        if (result?.confirmed) return result
+        if (world.getAllPlayers().length === 0) {
+            throw new Error('Player left before the Lucas dialogue completed.')
+        }
+        await system.waitTicks(1)
+    }
+}
 
 /**
  * Checks whether a page requests the name input.
@@ -142,14 +179,13 @@ function getPlayerRoom(playerCourse) {
 /**
  * Replaces all supported markers with their persistently stored values.
  * Missing values leave their markers unchanged; inserted text is not processed again.
- * @param {import('@minecraft/server').Player} player Player whose values to read.
  * @param {string} text Text containing {{playerName}} or {{playerCourse}} markers.
  * @returns {string} Text with available player values substituted literally.
- * @throws {Error} If reading persistent player storage fails.
+ * @throws {Error} If reading persistent world storage fails.
  */
-export function replaceMarkers(player, text) {
-    const playerName = Persist.readPlayerName(player)
-    const playerCourse = Persist.readPlayerCourse(player)
+export function replaceMarkers(text) {
+    const playerName = Persist.readPlayerName()
+    const playerCourse = Persist.readPlayerCourse()
     const playerRoom = getPlayerRoom(playerCourse)
 
     /** @type {{ playerName: string | undefined, playerCourse: string | undefined }} */
@@ -177,26 +213,33 @@ export function replaceMarkers(player, text) {
  * Navigation preserves input; leaving an input page saves its confirmed value.
  * Closing the form does not confirm the dialogue or advance the quest.
  * @param {import('@minecraft/server').Player} player Player viewing the dialogue.
+ * @param {number} [startPage=0] Zero-based page at which to open the dialogue.
  * @returns {Promise<LucasDialogResult>} Confirmed dialogue or an unfinished result.
  * @throws {Error} If form setup or display fails; the caller handles cleanup.
  */
-export async function showLucasDialog(player) {
-    if (lucasDialogPages.length === 0) return { confirmed: false }
+export async function showLucasDialog(player, startPage = 0) {
+    if (
+        !Number.isInteger(startPage) ||
+        startPage < 0 ||
+        startPage >= lucasDialogPages.length
+    ) {
+        throw new RangeError('Lucas dialogue start page is out of range.')
+    }
 
     /** @type {number} Index of the currently displayed page. */
-    let pageIndex = 0
+    let pageIndex = startPage
 
     /** @type {LucasDialogResult} Remains unfinished until the last page is confirmed. */
-    let result = { confirmed: false }
+    let result = { confirmed: false, page: startPage }
 
     /** @type {boolean} Whether any configured page collects a name. */
     const requiresName = lucasDialogPages.some(showsNameInput)
 
     /** @type {string | undefined} Previously confirmed name, if any. */
-    const savedName = Persist.readPlayerName(player)
+    const savedName = Persist.readPlayerName()
 
     /** @type {import('./persist.js').PlayerCourse | undefined} Previously selected course. */
-    const savedCourse = Persist.readPlayerCourse(player)
+    const savedCourse = Persist.readPlayerCourse()
 
     /**
      * Finds the dropdown choice matching the stored course.
@@ -284,7 +327,8 @@ export async function showLucasDialog(player) {
      */
     function updatePage() {
         const page = lucasDialogPages[pageIndex]
-        text.setData(replaceMarkers(player, page.text))
+
+        text.setData(replaceMarkers(page.text))
         title.setData(
             `Lucas (mit c) [${pageIndex + 1} von ${lucasDialogPages.length}]`
         )
@@ -295,6 +339,7 @@ export async function showLucasDialog(player) {
         nextLabel.setData(
             pageIndex === lucasDialogPages.length - 1 ? 'Abschließen' : 'Weiter'
         )
+
         updateCourseSelection()
     }
 
@@ -324,7 +369,7 @@ export async function showLucasDialog(player) {
             (requiresName && pageIndex === lucasDialogPages.length - 1)
         ) {
             try {
-                Persist.writePlayerName(player, preferredName)
+                Persist.writePlayerName(preferredName)
             } catch (error) {
                 console.error(`[Operation Erstsemester]: ${String(error)}`)
                 return
@@ -333,7 +378,7 @@ export async function showLucasDialog(player) {
 
         if (showsCourseInput(page) && courseOption) {
             try {
-                Persist.writePlayerCourse(player, courseOption.course)
+                Persist.writePlayerCourse(courseOption.course)
             } catch (error) {
                 console.error(`[Operation Erstsemester]: ${String(error)}`)
                 return
@@ -347,8 +392,8 @@ export async function showLucasDialog(player) {
         }
 
         result = requiresName
-            ? { confirmed: true, name: preferredName }
-            : { confirmed: true }
+            ? { confirmed: true, page: pageIndex, name: preferredName }
+            : { confirmed: true, page: pageIndex }
         form.close()
     }
 
@@ -378,7 +423,7 @@ export async function showLucasDialog(player) {
     try {
         updatePage()
         await form.show()
-        return result
+        return { ...result, page: pageIndex }
     } finally {
         name.unsubscribe(nameChanged)
         course.unsubscribe(courseChanged)

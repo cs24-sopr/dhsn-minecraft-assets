@@ -1,8 +1,13 @@
-/** @type {string} Persistent player property shared with the Lucas dialogue. */
+import { world } from '@minecraft/server'
+
+/** @type {string} Persistent world property shared with the Lucas dialogue. */
 const NAME_PROPERTY = 'dhsn:operation_freshman_name'
 
-/** @type {string} Persistent player property containing the selected course. */
+/** @type {string} Persistent world property containing the selected course. */
 const COURSE_PROPERTY = 'dhsn:operation_freshman_course'
+
+/** @type {string} Persistent world property containing the last dialogue result. */
+const LUCAS_DIALOG_PROPERTY = 'dhsn:operation_freshman_lucas_dialog'
 
 /**
  * Supported course identifiers for Operation Erstsemester.
@@ -34,51 +39,68 @@ function isPlayerCourse(value) {
 }
 
 /**
- * Stores the preferred name in the player's persistent dynamic properties.
+ * Stores the preferred name in the world's persistent dynamic properties.
  * Replaces any previously stored name and preserves the supplied string.
- * @param {import('@minecraft/server').Player} player Player whose name to store.
  * @param {string} name Preferred name to persist.
  * @returns {void}
- * @throws {Error} If the player is invalid or the storage operation fails.
+ * @throws {Error} If the storage operation fails.
  */
-export function writePlayerName(player, name) {
-    player.setDynamicProperty(NAME_PROPERTY, name)
+export function writePlayerName(name) {
+    world.setDynamicProperty(NAME_PROPERTY, name)
 }
 
 /**
- * Reads the preferred name from the player's persistent dynamic properties.
- * @param {import('@minecraft/server').Player} player Player whose name to read.
+ * Reads the preferred name from the world's persistent dynamic properties.
  * @returns {string | undefined} Stored name, or undefined if no string is stored.
- * @throws {Error} If the player is invalid or the storage operation fails.
+ * @throws {Error} If the storage operation fails.
  */
-export function readPlayerName(player) {
-    const name = player.getDynamicProperty(NAME_PROPERTY)
+export function readPlayerName() {
+    const name = world.getDynamicProperty(NAME_PROPERTY)
     return typeof name === 'string' ? name : undefined
 }
 
 /**
- * Stores the selected course in the player's persistent dynamic properties.
+ * Stores the selected course in the world's persistent dynamic properties.
  * Replaces any previously stored course.
- * @param {import('@minecraft/server').Player} player Player whose course to store.
  * @param {PlayerCourse} course Supported course identifier to persist.
  * @returns {void}
  * @throws {RangeError} If the course is not one of the five supported choices.
- * @throws {Error} If the player is invalid or the storage operation fails.
+ * @throws {Error} If the storage operation fails.
  */
-export function writePlayerCourse(player, course) {
+export function writePlayerCourse(course) {
     if (!isPlayerCourse(course)) {
         throw new RangeError('Ungültiger Studiengang.')
     }
-    player.setDynamicProperty(COURSE_PROPERTY, course)
+    world.setDynamicProperty(COURSE_PROPERTY, course)
 }
 
 /**
- * Reads the selected course from the player's persistent dynamic properties.
- * @param {import('@minecraft/server').Player} player Player whose course to read.
+ * Reads the selected course from the world's persistent dynamic properties.
  * @returns {PlayerCourse | undefined} Stored course, or undefined if missing or unsupported.
- * @throws {Error} If the player is invalid or the storage operation fails.
+ * @throws {Error} If the storage operation fails.
  */
-export function readPlayerCourse(player) {
-    const course = player.getDynamicProperty(COURSE_PROPERTY)
+export function readPlayerCourse() {
+    const course = world.getDynamicProperty(COURSE_PROPERTY)
     return isPlayerCourse(course) ? course : undefined
+}
+
+/**
+ * Reads the world's last Lucas dialogue result.
+ * @returns {import('./dialog.js').LucasDialogResult | undefined} Saved result, if present.
+ * @throws {Error} If reading or parsing the saved result fails.
+ */
+export function readLucasDialogResult() {
+    const value = world.getDynamicProperty(LUCAS_DIALOG_PROPERTY)
+    if (typeof value !== 'string') return undefined
+    return JSON.parse(value)
+}
+
+/**
+ * Stores the last page and completion status in the world.
+ * @param {import('./dialog.js').LucasDialogResult} result Result to persist.
+ * @returns {void}
+ * @throws {Error} If writing the saved result fails.
+ */
+export function writeLucasDialogResult(result) {
+    world.setDynamicProperty(LUCAS_DIALOG_PROPERTY, JSON.stringify(result))
 }
