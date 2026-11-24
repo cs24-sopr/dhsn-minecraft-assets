@@ -66,6 +66,8 @@ One world dynamic property per player: `dhsn:quest_awakening:<player id>`, JSON 
 
 ## Moving the quest to the real map
 
+**Step-by-step guide for the team that does it (German): [awakening-quest-map-guide.md](awakening-quest-map-guide.md).** The checklist below is the short version.
+
 The quest knows nothing about the map. Everything it needs is one `LAYOUT` object at the top of `awakening-quest.js`. Until it is filled in (it is `undefined`), the quest does nothing; the test setup provides its own layout instead (see [Testing](#testing)).
 
 **Checklist for the real map**
