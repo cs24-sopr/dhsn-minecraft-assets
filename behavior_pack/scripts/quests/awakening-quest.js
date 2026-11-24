@@ -59,7 +59,8 @@ import { questlog } from "../questlog.js";
  */
 
 // The places in the real map. Undefined means "not built yet": the quest then does nothing, except in a
-// world where the test setup saved its own layout (see setAwakeningTestLayout), which takes precedence.
+// world where the test setup or the setup menu saved a layout (see setAwakeningTestLayout and
+// setAwakeningSetupLayout), which takes precedence.
 // Example (all numbers are made up):
 // const LAYOUT = {
 //     wake: { x: 10.5, y: 64, z: 20.5 },
@@ -154,6 +155,7 @@ const TEXTS = {
 // player: "dhsn:quest_awakening:<player id>".
 const STATE_PROPERTY = "dhsn:quest_awakening";
 const TEST_LAYOUT_PROPERTY = "dhsn:awakening_test_layout";
+const SETUP_LAYOUT_PROPERTY = "dhsn:awakening_setup_layout";
 
 const RESET_COMMAND = "dhsn:quest_reset_awakening";
 const STATE_COMMAND = "dhsn:quest_awakening_state";
@@ -244,11 +246,19 @@ function findPlayer(playerId) {
 // --------------------------------------------------
 
 /**
- * The layout of the quest: the one saved by the test setup, otherwise LAYOUT.
+ * The layout of the quest: the one saved in the world by the setup menu or the test setup (only one of them
+ * exists at a time, the one saved last), otherwise LAYOUT.
  * @returns {AwakeningLayout | undefined}
  */
 function getLayout() {
-    return readJsonProperty(world, TEST_LAYOUT_PROPERTY) ?? LAYOUT;
+    return readJsonProperty(world, SETUP_LAYOUT_PROPERTY) ?? readJsonProperty(world, TEST_LAYOUT_PROPERTY) ?? LAYOUT;
+}
+
+/** Where the active layout comes from, for the state command and the setup menu. */
+export function getAwakeningLayoutSource() {
+    if (readJsonProperty(world, SETUP_LAYOUT_PROPERTY)) return "Setup-Menü";
+    if (readJsonProperty(world, TEST_LAYOUT_PROPERTY)) return "Testaufbau";
+    return LAYOUT ? "LAYOUT im Code" : undefined;
 }
 
 function dimensionOf(layout) {
@@ -707,8 +717,30 @@ world.afterEvents.playerLeave.subscribe(({ playerId }) => {
  * @param {AwakeningLayout} layout
  */
 export function setAwakeningTestLayout(layout) {
+    world.setDynamicProperty(SETUP_LAYOUT_PROPERTY, undefined);
     world.setDynamicProperty(TEST_LAYOUT_PROPERTY, JSON.stringify(layout));
     applyLayout();
+}
+
+/**
+ * Saves the layout made with the setup menu (quests/awakening-setup.js) in the world, or removes it with undefined.
+ * It replaces the layout of the test setup and takes precedence over LAYOUT.
+ * @param {AwakeningLayout | undefined} layout
+ */
+export function setAwakeningSetupLayout(layout) {
+    if (layout) world.setDynamicProperty(TEST_LAYOUT_PROPERTY, undefined);
+    world.setDynamicProperty(SETUP_LAYOUT_PROPERTY, layout ? JSON.stringify(layout) : undefined);
+    applyLayout();
+}
+
+/**
+ * Plays a camera path alone, without changing the progress. Used by the setup menu to check the shots.
+ * @param {import("@minecraft/server").Player} player
+ * @param {CameraShot[]} cameraPath
+ * @returns {boolean} False if the player is already on a ride.
+ */
+export function previewAwakeningRide(player, cameraPath) {
+    return playRide(player, /** @type {AwakeningLayout} */ ({ cameraPath }));
 }
 
 function clearAwakeningTestLayout() {
@@ -737,7 +769,7 @@ function describeState(state) {
     const lines = [`Schritt: ${state.step} (${STEPS.indexOf(state.step) + 1}/${STEPS.length})`];
     if (state.step === "wake") lines.push(`Wecker: ${state.alarmOff ? "aus" : "klingelt"}`);
     const layout = getLayout();
-    lines.push(layout ? `Layout: ${JSON.stringify(layout.window)} (Fenster), ${JSON.stringify(layout.portal)} (Portal)` : "Layout: nicht gesetzt");
+    lines.push(layout ? `Layout (${getAwakeningLayoutSource()}): ${JSON.stringify(layout.window)} (Fenster), ${JSON.stringify(layout.portal)} (Portal)` : "Layout: nicht gesetzt");
     return lines;
 }
 
