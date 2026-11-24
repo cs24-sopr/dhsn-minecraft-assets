@@ -4,6 +4,18 @@
     "padding": 8,
     "num_mip_levels": 4,
     "texture_data": {
+        "cracks": {
+            "textures": "textures/blocks/cracks"
+        },
+        "logical_not_poster": {
+            "textures": "textures/blocks/logical_not_poster"
+        },
+        "logical_or_poster": {
+            "textures": "textures/blocks/logical_or_poster"
+        },
+        "logical_and_poster": {
+            "textures": "textures/blocks/logical_and_poster"
+        },
         "papers": {
             "textures": "textures/blocks/papers"
         },

@@ -4,6 +4,7 @@ import "./frontdoor.js";
 import "./smart_board.js";
 import "./questlog.js";
 import "./volleyball.js";
+import "./cracks.js";
 import "./questlog.js";
 import "./custom_bookshelf.js";
 import "./quests/library-quest.js";

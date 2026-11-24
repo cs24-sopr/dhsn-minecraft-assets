@@ -1,0 +1,24 @@
+{
+    "format_version": "1.8.0",
+    "animations": {
+        "animation.toolbox.first_person_hold": {
+            "loop": true,
+            "bones": {
+                "root_item": {
+                    "rotation": [250, 268, 0],
+                    "position": [9, 18, 5]
+                }
+            }
+        },
+        "animation.toolbox.third_person_hold": {
+            "loop": true,
+            "bones": {
+                "root_item": {
+                    "rotation": [10, 180, 0],
+                    "position": [0.5, 14, -4],
+                    "scale": 0.95
+                }
+            }
+        }
+    }
+}
