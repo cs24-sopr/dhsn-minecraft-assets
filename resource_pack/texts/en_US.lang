@@ -30,6 +30,9 @@ tile.myname:window.name=Window
 tile.dhsn:frontdoor_empty.name=Frontdoor
 tile.myname:pile_of_paper.name=Chaotische Schreibtischdeko 
 tile.myname:papers.name=Chaotische Zettel
+tile.dhsn:logical_and_poster.name=Logisches UND Poster
+tile.dhsn:logical_or_poster.name=Logisches ODER Poster
+tile.dhsn:logical_not_poster.name=Logisches NICHT Poster
 tile.dhsn:cracks.name=Cracks
 
 entity.dhsn:librarian.name=Librarian
@@ -53,6 +56,11 @@ item.dhsn:volleyball=Volleyball
 entity.dhsn:volleyball.name=Volleyball
 item.dhsn:studierendenausweis=Studierendenausweis
 item.dhsn:certificate=Zeugnis
+item.dhsn:bamboo_key=bamboo key
+item.dhsn:cherry_key=cherry key
+item.dhsn:crimson_key=crimson key
+item.dhsn:warped_key=warped key
+item.dhsn:toolbox=Toolbox
 
 item.myname:builder_helmet=Builder Helmet
 item.myname:doctor_hat=Doctor Hat

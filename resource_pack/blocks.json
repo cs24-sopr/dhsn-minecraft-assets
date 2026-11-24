@@ -3,6 +3,15 @@
     "dhsn:cracks": {
         "sound": "packed_mud"
     },
+    "dhsn:logical_not_poster": {
+        "sound": "azalea_leaves"
+    },
+    "dhsn:logical_or_poster": {
+        "sound": "azalea_leaves"
+    },
+    "dhsn:logical_and_poster": {
+        "sound": "azalea_leaves"
+    },
     "myname:papers": {
         "sound": "stone"
     },
