@@ -14,7 +14,7 @@ Die ECTS werden **direkt als Level** gesetzt, nicht als Erfahrungspunkte. Erfahr
 
 ## Speicherung
 
-- Der echte Stand liegt **in der Welt (Map)**, als World-Dynamic-Property `dhsn:ects:<Spieler-ID>`, eine Zahl von 0 bis 180.
+- Der echte Stand liegt **in der Welt (Map)**, als World-Dynamic-Property `dhsn:ects`, eine Zahl von 0 bis 180. Einmal pro Welt, weil das Spiel Einzelspieler ist (siehe [Speicherung](Speicherung.md)). Ältere Stände mit Spieler-ID (`dhsn:ects:<Spieler-ID>`) werden beim ersten Lesen übernommen, bei mehreren der höchste.
 - Das Level ist nur die Anzeige. Ein Abgleich jede Sekunde (und beim Betreten der Welt) setzt es zurück, wenn etwas anderes es verändert hat, z. B. XP von Mobs, eine XP-Flasche, `/xp` oder der Tod. Dabei verschwinden auch Erfahrungspunkte in der Leiste.
 
 ## Titel
@@ -120,4 +120,3 @@ Testumgebung: flache Welt, Abenteuermodus, Cheats an, DHSN Behavior und Resource
 - **Textfeld noch ungetestet:** Das HUD-Textfeld und das Ausblenden der `ects:`-Titel sind noch nicht im Spiel geprüft (siehe oben).
 - **Titel überschreiben sich:** Kommt eine ECTS-Änderung genau während eines anderen Titels (z. B. des Countdowns „Halt!“), ersetzt der unsichtbare ECTS-Titel diesen kurz. Im normalen Spiel ist das selten.
 - **Kreativmodus:** Dort gibt es keine XP-Leiste, also auch keine Level-Zahl. Das Textfeld bleibt.
-- **Spieler-ID:** Der Stand hängt an `player.id`. Dass sie für denselben Spieler in derselben Welt gleich bleibt, prüft der Test „Welt schließen und neu öffnen“.
