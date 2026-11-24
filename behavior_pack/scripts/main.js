@@ -7,6 +7,7 @@ import "./volleyball.js";
 import "./cracks.js";
 import "./questlog.js";
 import "./ects.js";
+import "./util/storage.js";
 import "./custom_bookshelf.js";
 import "./quests/library-quest.js";
 import "./events/test.js";
