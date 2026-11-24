@@ -16,7 +16,7 @@
                 "volume": 1
             },
             "dhsn:ersti_coach": {
-              "events": {
+                "events": {
                     "death": "dig.wood",
                     "hurt": "mob.villager.hit",
                     "spawn": "mob.villager.idle"
@@ -40,6 +40,15 @@
                     "spawn": "mob.villager.idle"
                 },
                 "pitch": [1.1, 1.2],
+                "volume": 1
+            },
+            "dhsn:martina_thoenert": {
+                "events": {
+                    "death": "dig.wood",
+                    "hurt": "mob.villager.hit",
+                    "spawn": "mob.villager.idle"
+                },
+                "pitch": [0.8, 1.2],
                 "volume": 1
             }
         }
