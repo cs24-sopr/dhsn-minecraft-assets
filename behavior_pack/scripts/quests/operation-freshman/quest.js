@@ -1,7 +1,7 @@
 import { ItemStack, world } from '@minecraft/server'
 import { onEnterTerritory } from '../../events/index.js'
 
-import * as Debug from './debug.js'
+import { TRIGGER_ZONES } from './config.js'
 import * as Dialog from './dialog.js'
 import * as Persist from './persist.js'
 import { questlog } from '../../questlog.js'
@@ -60,11 +60,7 @@ async function sequenceInitialLucasDialog(player, lucas) {
  * @throws {Error} If no player remains, zone setup fails, or the sequence fails.
  */
 async function stepInitialLucasDialog() {
-    const zones = Debug.findTriggerZones()
-
-    if (zones.length === 0) {
-        throw new Error('No trigger zones found')
-    }
+    const zones = TRIGGER_ZONES.zones
 
     /** @type {Array<() => void>} Cleanup callbacks for the entrance listeners. */
     const unsubscribers = []
@@ -177,10 +173,13 @@ async function stepCompletedSummerDialog() {
 /**
  * Resumes the single-player quest at its saved world checkpoint.
  * An absent dialogue result means Lucas has not opened his conversation yet.
- * @returns {Promise<void>} Resolves after the currently implemented quest steps.
+ * Does nothing until entrance zones have been configured by the start command.
+ * @returns {Promise<void>} Resolves after the implemented steps, or immediately without configuration.
  * @throws {Error} If storage, entrance monitoring, or a quest step fails.
  */
 export async function initializeQuest() {
+    if (TRIGGER_ZONES.zones.length === 0) return
+
     const firstLine = 'mit dem Ersti-Coach Lucas (mit c) gesprochen'
 
     const questlogEntry = questlog.createEntry({

@@ -691,7 +691,7 @@ export async function walkTo(
  * @throws {Error} If querying, spawning, or configuring the entity fails.
  */
 export function spawnMrsSommer(room) {
-    const dimension = world.getDimension('overworld')
+    const dimension = world.getDimension(Config.MRS_SOMMER.dimensionId)
 
     const existingSommer = dimension.getEntities({
         type: 'dhsn:studienorganisation',

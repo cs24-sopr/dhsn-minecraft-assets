@@ -1,67 +1,84 @@
 import {
     BlockVolume,
+    BlockTypes,
     CommandPermissionLevel,
     CustomCommandStatus,
-    InputPermissionCategory,
+    SignSide,
     system,
     world,
 } from '@minecraft/server'
+import * as Config from './config.js'
+import { initializeQuest } from './quest.js'
 
 /**
- * Resets the temporary quest environment from a scheduled command callback.
- * Script reload remains a separate action to restart the running quest sequence.
- * @returns {void}
- */
-function resetQuestEnvironment() {
-    try {
-        resetNpcs()
-        for (const player of world.getAllPlayers()) {
-            resetPlayer(player)
-            player.removeTag('dhsn:lucas_follow_target')
-        }
-        resetPersist()
-        world.sendMessage(
-            'Operation Erstsemester zurückgesetzt. Bitte jetzt /reload ausführen, um den Questablauf neu zu starten.'
-        )
-    } catch (error) {
-        const message = error instanceof Error ? error.message : String(error)
-        console.error(`[Operation Erstsemester]: ${message}`)
-        world.sendMessage(`Quest-Reset fehlgeschlagen: ${message}`)
-    }
-}
-
-/**
- * Schedules the debug reset outside the custom command's restricted execution.
- * @returns {import('@minecraft/server').CustomCommandResult} Scheduling status.
- */
-function resetQuestCommand() {
-    system.run(resetQuestEnvironment)
-    return {
-        status: CustomCommandStatus.Success,
-        message: 'Quest-Reset eingeplant.',
-    }
-}
-
-/**
- * Registers the operator-only quest reset command during script startup.
+ * Registers operator-only quest commands during script startup.
  * @param {import('@minecraft/server').StartupEvent} event Command registry access.
  * @returns {void}
  */
-function registerDebugCommands(event) {
+export function registerDebugCommands(event) {
     event.customCommandRegistry.registerCommand(
         {
-            name: 'dhsn:reset',
-            description: 'Setzt Quest-Speicher, Spieler und Debug-NPCs zurück.',
+            name: 'dhsn:quest_operation_freshman_start',
+            description:
+                'Richtet die Quest mit Raumschildern und Goldblöcken neu ein.',
             permissionLevel: CommandPermissionLevel.GameDirectors,
         },
-        resetQuestCommand
+        (origin) => {
+            const player = origin.sourceEntity
+            if (!player || player.typeId !== 'minecraft:player') {
+                return {
+                    status: CustomCommandStatus.Failure,
+                    message:
+                        'Diesen Befehl bitte als Spieler im Testbereich ausführen.',
+                }
+            }
+            system.run(() => {
+                void setupQuestEnvironment(
+                    /** @type {import('@minecraft/server').Player} */ (player)
+                )
+            })
+            return {
+                status: CustomCommandStatus.Success,
+                message:
+                    'Quest-Einrichtung eingeplant (Suchbereich: ±128 Blöcke horizontal, ±8 vertikal).',
+            }
+        }
     )
 }
 
-system.beforeEvents.startup.subscribe(registerDebugCommands)
+/**
+ * Validates debug markers, applies configuration, clears progress, and starts the quest.
+ * Existing Lucas NPCs remain available for nearest-coach selection.
+ * @param {import('@minecraft/server').Player} player Operator in the test area.
+ * @returns {Promise<void>} Resolves after the quest finishes or a failure is reported.
+ */
+async function setupQuestEnvironment(player) {
+    try {
+        const { sommer, zones } = discoverQuestSetup(player)
+        if (
+            player.dimension.getEntities({ type: 'dhsn:ersti_coach' }).length === 0
+        ) {
+            throw new Error(
+                'Bitte mindestens einen Lucas im Testbereich platzieren.'
+            )
+        }
+        Config.configureQuest(sommer, zones)
+        resetPersist()
+        player.sendMessage(
+            `Operation Erstsemester neu eingerichtet: Räume 113 und 114, ${zones.length} Goldblock-Trigger. Die Quest ist bereit.`
+        )
+        await initializeQuest()
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error)
+        console.error(`[Operation Erstsemester]: ${message}`)
+        if (player.isValid) {
+            player.sendMessage(`Quest-Einrichtung fehlgeschlagen: ${message}`)
+        }
+    }
+}
 
 /**
- * Clears all Operation Erstsemester world dynamic properties for a debug restart.
+ * Clears all Operation Erstsemester world dynamic properties for debug setup.
  * @returns {void}
  * @throws {Error} If reading or clearing world storage fails.
  */
@@ -73,115 +90,102 @@ export function resetPersist() {
     }
 }
 
-/**
- * Player placement used when restarting the temporary development sequence.
- * @typedef {object} PlayerDefaults
- * @property {string} dimensionId Dimension containing the starting position.
- * @property {import('@minecraft/server').Vector3} location Starting position.
- * @property {import('@minecraft/server').Vector2} rotation Starting pitch and yaw.
- */
-
-// Temporary development coordinates, matching the active reset in command.js.
-/** @type {PlayerDefaults} */
-const PLAYER_DEFAULTS = {
-    dimensionId: 'minecraft:overworld',
-    location: { x: 0.5, y: -60, z: 0.5 },
-    rotation: { x: 0, y: 270 },
-}
+/** @type {import('@minecraft/server').Vector3} Temporary scan radius around the operator. */
+const DEBUG_SCAN_RADIUS = { x: 128, y: 8, z: 128 }
 
 /**
- * Restores normal camera and input after a reload interrupts the quest effects.
- * @param {import('@minecraft/server').Player} player Player whose controls to restore.
- * @returns {void}
- * @throws {Error} If restoring camera or input fails.
+ * Discovers signs labelled exactly 113 or 114 and gold blocks near the operator.
+ * Both sign sides are supported. Unloaded chunks in the search box are skipped.
+ * Each gold block creates a 1 x 1 x 3 trigger immediately above it.
+ * @param {import('@minecraft/server').Player} player Operator defining the search center.
+ * @returns {{ sommer: import('./config.js').MrsSommerConfig, zones: import('./quest.js').QuestZone[] }} Validated placements.
+ * @throws {Error} If loaded markers are missing, ambiguous, or unreadable.
  */
-export function resetPlayerControls(player) {
-    player.camera.clear()
-    player.inputPermissions.setPermissionCategory(
-        InputPermissionCategory.Movement,
-        true
+function discoverQuestSetup(player) {
+    const dimension = player.dimension
+    const location = player.location
+    const center = {
+        x: Math.floor(location.x),
+        y: Math.floor(location.y),
+        z: Math.floor(location.z),
+    }
+    const volume = new BlockVolume(
+        {
+            x: center.x - DEBUG_SCAN_RADIUS.x,
+            y: Math.max(
+                dimension.heightRange.min,
+                center.y - DEBUG_SCAN_RADIUS.y
+            ),
+            z: center.z - DEBUG_SCAN_RADIUS.z,
+        },
+        {
+            x: center.x + DEBUG_SCAN_RADIUS.x,
+            y: Math.min(
+                dimension.heightRange.max - 1,
+                center.y + DEBUG_SCAN_RADIUS.y
+            ),
+            z: center.z + DEBUG_SCAN_RADIUS.z,
+        }
     )
-    player.inputPermissions.setPermissionCategory(
-        InputPermissionCategory.Camera,
-        true
-    )
-}
-
-/**
- * Restores the player's debug position, rotation, normal camera, and input.
- * @param {import('@minecraft/server').Player} player Player to reset.
- * @returns {void}
- * @throws {Error} If a player or destination operation fails.
- */
-export function resetPlayer(player) {
-    resetPlayerControls(player)
-    player.teleport(PLAYER_DEFAULTS.location, {
-        dimension: world.getDimension(PLAYER_DEFAULTS.dimensionId),
-        rotation: PLAYER_DEFAULTS.rotation,
-    })
-    player.clearVelocity()
-}
-
-/**
- * Fixed search bounds for the temporary gold-block debug markers.
- * @typedef {object} TerritoryScanConfig
- * @property {string} dimensionId Dimension containing the debug area.
- * @property {import('@minecraft/server').Vector3} from First corner block to scan.
- * @property {import('@minecraft/server').Vector3} to Opposite corner block to scan.
- */
-
-// Temporary bounds around the debugging command's test positions.
-// Only loaded chunks are scanned. Adjust these corners for another test area.
-/** @type {TerritoryScanConfig} */
-const TERRITORY_SCAN = {
-    dimensionId: 'minecraft:overworld',
-    from: { x: -32, y: -64, z: -32 },
-    to: { x: 32, y: -58, z: 32 },
-}
-
-/**
- * Builds a zone array from the currently loaded gold blocks in the debug area.
- * Each marker creates a 1 x 1 x 3 zone directly above it, excluding the block.
- * @returns {import('./quest.js').QuestZone[]} Zones to pass to the quest logic.
- * @throws {Error} If the block query fails.
- */
-export function findTriggerZones() {
-    const dimension = world.getDimension(TERRITORY_SCAN.dimensionId)
+    const signTypes = BlockTypes.getAll()
+        .filter((type) => type.id.endsWith('_sign'))
+        .map((type) => type.id)
     const markers = dimension.getBlocks(
-        new BlockVolume(TERRITORY_SCAN.from, TERRITORY_SCAN.to),
-        { includeTypes: ['minecraft:gold_block'] },
+        volume,
+        { includeTypes: ['minecraft:gold_block', ...signTypes] },
         true
     )
+    /** @type {Partial<Record<113 | 114, import('./config.js').MrsSommerSpawn>>} */
+    const rooms = {}
     /** @type {import('./quest.js').QuestZone[]} */
     const zones = []
     for (const { x, y, z } of markers.getBlockLocationIterator()) {
-        zones.push({
-            dimensionId: TERRITORY_SCAN.dimensionId,
-            from: { x, y: y + 1, z },
-            to: { x, y: y + 3, z },
-        })
-    }
-    return zones
-}
-
-/**
- * Removes all loaded Lucas NPCs across dimensions without spawning replacements.
- * Also preserves the existing cleanup of Frau Sommer in the overworld.
- * Entities in unloaded chunks cannot be removed by this query.
- * @returns {void}
- * @throws {Error} If an entity query or removal fails.
- */
-export function resetNpcs() {
-    for (const dimensionId of ['overworld', 'nether', 'the_end']) {
-        const dimension = world.getDimension(dimensionId)
-        for (const lucas of dimension.getEntities({ type: 'dhsn:ersti_coach' })) {
-            lucas.remove()
+        const block = dimension.getBlock({ x, y, z })
+        if (!block) continue
+        if (block.typeId === 'minecraft:gold_block') {
+            zones.push({
+                dimensionId: dimension.id,
+                from: { x, y: y + 1, z },
+                to: { x, y: y + 3, z },
+            })
+            continue
+        }
+        const sign = block.getComponent('minecraft:sign')
+        if (!sign) continue
+        const labels = new Set([
+            sign.getText(SignSide.Front)?.trim(),
+            sign.getText(SignSide.Back)?.trim(),
+        ])
+        if (labels.has('113') && labels.has('114')) {
+            throw new Error('Die Räume 113 und 114 benötigen getrennte Schilder.')
+        }
+        for (const room of /** @type {const} */ ([113, 114])) {
+            if (!labels.has(String(room))) continue
+            if (rooms[room]) {
+                throw new Error(
+                    `Mehrere Schilder mit der Raumnummer ${room} gefunden.`
+                )
+            }
+            rooms[room] = {
+                position: { x: x + 0.5, y, z: z + 0.5 },
+                rotation: { x: 0, y: 0 },
+            }
         }
     }
-
-    for (const sommer of world
-        .getDimension('overworld')
-        .getEntities({ type: 'dhsn:studienorganisation' })) {
-        sommer.remove()
+    if (!rooms[113] || !rooms[114]) {
+        throw new Error(
+            'Im Suchbereich wird je ein Schild mit genau 113 und 114 benötigt.'
+        )
+    }
+    if (zones.length === 0) {
+        throw new Error('Im Suchbereich wurden keine Goldblock-Trigger gefunden.')
+    }
+    return {
+        sommer: {
+            dimensionId: dimension.id,
+            spawn: { 113: rooms[113], 114: rooms[114] },
+        },
+        zones,
     }
 }
+
