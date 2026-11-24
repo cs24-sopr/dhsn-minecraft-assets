@@ -20,7 +20,7 @@ const raw = takeOverPerPlayerValue("dhsn:quest_meine_quest"); // alter Wert wird
 
 | Art | Beispiele | Bei `dhsn:map_cleanup` |
 | --- | --- | --- |
-| Quest-Fortschritt | `dhsn:quest_library` | gelöscht |
+| Quest-Fortschritt | `dhsn:quest_library`, `dhsn:ects` | gelöscht |
 | Zustand der Map-Welt | `dhsn:library_highscores`, `dhsn:shelf_contents:…` | gelöscht |
 | Testaufbauten | `dhsn:library_test_area`, `dhsn:library_test_sign` | gelöscht |
 | Einstellungen der fertigen Map | `dhsn:library_map_layout` (per Befehlsblock gesetzt) | **bleibt** |

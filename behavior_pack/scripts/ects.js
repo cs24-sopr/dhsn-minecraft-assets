@@ -1,9 +1,10 @@
 import { system, world } from "@minecraft/server";
+import { takeOverPerPlayerValue } from "./util/storage.js";
 
 // ECTS as experience levels (project#121): 1 ECTS = 1 level, at most 180 in the whole game.
 //
-// The real ECTS count is stored in the world (the map), one world dynamic property per player:
-// "dhsn:ects:<player id>". The player's experience level only displays it: a sync sets the level
+// The real ECTS count is stored in the world (the map), once per world because the game is single
+// player: "dhsn:ects". The player's experience level only displays it: a sync sets the level
 // back to the ECTS count whenever something else changed it (XP from mobs, /xp, death).
 //
 // Quests give ECTS with addEcts(player, amount). Command blocks of the map can use
@@ -46,7 +47,9 @@ const TEXTS = {
     newTitleSubtitle: (ects) => `${ects} ECTS`,
 };
 
-const PROPERTY_PREFIX = "dhsn:ects:";
+// Stored once per world: the game is single player. Older versions used "dhsn:ects:<player id>";
+// such values are taken over (the highest, if there are several).
+const PROPERTY = "dhsn:ects";
 const SHOW_COMMAND = "dhsn:ects";
 const ADD_COMMAND = "dhsn:ects_add";
 const SET_COMMAND = "dhsn:ects_set";
@@ -64,8 +67,9 @@ function clamp(value) {
     return Math.max(0, Math.min(MAX_ECTS, Math.floor(value)));
 }
 
+/** The player parameter is kept so quests do not need to change if this ever becomes per player again. */
 function propertyId(player) {
-    return `${PROPERTY_PREFIX}${player.id}`;
+    return PROPERTY;
 }
 
 /**
@@ -73,7 +77,10 @@ function propertyId(player) {
  * @returns {number} The player's ECTS, 0 if none were given yet.
  */
 export function getEcts(player) {
-    const value = world.getDynamicProperty(propertyId(player));
+    const value = takeOverPerPlayerValue(propertyId(player), (values) => {
+        const numbers = values.filter((v) => typeof v === "number");
+        return numbers.length > 0 ? Math.max(...numbers) : undefined;
+    });
     return typeof value === "number" ? clamp(value) : 0;
 }
 
