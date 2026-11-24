@@ -68,6 +68,8 @@ One world dynamic property per player: `dhsn:quest_awakening:<player id>`, JSON 
 
 **Step-by-step guide for the team that does it (German): [awakening-quest-map-guide.md](awakening-quest-map-guide.md).** The checklist below is the short version.
 
+**Easiest way:** the in-game setup menu (`/scriptevent dhsn:awakening_setup`, see [awakening-setup.md](awakening-setup.md)) saves the layout in the world, no code change needed. The checklist below describes the code route with `LAYOUT`; the guide linked above uses the menu.
+
 The quest knows nothing about the map. Everything it needs is one `LAYOUT` object at the top of `awakening-quest.js`. Until it is filled in (it is `undefined`), the quest does nothing; the test setup provides its own layout instead (see [Testing](#testing)).
 
 **Checklist for the real map**
