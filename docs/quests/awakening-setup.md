@@ -26,6 +26,7 @@ Hinstellen, Menü öffnen, passenden Knopf klicken. ✔ / ✘ zeigt, was schon g
 | Rückkehrpunkt | Position im Gebäude, an die zu früh Gehende zurückgesetzt werden |
 | Teleporter Ecke 1 / 2 | der Block, in dem man steht; Höhe: 2 Blöcke über den Füßen |
 | Insel-Tor | Position und Blick nach dem Teleport |
+| Professor | der NPC, den man ansieht, bekommt den Tag `dhsn:awakening_professor` (ein früherer Professor verliert ihn); der Tag liegt am NPC, nicht im Layout |
 | Kamerafahrt … | Aufnahmen hinzufügen (Position und Blick), letzte entfernen, löschen, Vorschau |
 
 Beim Ansehen (Wecker, Truhe) merkt sich das Menü die Blickrichtung beim Öffnen. Falsche Blöcke werden abgelehnt.

@@ -1,6 +1,6 @@
 import { ItemStack, system, world } from "@minecraft/server";
 import { ActionFormData, FormCancelationReason, ModalFormData } from "@minecraft/server-ui";
-import { getAwakeningLayoutSource, previewAwakeningRide, resetAwakening, setAwakeningSetupLayout, startAwakening } from "./awakening-quest.js";
+import { PROFESSOR_TAG, getAwakeningLayoutSource, previewAwakeningRide, resetAwakening, setAwakeningSetupLayout, startAwakening } from "./awakening-quest.js";
 
 // Setup menu for the quest "Das Erwachen": the places of the real map are entered in the game instead of in the code.
 // The builder stands at a place, opens the menu and clicks the matching button; the menu takes the position of the
@@ -206,6 +206,7 @@ async function openMenu(player, note) {
                 { text: `${mark(raw.portal?.a)}Teleporter: Ecke 1`, run: () => setCorner(player, "portal", "a") },
                 { text: `${mark(raw.portal?.b)}Teleporter: Ecke 2`, run: () => setCorner(player, "portal", "b") },
                 { text: `${mark(raw.islandGate)}Insel-Tor (Position + Blick)`, run: () => setPoint(player, "islandGate", "islandFacing", "Insel-Tor") },
+                { text: `${mark(hasProfessor(player))}Professor (NPC ansehen)`, run: () => setProfessor(player) },
                 { text: `${mark((raw.cameraPath?.length ?? 0) > 0)}Kamerafahrt …`, run: () => cameraMenu(player) },
                 { text: "Quest neu starten (am Aufwachpunkt)", run: () => restartQuest(player) },
                 { text: "Alles löschen", run: () => clearAll(player) },
@@ -256,6 +257,24 @@ function setCorner(player, key, corner) {
     saveRaw(raw);
     const spec = BOXES[key];
     return `${spec.label}: Ecke ${corner === "a" ? 1 : 2} gesetzt: ${format(raw[key][corner])}`;
+}
+
+/** True if an entity with the professor tag exists in the dimension of the player. */
+function hasProfessor(player) {
+    try {
+        return player.dimension.getEntities({ tags: [PROFESSOR_TAG] }).length > 0;
+    } catch {
+        return false;
+    }
+}
+
+/** Tags the NPC the player looks at as the professor. The tag is on the entity, not in the layout. */
+function setProfessor(player) {
+    const hit = player.getEntitiesFromViewDirection({ maxDistance: LOOK_DISTANCE }).find((h) => h.entity.id !== player.id);
+    if (!hit) return `Kein NPC im Blick (max. ${LOOK_DISTANCE} Blöcke). Das Menü merkt sich die Blickrichtung beim Öffnen.`;
+    for (const old of player.dimension.getEntities({ tags: [PROFESSOR_TAG] })) old.removeTag(PROFESSOR_TAG);
+    hit.entity.addTag(PROFESSOR_TAG);
+    return `Professor gesetzt: ${hit.entity.nameTag || hit.entity.typeId}`;
 }
 
 function restartQuest(player) {
