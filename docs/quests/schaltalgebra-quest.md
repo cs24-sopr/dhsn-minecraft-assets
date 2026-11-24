@@ -11,6 +11,7 @@ All texts are **placeholders** until the story team delivers the real ones. All 
 - [Flow](#flow)
 - [How the puzzle is detected](#how-the-puzzle-is-detected)
 - [Configuration](#configuration)
+- [Setting up the finished map (command blocks)](#setting-up-the-finished-map-command-blocks)
 - [What the building team has to provide](#what-the-building-team-has-to-provide)
 - [Progress storage](#progress-storage)
 - [Commands](#commands)
@@ -45,7 +46,7 @@ At the top of `schaltalgebra-quest.js`:
 
 | Constant | Meaning |
 | --- | --- |
-| `LAYOUT` | All positions in the map (see below). `undefined` until the rooms exist; the test setup saves its own layout, which takes precedence. |
+| `LAYOUT` | All positions in the map (see below). `undefined` until the rooms exist. Usually not needed: in the finished map the positions are set with command blocks (see [Setting up the finished map](#setting-up-the-finished-map-command-blocks)). The test setup saves its own layout, which takes precedence. |
 | `REQUIRED_ITEM` | `dhsn:studierendenausweis`. `undefined` switches the check off. |
 | `QUEST_ECTS` | ECTS for solving, **placeholder 10**. All quests together should give 180 ([docs/Ects.md](../Ects.md), German). |
 | `TELEPORT_DELAY` | Ticks between button and teleport (20; a stone button stays pressed for 20 ticks). |
@@ -66,9 +67,43 @@ At the top of `schaltalgebra-quest.js`:
 | `levers` | the four levers |
 | `puzzleArea` | `{ from, to }`: corners of the puzzle room |
 
+## Setting up the finished map (command blocks)
+
+In the finished map, the positions do not have to be written into the code. They are set **once with command blocks** and saved in the world (`dhsn:schaltalgebra_map_layout`):
+
+```text
+/scriptevent dhsn:schaltalgebra_set <variable> <coordinates>
+```
+
+| Variable | Numbers | Position |
+| --- | --- | --- |
+| `start_button` | x y z | stone button on the lamp in the lecture room |
+| `start_lamp` | x y z | redstone lamp in the lecture room |
+| `puzzle_arrival` | x y z [x y z] | where the player lands in the puzzle room, optionally the point they look at |
+| `return_button` | x y z | return button in the puzzle room |
+| `return_arrival` | x y z [x y z] | where the player lands in the lecture room, optionally the point they look at |
+| `target_lamp` | x y z | target lamp at the end of the puzzle room |
+| `lever_1` … `lever_4` | x y z | the four levers |
+| `puzzle_area` | x y z x y z | two opposite corners of the puzzle room |
+
+- **Coordinates** are absolute numbers or relative to the command block with `~` (`~`, `~3`, `~-2`), like in normal Minecraft commands. Arrival points given as whole numbers are moved to the middle of the block.
+- **The dimension** is the one of the command block.
+- **Feedback:** every call writes to the chat which variable was set and which are still missing. As soon as all 14 are set: "Alle Variablen gesetzt, die Quest ist aktiv."
+- **Check:** `/scriptevent dhsn:schaltalgebra_layout` lists all variables. `/scriptevent dhsn:schaltalgebra_layout_clear` deletes them.
+- **Order of precedence:** test setup (if one is saved) → command block values → `LAYOUT` in the code. If a test layout is still saved in the map, remove it with `/scriptevent dhsn:quest_test_schaltalgebra_clear`.
+- Use **impulse command blocks** (run once), not repeating ones.
+
+Example, command block standing in the lecture room next to the lamp:
+
+```text
+/scriptevent dhsn:schaltalgebra_set start_lamp ~2 ~ ~
+/scriptevent dhsn:schaltalgebra_set start_button ~2 ~1 ~
+/scriptevent dhsn:schaltalgebra_set return_arrival ~-1 ~ ~ ~2 ~1 ~
+```
+
 ## What the building team has to provide
 
-- All positions of the `LAYOUT` table.
+- All positions of the `LAYOUT` table, set with command blocks (see above) or sent to the coding team.
 - The block **directly below the lamp** in the lecture room must be a plain floor block with no redstone around it; the script replaces it by a redstone block.
 - The circuit must keep the target lamp **off when all levers are off**, because the script switches them off on every arrival.
 - The puzzle room must be closed; the only way out is the return button.
@@ -82,6 +117,7 @@ In the world (the map):
 | `dhsn:quest_schaltalgebra:<player id>` | `{ "status": "started" }` or `{ "status": "done" }`; none = not started |
 | `dhsn:schaltalgebra_lamp_on` | whether the lamp in the lecture room is on for good |
 | `dhsn:schaltalgebra_lamp_base` | the floor block below the lamp before the redstone block was placed |
+| `dhsn:schaltalgebra_map_layout` | positions set with `/scriptevent dhsn:schaltalgebra_set` (finished map) |
 | `dhsn:schaltalgebra_test_layout` | layout of the test setup (only while testing) |
 
 ## Commands
@@ -93,6 +129,9 @@ In the world (the map):
 | `/scriptevent dhsn:quest_schaltalgebra_solve` | Solves the puzzle without a circuit (testing). |
 | `/scriptevent dhsn:quest_test_schaltalgebra` | Test setup, see [test-schaltalgebra.md](../events/test-schaltalgebra.md). |
 | `/scriptevent dhsn:quest_test_schaltalgebra_clear` | Removes the saved test layout. |
+| `/scriptevent dhsn:schaltalgebra_set <variable> <coordinates>` | Sets a position of the finished map (command block). |
+| `/scriptevent dhsn:schaltalgebra_layout` | Lists the positions set for the map. |
+| `/scriptevent dhsn:schaltalgebra_layout_clear` | Deletes the positions set for the map. |
 
 ## Testing
 

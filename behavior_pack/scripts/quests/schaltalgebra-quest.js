@@ -24,19 +24,23 @@ import { questlog } from "../questlog.js";
  * @property {import("@minecraft/server").Vector3} startButton Stone button on the lamp in the lecture room.
  * @property {import("@minecraft/server").Vector3} startLamp Redstone lamp in the lecture room. The block below it
  *     must be free for the script (floor block): it becomes a redstone block to keep the lamp lit.
- * @property {{ location: import("@minecraft/server").Vector3, facing: import("@minecraft/server").Vector3 }} puzzleArrival
+ * @property {{ location: import("@minecraft/server").Vector3, facing?: import("@minecraft/server").Vector3 }} puzzleArrival
  *     Where the player lands in the puzzle room and where they look.
  * @property {import("@minecraft/server").Vector3} returnButton Button in the puzzle room that leads back.
- * @property {{ location: import("@minecraft/server").Vector3, facing: import("@minecraft/server").Vector3 }} returnArrival
+ * @property {{ location: import("@minecraft/server").Vector3, facing?: import("@minecraft/server").Vector3 }} returnArrival
  *     Where the player lands in the lecture room and where they look.
  * @property {import("@minecraft/server").Vector3} targetLamp Redstone lamp at the end of the puzzle room.
  * @property {import("@minecraft/server").Vector3[]} levers The four levers; they are switched off on arrival.
  * @property {{ from: import("@minecraft/server").Vector3, to: import("@minecraft/server").Vector3 }} puzzleArea The puzzle room.
  */
 
-// The real positions in the map. Undefined until the building team has built the rooms (project#174);
-// until then the quest only works with the test setup (dhsn:quest_test_schaltalgebra), which saves
-// its own layout in the world.
+// The real positions in the map. Two ways to set them:
+// - in the finished map with command blocks: /scriptevent dhsn:schaltalgebra_set <variable> <coordinates>
+//   (see MAP_VARIABLES below; saved in the world, no code change needed), or
+// - here in the code.
+// Undefined until the building team has built the rooms (project#174); until then the quest only works
+// with the test setup (dhsn:quest_test_schaltalgebra), which saves its own layout in the world.
+// Order of precedence: test setup, then the command block values, then this constant.
 /** @type {Layout | undefined} */
 const LAYOUT = undefined;
 
@@ -68,11 +72,31 @@ const STATE_PREFIX = "dhsn:quest_schaltalgebra:";
 const LAMP_PROPERTY = "dhsn:schaltalgebra_lamp_on";
 const LAMP_BASE_PROPERTY = "dhsn:schaltalgebra_lamp_base";
 const TEST_LAYOUT_PROPERTY = "dhsn:schaltalgebra_test_layout";
+const MAP_LAYOUT_PROPERTY = "dhsn:schaltalgebra_map_layout";
 
 const RESET_COMMAND = "dhsn:quest_reset_schaltalgebra";
 const STATE_COMMAND = "dhsn:quest_schaltalgebra_state";
 const SOLVE_COMMAND = "dhsn:quest_schaltalgebra_solve";
 const TEST_CLEAR_COMMAND = "dhsn:quest_test_schaltalgebra_clear";
+const MAP_SET_COMMAND = "dhsn:schaltalgebra_set";
+const MAP_SHOW_COMMAND = "dhsn:schaltalgebra_layout";
+const MAP_CLEAR_COMMAND = "dhsn:schaltalgebra_layout_clear";
+
+// Variables of /scriptevent dhsn:schaltalgebra_set and how many numbers each takes.
+// 3 = one position (x y z); 6 = position plus the point the player looks at, or two corners.
+const MAP_VARIABLES = {
+    start_button: { numbers: [3], help: "Steinknopf auf der Lampe im Hochschulraum" },
+    start_lamp: { numbers: [3], help: "Redstone-Lampe im Hochschulraum" },
+    puzzle_arrival: { numbers: [3, 6], help: "Ankunft im Rätselraum (x y z), optional Blickziel (x y z)" },
+    return_button: { numbers: [3], help: "Rückkehr-Knopf im Rätselraum" },
+    return_arrival: { numbers: [3, 6], help: "Ankunft im Hochschulraum (x y z), optional Blickziel (x y z)" },
+    target_lamp: { numbers: [3], help: "Ziel-Lampe am Ende des Rätselraums" },
+    lever_1: { numbers: [3], help: "Hebel 1" },
+    lever_2: { numbers: [3], help: "Hebel 2" },
+    lever_3: { numbers: [3], help: "Hebel 3" },
+    lever_4: { numbers: [3], help: "Hebel 4" },
+    puzzle_area: { numbers: [6], help: "Rätselraum, zwei gegenüberliegende Ecken (x y z x y z)" },
+};
 
 const LIT_LAMP = "minecraft:lit_redstone_lamp";
 const POWER_BLOCK = "minecraft:redstone_block";
@@ -95,9 +119,99 @@ function readJson(id) {
     }
 }
 
-/** The layout of the test setup if one is saved, otherwise LAYOUT. */
+/** The layout of the test setup, otherwise the one set by command blocks, otherwise LAYOUT. */
 function getLayout() {
-    return /** @type {Layout | undefined} */ (readJson(TEST_LAYOUT_PROPERTY)) ?? LAYOUT;
+    return /** @type {Layout | undefined} */ (readJson(TEST_LAYOUT_PROPERTY)) ?? mapLayout() ?? LAYOUT;
+}
+
+// --------------------------------------------------
+// LAYOUT FROM COMMAND BLOCKS (finished map)
+// --------------------------------------------------
+
+/** @returns {Record<string, any>} The variables set so far with /scriptevent dhsn:schaltalgebra_set. */
+function readMapValues() {
+    const values = readJson(MAP_LAYOUT_PROPERTY);
+    return values && typeof values === "object" ? values : {};
+}
+
+function missingMapVariables(values) {
+    return Object.keys(MAP_VARIABLES).filter((name) => !(name in values));
+}
+
+/** The layout from the command block values, or undefined while variables are missing. */
+function mapLayout() {
+    const values = readMapValues();
+    if (missingMapVariables(values).length > 0) return undefined;
+    return {
+        dimension: values.dimension ?? "minecraft:overworld",
+        startButton: values.start_button,
+        startLamp: values.start_lamp,
+        puzzleArrival: values.puzzle_arrival,
+        returnButton: values.return_button,
+        returnArrival: values.return_arrival,
+        targetLamp: values.target_lamp,
+        levers: [values.lever_1, values.lever_2, values.lever_3, values.lever_4],
+        puzzleArea: values.puzzle_area,
+    };
+}
+
+/**
+ * Parses coordinates like in Minecraft commands: absolute numbers or "~" / "~5" relative to `origin`.
+ * @returns {number[] | undefined}
+ */
+function parseCoordinates(tokens, origin) {
+    const axes = ["x", "y", "z"];
+    const numbers = [];
+    for (let i = 0; i < tokens.length; i++) {
+        const token = tokens[i].replace(",", ".");
+        const relative = token.startsWith("~");
+        const value = Number(relative ? token.slice(1) || "0" : token);
+        if (!Number.isFinite(value)) return undefined;
+        numbers.push(relative ? Math.floor(origin[axes[i % 3]]) + value : value);
+    }
+    return numbers;
+}
+
+const toVector = (n, offset = 0) => ({ x: n[offset], y: n[offset + 1], z: n[offset + 2] });
+// Arrival points given as block coordinates are moved to the middle of the block.
+const toBlockCenter = (v) => ({ x: Number.isInteger(v.x) ? v.x + 0.5 : v.x, y: v.y, z: Number.isInteger(v.z) ? v.z + 0.5 : v.z });
+
+/**
+ * Handles /scriptevent dhsn:schaltalgebra_set <variable> <coordinates>.
+ * @returns {string} Feedback for the chat.
+ */
+function setMapVariable(message, origin, dimensionId) {
+    const [name, ...tokens] = message.trim().split(/\s+/);
+    const variable = MAP_VARIABLES[name];
+    if (!variable) return `Unbekannte Variable „${name ?? ""}“. Möglich: ${Object.keys(MAP_VARIABLES).join(", ")}`;
+    if (!variable.numbers.includes(tokens.length)) return `${name} braucht ${variable.numbers.join(" oder ")} Zahlen: ${variable.help}`;
+
+    const numbers = parseCoordinates(tokens, origin);
+    if (!numbers) return `${name}: Koordinaten nicht lesbar. Erlaubt sind Zahlen und ~ / ~5 (relativ zum Befehlsblock).`;
+
+    let value;
+    if (name === "puzzle_area") {
+        value = { from: toVector(numbers, 0), to: toVector(numbers, 3) };
+    } else if (name === "puzzle_arrival" || name === "return_arrival") {
+        value = { location: toBlockCenter(toVector(numbers, 0)), facing: numbers.length === 6 ? toBlockCenter(toVector(numbers, 3)) : undefined };
+    } else {
+        value = toVector(numbers, 0);
+    }
+
+    const values = readMapValues();
+    values[name] = value;
+    values.dimension = dimensionId;
+    world.setDynamicProperty(MAP_LAYOUT_PROPERTY, JSON.stringify(values));
+
+    const missing = missingMapVariables(values);
+    return `Schaltalgebra: ${name} = ${numbers.join(" ")}. ${missing.length === 0 ? "Alle Variablen gesetzt, die Quest ist aktiv." : `Es fehlen noch: ${missing.join(", ")}`}`;
+}
+
+function describeMapVariables() {
+    const values = readMapValues();
+    const lines = Object.keys(MAP_VARIABLES).map((name) => `${name}: ${name in values ? JSON.stringify(values[name]) : "fehlt"}`);
+    if (readJson(TEST_LAYOUT_PROPERTY)) lines.push("Achtung: Ein Test-Layout ist gespeichert und hat Vorrang (/scriptevent dhsn:quest_test_schaltalgebra_clear).");
+    return lines;
 }
 
 function getDimension(layout) {
@@ -213,7 +327,9 @@ function teleportWithFade(player, target, layout) {
     return new Promise((resolve) => {
         system.runTimeout(() => {
             try {
-                player.teleport(target.location, { dimension: getDimension(layout), facingLocation: target.facing });
+                const options = { dimension: getDimension(layout) };
+                if (target.facing) options.facingLocation = target.facing;
+                player.teleport(target.location, options);
             } catch (error) {
                 console.warn(`[schaltalgebra] Teleport failed: ${error}`);
             }
@@ -346,6 +462,29 @@ export function setSchaltalgebraTestLayout(layout) {
 export function isStartLampOn() {
     return world.getDynamicProperty(LAMP_PROPERTY) === true;
 }
+
+// Setting up the finished map: works from command blocks (no player needed). Feedback goes to the chat
+// of everyone in the world, so it is visible when the command block is triggered.
+system.afterEvents.scriptEventReceive.subscribe(({ id, message, sourceEntity, sourceBlock }) => {
+    if (![MAP_SET_COMMAND, MAP_SHOW_COMMAND, MAP_CLEAR_COMMAND].includes(id)) return;
+
+    const origin = sourceBlock?.location ?? sourceEntity?.location ?? { x: 0, y: 0, z: 0 };
+    const dimensionId = sourceBlock?.dimension.id ?? sourceEntity?.dimension.id ?? "minecraft:overworld";
+    /** @type {string[]} */
+    let lines;
+    switch (id) {
+        case MAP_SET_COMMAND:
+            lines = [setMapVariable(message, origin, dimensionId)];
+            break;
+        case MAP_SHOW_COMMAND:
+            lines = describeMapVariables();
+            break;
+        default:
+            world.setDynamicProperty(MAP_LAYOUT_PROPERTY, undefined);
+            lines = ["Schaltalgebra: alle Variablen der Map gelöscht."];
+    }
+    for (const line of lines) world.sendMessage(`§e${line}`);
+});
 
 system.afterEvents.scriptEventReceive.subscribe(({ id, sourceEntity }) => {
     if (![RESET_COMMAND, STATE_COMMAND, SOLVE_COMMAND, TEST_CLEAR_COMMAND].includes(id)) return;
