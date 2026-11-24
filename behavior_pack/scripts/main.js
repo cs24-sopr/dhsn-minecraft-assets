@@ -8,6 +8,8 @@ import "./questlog.js";
 import "./ects.js";
 import "./custom_bookshelf.js";
 import "./quests/library-quest.js";
+import "./quests/schaltalgebra-quest.js";
 import "./events/test.js";
 import "./events/test-library.js";
+import "./events/test-schaltalgebra.js";
 

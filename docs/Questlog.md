@@ -1,10 +1,10 @@
 # Questlog: Verwendung und Gestaltung
 
-Das Questlog zeigt Text oben rechts im Spiel. [questlog.js](behavior-pack/questlog/scripts/questlog.js) verwaltet die Einträge und sendet ihren Text über die Actionbar. Das Resource Pack bestimmt die Darstellung.
+Das Questlog zeigt Text oben rechts im Spiel. [questlog.js](../behavior_pack/scripts/questlog.js) verwaltet die Einträge und sendet ihren Text über die Actionbar. Das Resource Pack bestimmt die Darstellung.
 
 ## 1. Questlog verwenden
 
-Eine ausführbare Beispielverwendung steht in [examples.js](behavior-pack/questlog/scripts/examples.js). Das Manifest startet diese Datei, die `questlog.js` importiert. Sie zeigt drei deutsche Einträge, einen laufenden Timer sowie Änderungen an Text, Reihenfolge und Sichtbarkeit durch Entfernen eines Eintrags. Die zeitgesteuerten Änderungen dienen nur als Demonstration.
+Eine ausführbare Beispieldatei (`examples.js`) gehört nicht zum Repository. Beispiele stehen unten; echte Verwendungen sind die Bibliotheks-Quest (`behavior_pack/scripts/quests/library-quest.js`, `order: 2`) und die Quest Schaltalgebra (`behavior_pack/scripts/quests/schaltalgebra-quest.js`, `order: 3`).
 
 Die folgenden Beispiele verwenden die exportierte Instanz `questlog`. In `questlog.js` können sie nach `export const questlog = new Questlog();` stehen. Aus einem anderen Modul im selben Ordner ist sie so importierbar:
 
@@ -52,7 +52,7 @@ Die vorhandene Schleife sendet den Text alle **20 Spielticks**, ungefähr einmal
 
 ## 2. HUD gestalten
 
-In [hud_screen.json](resource-pack/questlog/ui/hud_screen.json) zeichnet `hud_actionbar_text` den Hintergrund. Das untergeordnete Label `actionbar_message` zeigt den Text.
+In [hud_screen.json](../resource_pack/ui/hud_screen.json) zeichnet `hud_actionbar_text` den Hintergrund. (Dieselbe Datei enthält außerdem das ECTS-Textfeld über der XP-Leiste, `ects_label`, siehe [ECTS als XP](Ects.md); es ändert die Questlog-Darstellung nicht.) Das untergeordnete Label `actionbar_message` zeigt den Text.
 
 | Element / Feld                    | Aktueller Wert         | Wirkung                                                          |
 | --------------------------------- | ---------------------- | ---------------------------------------------------------------- |

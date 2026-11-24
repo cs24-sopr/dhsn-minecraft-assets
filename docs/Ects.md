@@ -91,8 +91,9 @@ Damit man genau 180 erreicht, trägt jede Quest hier ihre ECTS ein. Die Werte le
 | Quest | Issue | ECTS | Stand |
 | --- | --- | --- | --- |
 | Aushilfe in der Bibliothek | `project#91` | 5 (Platzhalter, `QUEST_ECTS` in `library-quest.js`) | angebunden; die Challenge danach gibt keine ECTS |
+| Schaltalgebra | `project#173` | 10 (Platzhalter, `QUEST_ECTS` in `schaltalgebra-quest.js`) | angebunden, einmalig beim Lösen des Rätsels |
 | … | | | |
-| **Summe** | | **5 / 180** | |
+| **Summe** | | **15 / 180** | |
 
 ## Testen
 

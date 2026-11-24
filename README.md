@@ -185,7 +185,7 @@ Tells Minecraft how to render materials, textures, and geometry.
 
 ## Scripts: Quest Events
 
-Reusable building blocks for detecting what players do in quests (picking up items, items in hoppers and shelves, placing blocks, entering areas) live in `behavior_pack/scripts/events/`. See the German documentation in [docs/Events.md](docs/Events.md); the in-game test course is described in [docs/events/test.md](docs/events/test.md). The first quest built on them is the library quest, see [docs/quests/library-quest.md](docs/quests/library-quest.md).
+Reusable building blocks for detecting what players do in quests (picking up items, items in hoppers and shelves, placing blocks, entering areas) live in `behavior_pack/scripts/events/`. See the German documentation in [docs/Events.md](docs/Events.md); the in-game test course is described in [docs/events/test.md](docs/events/test.md). The first quest built on them is the library quest, see [docs/quests/library-quest.md](docs/quests/library-quest.md). The quest "Schaltalgebra" (redstone puzzle room) is described in [docs/quests/schaltalgebra-quest.md](docs/quests/schaltalgebra-quest.md).
 
 ## Scripts: ECTS
 
