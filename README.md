@@ -5,6 +5,7 @@
     - [Entities & Animated Objects](#2-for-entities--animated-objects-format-bedrock-entity)
 - [Scripts: Quest Events](#scripts-quest-events)
 - [Scripts: ECTS](#scripts-ects)
+- [Scripts: Saved data](#scripts-saved-data)
 - [Testing In-Game (Bedrock on Linux)](#testing-in-game-bedrock-on-linux)
 - [Formatting JSON with Prettier](#formatting-json-with-prettier)
 
@@ -190,6 +191,10 @@ Reusable building blocks for detecting what players do in quests (picking up ite
 ## Scripts: ECTS
 
 Students collect ECTS (at most 180) as experience levels: 1 ECTS = 1 level, stored in the world and kept in sync with the level. Quests give them with `addEcts(player, amount)` from `behavior_pack/scripts/ects.js`; command blocks can use `/scriptevent dhsn:ects_add <n>`. The title (Erstie, Fortgeschritten, bald fertig!, Abschluss) is shown in a label above the XP bar (`resource_pack/ui/hud_screen.json`). See the German documentation in [docs/Ects.md](docs/Ects.md).
+
+## Scripts: Saved data
+
+Everything the add-on remembers is stored in the world (world dynamic properties, prefix `dhsn:`), once per world because the game is single player. `/scriptevent dhsn:progress` lists it; `/scriptevent dhsn:map_cleanup confirm` deletes all progress and test data before the map is handed out and keeps only the map setup (`*_map_layout`). See the German documentation in [docs/Speicherung.md](docs/Speicherung.md).
 
 ---
 
