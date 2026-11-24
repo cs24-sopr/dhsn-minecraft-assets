@@ -36,7 +36,7 @@ Informatik hat absichtlich 4 Regale: Eine normale Runde kann dort bis zu 4 Büch
    - **Fünf Regalreihen** nördlich (−Z), eine pro Studiengang, ab 3 Blöcken Abstand, mit je einem Gang dazwischen. Die Regale zeigen nach Süden. Nur das **letzte Regal jeder Reihe** (östliches Ende) trägt ein Schild mit dem Studiengang.
    - **Bibliothekarin** östlich der ersten Reihe.
    - **Highscore-Schild** östlich der dritten Reihe. Es zeigt die 3 besten Zeiten der Challenge.
-4. Im Chat steht eine Kurzfassung der Quest.
+4. Im Chat steht eine Kurzfassung der Quest und eine Zeile zu den ECTS: dein aktueller Stand und wie viele ECTS die Quest gibt (siehe [ECTS](../Ects.md)). Der Testaufbau ändert die ECTS nicht; zum Zurücksetzen `/scriptevent dhsn:ects_reset`.
 
 Bibliotheksbereich und Position des Highscore-Schildes werden **in der Welt gespeichert** (`dhsn:library_test_area`, `dhsn:library_test_sign`). Sie gelten also auch nach `/reload` und nach einem Neustart der Welt und haben Vorrang vor den Werten im Code (`LIBRARY_AREA`, `HIGHSCORE_SIGN`).
 

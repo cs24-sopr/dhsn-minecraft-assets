@@ -36,7 +36,7 @@ talk to librarian ──► offer round 1 ──accept──► round 1 active �
 3. **Sorting.** Every book has to go into a bookshelf of its study program inside the library, and **every shelf takes only one book per round**. Books cannot be taken out of the shelves again. Each book sorted writes `Buch einsortiert: Informatik (1/9)` to the chat and updates the questlog.
 4. **Hand in.** Once all books of the round are sorted, the questlog line turns green and "Zurück zur Bibliothekarin" appears. Talking to the librarian shows the round's finish dialog. She then takes the round's books out of the shelves again ("tidies up"), so the shelves are free for the next round.
 5. **Next round.** Right after finishing a round, the librarian offers the next one in the same conversation. Accepting hands out newly rolled books.
-6. **Quest finished.** After the last round, the librarian gives the reward (placeholder: 3 emeralds), the quest is done, the questlog entry disappears, and the chat shows `Quest abgeschlossen: Aushilfe in der Bibliothek (<name>)` to everyone.
+6. **Quest finished.** After the last round, the librarian gives the reward (placeholder: 3 emeralds) and **5 ECTS** (placeholder, see [ECTS](../Ects.md), German), the quest is done, the questlog entry disappears, and the chat shows `Quest abgeschlossen: Aushilfe in der Bibliothek (<name>)` to everyone.
 7. **Challenge.** Right after the reward, the librarian offers the challenge ("Da du ja jetzt schon so geübt bist …"). See [Challenge](#challenge).
 
 ### Leaving the library
@@ -240,6 +240,7 @@ Texts used in every round. All chat output is made yellow by the script, so text
 | `objective`, `returnObjective`, `time` | Questlog lines for progress, "go back" and the challenge time |
 | `questFinished(player)` | Chat message to everyone when the quest is finished |
 | `reward(amount)` | Line the librarian says when handing out the quest reward. It names the item ("Smaragde"), so change it together with `QUEST_REWARD`. |
+| `ectsReward(ects)` | Line the librarian says about the ECTS of the quest (`QUEST_ECTS`). |
 | `reset` | Chat line after `/scriptevent dhsn:quest_reset_library` |
 | `wrongShelf(shelfName, bookName)`, `shelfUsed(bookName)`, `programDone(bookName)` | What the librarian says when a shelf refuses a book during a round |
 | `leaveTitle`, `leaveWarning`, `leaveCountdown(seconds)`, `leaveBack`, `leaveReset`, `rejoinReset` | Leaving the library. `leaveCountdown` is the subtitle in the middle of the screen; keep it short, longer texts run off the screen. |
@@ -251,6 +252,7 @@ Texts used in every round. All chat output is made yellow by the script, so text
 
 - **Per round:** the optional `reward` function of each round.
 - **For the whole quest:** `QUEST_REWARD`, handed out once after the last round by `giveQuestReward(player)`. **Placeholder:** 3 emeralds.
+- **ECTS:** `QUEST_ECTS` (**placeholder: 5**), given in addition in `giveQuestReward(player)` with `addEcts` from `behavior_pack/scripts/ects.js`. `addEcts` respects the limit of 180 ECTS, writes `+5 ECTS (jetzt …/180)` to the chat and updates the level and the label above the XP bar. The story team decides the real value; all quests together should give 180 (budget table in [docs/Ects.md](../Ects.md), German).
 
 ```js
 const QUEST_REWARD = { item: "minecraft:emerald", amount: 3 };
@@ -261,7 +263,7 @@ const QUEST_REWARD = { item: "minecraft:emerald", amount: 3 };
 | `item` | Item id of the reward, e.g. a custom item like `dhsn:certificate` or a vanilla item. |
 | `amount` | How many. Must not exceed the item's maximum stack size (our own books and items stack only to 1). |
 
-The librarian announces the reward with `TEXTS.reward(amount)`; adjust that text when changing the item. If the inventory is full, the reward drops at the player's feet. For a reward that is more than one item, extend `giveQuestReward(player)`. The challenge has no reward, only the highscore.
+The librarian announces the reward with `TEXTS.reward(amount)`; adjust that text when changing the item. If the inventory is full, the reward drops at the player's feet. For a reward that is more than one item, extend `giveQuestReward(player)`. The challenge has no reward and **no ECTS**, only the highscore. Resetting the quest with `/scriptevent dhsn:quest_reset_library` and finishing it again gives the ECTS again (for testing); the limit of 180 still applies.
 
 ### Camera ride – `playIntro(player)`
 
@@ -319,7 +321,7 @@ Test environment: **flat world, adventure mode** (like the map), **cheats on**, 
 7. Walk off and stay outside: after 5 seconds the books are gone from the inventory, the questlog entry disappears. Talk to the librarian: round 1 is offered again, with newly rolled books.
 8. Sort all books. The chat shows `Buch einsortiert: … (n/<total>)` (only this line, the shelf itself writes nothing), at the end "Alle Bücher sind einsortiert …".
 9. Talk to her: the finish dialog of round 1 appears, followed by the offer for round 2. Decline it and walk off the floor: the questlog shows "Sprich mit der Bibliothekarin …"; walk back: the entry disappears. `/scriptevent dhsn:quest_library_state` shows no sorted books any more (shelves tidied up).
-10. Accept round 2, sort the books and hand them in: she gives 3 emeralds, the chat shows `Quest abgeschlossen: …`, then she offers the challenge.
+10. Accept round 2, sort the books and hand them in: she gives 3 emeralds and 5 ECTS (level +5, chat `+5 ECTS (jetzt …/180)`), the chat shows `Quest abgeschlossen: …`, then she offers the challenge. Finishing the challenge later changes no ECTS.
 11. Start the challenge: 3 Informatik books (4 shelves, limited to 3) and 3 of every other program. The questlog shows the running time. Sort all books: the time appears in the chat, and the sign shows it.
 12. Play the challenge two more times: every time gets onto the sign while there are fewer than 3. A fourth, slower attempt does not change the sign; a faster one pushes place 3 out.
 13. Start a challenge and walk off the floor for 5 seconds: the challenge is cancelled, no time.

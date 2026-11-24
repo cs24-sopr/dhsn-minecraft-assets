@@ -1,5 +1,6 @@
 import { BlockPermutation, BlockVolume, SignSide, system } from "@minecraft/server";
-import { setLibraryTestSetup } from "../quests/library-quest.js";
+import { getEcts, MAX_ECTS } from "../ects.js";
+import { QUEST_ECTS, setLibraryTestSetup } from "../quests/library-quest.js";
 import { clearShelfContents } from "./shelf-contents.js";
 
 // Test setup for the library quest (see quests/library-quest.js). Stand on flat ground
@@ -112,6 +113,8 @@ function buildScene(player) {
     say(player, "Bibliotheks-Test aufgebaut. Sprich die Bibliothekarin an, um die Quest zu starten.");
     say(player, `Bibliothek (Holzboden): ${area.from.x} ${area.from.y} ${area.from.z} bis ${area.to.x} ${area.to.y} ${area.to.z}`);
     for (const line of QUEST_SUMMARY) say(player, line);
+    // The test does not change the ECTS; resetting them is up to the tester (/scriptevent dhsn:ects_reset).
+    say(player, `ECTS: du hast ${getEcts(player)}/${MAX_ECTS}, die Quest gibt beim Abschluss ${QUEST_ECTS} (nicht die Challenge).`);
 }
 
 system.afterEvents.scriptEventReceive.subscribe(({ id, sourceEntity }) => {
