@@ -195,6 +195,7 @@ async function openMenu(player, note) {
 
             /** @type {{ text: string, run: () => string | undefined | Promise<string | undefined> }[]} */
             const entries = [
+                { text: `${mark((raw.cameraPath?.length ?? 0) > 0)}Kamerafahrt …`, run: () => cameraMenu(player) },
                 { text: `${mark(raw.wake)}Aufwachpunkt (Position + Blick)`, run: () => setPoint(player, "wake", "wakeFacing", "Aufwachpunkt") },
                 { text: `${mark(raw.alarm)}Wecker (Notenblock ansehen)`, run: () => setBlock(player, "alarm", (t) => t === "minecraft:noteblock", "Notenblock", "Wecker") },
                 { text: `${mark(raw.window?.a)}Fenster: Ecke 1`, run: () => setCorner(player, "window", "a") },
@@ -207,7 +208,6 @@ async function openMenu(player, note) {
                 { text: `${mark(raw.portal?.b)}Teleporter: Ecke 2`, run: () => setCorner(player, "portal", "b") },
                 { text: `${mark(raw.islandGate)}Insel-Tor (Position + Blick)`, run: () => setPoint(player, "islandGate", "islandFacing", "Insel-Tor") },
                 { text: `${mark(hasProfessor(player))}Professor (NPC ansehen)`, run: () => setProfessor(player) },
-                { text: `${mark((raw.cameraPath?.length ?? 0) > 0)}Kamerafahrt …`, run: () => cameraMenu(player) },
                 { text: "Quest neu starten (am Aufwachpunkt)", run: () => restartQuest(player) },
                 { text: "Alles löschen", run: () => clearAll(player) },
                 { text: "Schließen", run: () => "close" },
