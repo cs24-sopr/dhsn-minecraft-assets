@@ -1,37 +1,49 @@
 {
-	"texture_data": {
-		"toolbox": {
+    "texture_data": {
+        "warped_key": {
+			"textures": "textures/items/warped_key.png"
+		},
+		"crimson_key": {
+			"textures": "textures/items/crimson_key.png"
+		},
+		"cherry_key": {
+			"textures": "textures/items/cherry_key.png"
+		},
+		"bamboo_key": {
+			"textures": "textures/items/bamboo_key.png"
+		},
+"toolbox": {
 			"textures": "textures/items/toolbox.png"
 		},
 		"studierendenausweis": {
-			"textures": "textures/items/studierendenausweis.png"
-		},
-		"builder_helmet": {
-			"textures": "textures/items/builder_helmet.png"
-		},
-		"doctor_hat": {
-			"textures": "textures/items/doctor_hat.png"
-		},
-		"stwp_book": {
-			"textures": "textures/items/stwp_book.png"
-		},
-		"cofi_book": {
-			"textures": "textures/items/cofi_book.png"
-		},
-		"immo_book": {
-			"textures": "textures/items/immo_book.png"
-		},
-		"niia_book": {
-			"textures": "textures/items/niia_book.png"
-		},
-		"cs_book": {
-			"textures": "textures/items/cs_book.png"
-		},
-		"certificate": {
-			"textures": "textures/items/certificate.png"
-		},
-		"volleyball": {
-			"textures": "textures/items/volleyball.png"
-		}
-	}
+            "textures": "textures/items/studierendenausweis.png"
+        },
+        "builder_helmet": {
+            "textures": "textures/items/builder_helmet.png"
+        },
+        "doctor_hat": {
+            "textures": "textures/items/doctor_hat.png"
+        },
+        "stwp_book": {
+            "textures": "textures/items/stwp_book.png"
+        },
+        "cofi_book": {
+            "textures": "textures/items/cofi_book.png"
+        },
+        "immo_book": {
+            "textures": "textures/items/immo_book.png"
+        },
+        "niia_book": {
+            "textures": "textures/items/niia_book.png"
+        },
+        "cs_book": {
+            "textures": "textures/items/cs_book.png"
+        },
+        "certificate": {
+            "textures": "textures/items/certificate.png"
+        },
+        "volleyball": {
+            "textures": "textures/items/volleyball.png"
+        }
+    }
 }
