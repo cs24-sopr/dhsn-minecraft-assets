@@ -33,7 +33,7 @@ Ersetzt die echte Map, die es noch nicht gibt: Der Befehl baut alles, was die Qu
 | Insel | x 24 bis 34, z 0 bis 8 | Zweiter Platz mit einem Tor aus Eisengittern zwischen zwei Pfeilern (x 33). |
 | Professor | x 31, z 4 | Platzhalter-NPC mit dem Tag `dhsn:awakening_professor`. |
 
-Danach bist du im Zimmer neben dem Bett, der Wecker klingelt, und im Chat steht eine Kurzfassung der Quest. Ein erneuter Aufruf baut alles an der neuen Position neu auf (den NPC des letzten Durchlaufs erkennt der Test am Tag und ersetzt ihn) und startet die Quest von vorn.
+Danach bist du im Zimmer neben dem Bett, der Wecker klingelt, und im Chat steht eine Zeile zum Zurücksetzen. Ein erneuter Aufruf baut alles an der neuen Position neu auf (den NPC des letzten Durchlaufs erkennt der Test am Tag und ersetzt ihn) und startet die Quest von vorn.
 
 Das Layout wird **in der Welt gespeichert** (`dhsn:awakening_test_layout`) und gilt auch nach `/reload` und nach einem Neustart der Welt. Es hat Vorrang vor `LAYOUT` im Code, bis es mit `/scriptevent dhsn:quest_test_awakening_clear` gelöscht wird.
 

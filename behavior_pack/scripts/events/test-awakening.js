@@ -28,18 +28,6 @@ const WALL = "minecraft:stone_bricks";
 const FLOOR = "minecraft:oak_planks";
 const PLAZA = "minecraft:stone_bricks";
 
-// Rough outline of the quest, shown in the chat when the test starts.
-const QUEST_SUMMARY = [
-    "Quest \"Das Erwachen\" in Kürze:",
-    " 1. Der Wecker (Notenblock im Zimmer) klingelt. Rechtsklick schaltet ihn aus, das ist optional.",
-    " 2. Zum Fenster in der Nordwand gehen: die Kamerafahrt startet und kann nicht übersprungen werden.",
-    " 3. Die Truhe im Zimmer durchsuchen: Rucksack (Bündel) und Essen.",
-    " 4. Das Gebäude durch die Tür im Osten verlassen und auf den Teleporter (lila Platte) treten.",
-    " 5. Auf der Insel den Professor vor dem Tor ansprechen.",
-    "Das Gebäude lässt sich vor Schritt 4 nicht verlassen.",
-    "Neu starten: /scriptevent dhsn:quest_test_awakening  ·  Zurücksetzen: /scriptevent dhsn:quest_reset_awakening",
-];
-
 /** Places the two halves of a bed. Falls back to wool if the bed states are not accepted. */
 function placeBed(dimension, foot, head) {
     try {
@@ -142,14 +130,12 @@ system.afterEvents.scriptEventReceive.subscribe(({ id, sourceEntity }) => {
     }
 
     const player = sourceEntity;
-    const layout = buildScene(player);
+    buildScene(player);
 
     // Start from scratch, like a player who joins the real map for the first time.
     resetAwakening(player);
     startAwakening(player, true);
 
-    const say = (text) => player.sendMessage(`§e${text}`);
-    say("Test für \"Das Erwachen\" aufgebaut. Du liegst im Zimmer, der Wecker klingelt.");
-    say(`Gebäude: ${layout.building.from.x} ${layout.building.from.y} ${layout.building.from.z} bis ${layout.building.to.x} ${layout.building.to.y} ${layout.building.to.z}`);
-    for (const line of QUEST_SUMMARY) say(line);
+    // One line only: the chat should not be flooded. The outline of the quest is in docs/quests/awakening-quest.md.
+    player.sendMessage("§eTest für \"Das Erwachen\" aufgebaut. Zurücksetzen: /scriptevent dhsn:quest_reset_awakening");
 });
