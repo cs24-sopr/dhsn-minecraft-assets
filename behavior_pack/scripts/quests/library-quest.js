@@ -5,6 +5,8 @@ import { createArea, isInArea, isSameBlock } from "../events/area.js";
 import { onItemInShelf } from "../events/index.js";
 import { changeShelfContents, DHSN_SHELF_TYPES } from "../events/shelf-contents.js";
 import { questlog } from "../questlog.js";
+import { commandSource, parseCoordinates, toVector } from "../util/command-coordinates.js";
+import { takeOverPerPlayerValue } from "../util/storage.js";
 
 // Library quest "Aushilfe in der Bibliothek", played in rounds (see ROUNDS):
 // 1. The player talks to the librarian, accepts a round and gets that round's books: for every
@@ -18,7 +20,8 @@ import { questlog } from "../questlog.js";
 //    possible. The challenge can be repeated; the 3 best times are shown on a sign.
 // Leaving the library during a round or the challenge shows a warning with a countdown;
 // staying outside resets the round (the books are taken away).
-// The progress is stored in the world, per player, so it survives /reload and restarting the world.
+// The progress is stored in the world, once per world (the game is single player), so it survives
+// /reload and restarting the world.
 // Commands: see the bottom of this file. Documentation: docs/quests/library-quest.md
 
 // --------------------------------------------------
@@ -29,8 +32,11 @@ const LIBRARIAN = "dhsn:librarian";
 
 // The library room. Only shelves inside it count, and leaving it resets a running round.
 // Undefined means "every shelf in the world counts, leaving is not checked", until the library
-// is built in the map and its corners are known. The test setup (dhsn:quest_test_library)
-// sets its own area, which takes precedence (see setLibraryTestSetup).
+// is built in the map and its corners are known.
+// In the finished map the area and the highscore sign are usually set with command blocks instead:
+//   /scriptevent dhsn:library_set library_area <x y z x y z>
+//   /scriptevent dhsn:library_set highscore_sign <x y z>
+// Order of precedence: test setup (dhsn:quest_test_library), then the command block values, then these constants.
 // Example: { from: { x: 100, y: 64, z: 40 }, to: { x: 120, y: 70, z: 60 }, dimension: "minecraft:overworld" }
 /** @type {{ from: import("@minecraft/server").Vector3, to: import("@minecraft/server").Vector3, dimension?: string } | undefined} */
 const LIBRARY_AREA = undefined;
@@ -139,19 +145,29 @@ const TEXTS = {
     signTitle: "Bestzeiten",
 };
 
-// The progress of every player is stored in the world (the map), one world dynamic property per
-// player: "dhsn:quest_library:<player id>". Older versions stored it on the player itself under
-// STATE_PROPERTY; such progress is moved to the world the first time it is read.
+// The progress is stored in the world (the map) under STATE_PROPERTY, once per world: the game is
+// single player. Older versions stored it per player, first on the player itself, later in the world
+// as "dhsn:quest_library:<player id>"; both are moved to STATE_PROPERTY the first time it is read.
 const STATE_PROPERTY = "dhsn:quest_library";
 const HIGHSCORE_PROPERTY = "dhsn:library_highscores";
 const TEST_AREA_PROPERTY = "dhsn:library_test_area";
 const TEST_SIGN_PROPERTY = "dhsn:library_test_sign";
+const MAP_LAYOUT_PROPERTY = "dhsn:library_map_layout";
 
 const RESET_COMMAND = "dhsn:quest_reset_library";
 const STATE_COMMAND = "dhsn:quest_library_state";
 const HIGHSCORES_RESET_COMMAND = "dhsn:library_highscores_reset";
 const HIGHSCORES_ADD_COMMAND = "dhsn:library_highscores_add";
 const TEST_CLEAR_COMMAND = "dhsn:quest_test_library_clear";
+const MAP_SET_COMMAND = "dhsn:library_set";
+const MAP_SHOW_COMMAND = "dhsn:library_layout";
+const MAP_CLEAR_COMMAND = "dhsn:library_layout_clear";
+
+// Variables of /scriptevent dhsn:library_set and how many numbers each takes.
+const MAP_VARIABLES = {
+    library_area: { numbers: 6, help: "Bibliothek, zwei gegenüberliegende Ecken (x y z x y z)" },
+    highscore_sign: { numbers: 3, help: "Schild für die Bestenliste der Challenge (x y z)" },
+};
 
 // Prepared for "Operation Erstsemester" (#79): later this checks for the student ID card.
 function canStartQuest(player) {
@@ -266,8 +282,9 @@ function totalBooks(books) {
  * @returns {Library | undefined}
  */
 function getLibrary() {
-    const saved = readJsonProperty(world, TEST_AREA_PROPERTY);
-    const source = saved ?? LIBRARY_AREA;
+    const map = readMapValues();
+    const fromMap = map.library_area && { ...map.library_area, dimension: map.dimension };
+    const source = readJsonProperty(world, TEST_AREA_PROPERTY) ?? fromMap ?? LIBRARY_AREA;
     if (!source) return undefined;
 
     return {
@@ -279,7 +296,49 @@ function getLibrary() {
 
 /** @returns {import("@minecraft/server").Vector3 | undefined} */
 function getHighscoreSign() {
-    return readJsonProperty(world, TEST_SIGN_PROPERTY) ?? HIGHSCORE_SIGN;
+    return readJsonProperty(world, TEST_SIGN_PROPERTY) ?? readMapValues().highscore_sign ?? HIGHSCORE_SIGN;
+}
+
+// --------------------------------------------------
+// LIBRARY POSITIONS FROM COMMAND BLOCKS (finished map)
+// --------------------------------------------------
+
+/** @returns {Record<string, any>} The values set so far with /scriptevent dhsn:library_set. */
+function readMapValues() {
+    const values = readJsonProperty(world, MAP_LAYOUT_PROPERTY);
+    return values && typeof values === "object" ? values : {};
+}
+
+/**
+ * Handles /scriptevent dhsn:library_set <variable> <coordinates>.
+ * @returns {string} Feedback for the chat.
+ */
+function setMapVariable(message, origin, dimensionId) {
+    const [name, ...tokens] = message.trim().split(/\s+/);
+    const variable = MAP_VARIABLES[name];
+    if (!variable) return `Unbekannte Variable „${name ?? ""}“. Möglich: ${Object.keys(MAP_VARIABLES).join(", ")}`;
+    if (tokens.length !== variable.numbers) return `${name} braucht ${variable.numbers} Zahlen: ${variable.help}`;
+
+    const numbers = parseCoordinates(tokens, origin);
+    if (!numbers) return `${name}: Koordinaten nicht lesbar. Erlaubt sind Zahlen und ~ / ~5 (relativ zum Befehlsblock).`;
+
+    const values = readMapValues();
+    values[name] = name === "library_area" ? { from: toVector(numbers, 0), to: toVector(numbers, 3) } : toVector(numbers, 0);
+    values.dimension = dimensionId;
+    world.setDynamicProperty(MAP_LAYOUT_PROPERTY, JSON.stringify(values));
+    if (name === "highscore_sign") updateHighscoreSign();
+
+    const missing = Object.keys(MAP_VARIABLES).filter((key) => !(key in values));
+    return `Bibliothek: ${name} = ${numbers.join(" ")}. ${missing.length === 0 ? "Alle Positionen gesetzt." : `Es fehlt noch: ${missing.join(", ")}`}`;
+}
+
+function describeMapVariables() {
+    const values = readMapValues();
+    const lines = Object.keys(MAP_VARIABLES).map((name) => `${name}: ${name in values ? JSON.stringify(values[name]) : "fehlt"}`);
+    if (readJsonProperty(world, TEST_AREA_PROPERTY)) {
+        lines.push("Achtung: Ein Test-Bereich ist gespeichert und hat Vorrang (/scriptevent dhsn:quest_test_library_clear).");
+    }
+    return lines;
 }
 
 function isInLibrary(library, dimensionId, location) {
@@ -379,18 +438,16 @@ function clearSortedBooks(player, sorted) {
  * @property {Challenge} [challenge] Only while a challenge runs (after the quest is done).
  */
 
-function stateKey(player) {
-    return `${STATE_PROPERTY}:${player.id}`;
-}
-
 /** @returns {QuestState | undefined} */
 function readState(player) {
-    let state = readJsonProperty(world, stateKey(player));
+    // Older per-player progress in the world ("dhsn:quest_library:<player id>") is taken over first.
+    const raw = takeOverPerPlayerValue(STATE_PROPERTY);
+    let state = typeof raw === "string" ? readJsonProperty(world, STATE_PROPERTY) : undefined;
     if (state === undefined) {
-        // Progress of older versions on the player: move it to the world.
+        // Progress of the oldest versions on the player: move it to the world.
         state = readJsonProperty(player, STATE_PROPERTY);
         if (state !== undefined) {
-            world.setDynamicProperty(stateKey(player), JSON.stringify(state));
+            world.setDynamicProperty(STATE_PROPERTY, JSON.stringify(state));
             player.setDynamicProperty(STATE_PROPERTY, undefined);
         }
     }
@@ -406,7 +463,7 @@ function readState(player) {
 
 /** @param {QuestState | undefined} state */
 function writeState(player, state) {
-    world.setDynamicProperty(stateKey(player), state ? JSON.stringify(state) : undefined);
+    world.setDynamicProperty(STATE_PROPERTY, state ? JSON.stringify(state) : undefined);
 }
 
 /**
@@ -931,6 +988,29 @@ function describeState(state) {
     lines.push(library ? `Bibliothek: ${JSON.stringify(library.corners)}` : "Bibliothek: kein Bereich gesetzt");
     return lines;
 }
+
+// Setting up the finished map: works from command blocks (no player needed). Feedback goes to the
+// chat of everyone in the world, so it is visible when the command block is triggered.
+system.afterEvents.scriptEventReceive.subscribe((event) => {
+    const { id, message } = event;
+    if (![MAP_SET_COMMAND, MAP_SHOW_COMMAND, MAP_CLEAR_COMMAND].includes(id)) return;
+
+    const { origin, dimensionId } = commandSource(event);
+    /** @type {string[]} */
+    let lines;
+    switch (id) {
+        case MAP_SET_COMMAND:
+            lines = [setMapVariable(message, origin, dimensionId)];
+            break;
+        case MAP_SHOW_COMMAND:
+            lines = describeMapVariables();
+            break;
+        default:
+            world.setDynamicProperty(MAP_LAYOUT_PROPERTY, undefined);
+            lines = ["Bibliothek: alle Positionen der Map gelöscht."];
+    }
+    for (const line of lines) world.sendMessage(`§e${line}`);
+});
 
 system.afterEvents.scriptEventReceive.subscribe(({ id, message, sourceEntity }) => {
     const commands = [RESET_COMMAND, STATE_COMMAND, HIGHSCORES_RESET_COMMAND, HIGHSCORES_ADD_COMMAND, TEST_CLEAR_COMMAND];

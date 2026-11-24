@@ -38,7 +38,7 @@ Informatik hat absichtlich 4 Regale: Eine normale Runde kann dort bis zu 4 Büch
    - **Highscore-Schild** östlich der dritten Reihe. Es zeigt die 3 besten Zeiten der Challenge.
 4. Im Chat steht eine Kurzfassung der Quest.
 
-Bibliotheksbereich und Position des Highscore-Schildes werden **in der Welt gespeichert** (`dhsn:library_test_area`, `dhsn:library_test_sign`). Sie gelten also auch nach `/reload` und nach einem Neustart der Welt und haben Vorrang vor den Werten im Code (`LIBRARY_AREA`, `HIGHSCORE_SIGN`).
+Bibliotheksbereich und Position des Highscore-Schildes werden **in der Welt gespeichert** (`dhsn:library_test_area`, `dhsn:library_test_sign`). Sie gelten also auch nach `/reload` und nach einem Neustart der Welt und haben Vorrang vor den Werten, die für die fertige Map per Befehlsblock gesetzt wurden (`/scriptevent dhsn:library_set`), und vor den Werten im Code (`LIBRARY_AREA`, `HIGHSCORE_SIGN`).
 
 ## Danach
 
@@ -49,7 +49,7 @@ Weiter geht es mit der Bibliotheks-Quest: Bibliothekarin ansprechen, Quest anneh
 | Befehl | Wirkung |
 | --- | --- |
 | `/scriptevent dhsn:quest_test_library` | Baut die Bibliothek an der aktuellen Position (neu) auf. |
-| `/scriptevent dhsn:quest_test_library_clear` | Löscht den gespeicherten Bibliotheksbereich und das Test-Schild. Danach gelten wieder `LIBRARY_AREA` und `HIGHSCORE_SIGN` aus dem Code. Die Blöcke bleiben stehen. |
+| `/scriptevent dhsn:quest_test_library_clear` | Löscht den gespeicherten Bibliotheksbereich und das Test-Schild. Danach gelten wieder die per Befehlsblock gesetzten Werte, sonst `LIBRARY_AREA` und `HIGHSCORE_SIGN` aus dem Code. Die Blöcke bleiben stehen. |
 | `/scriptevent dhsn:quest_reset_library` | Setzt den eigenen Quest-Stand zurück, nimmt die Bücher einer laufenden Runde oder Challenge weg und trägt sie aus den Regalen aus. |
 | `/scriptevent dhsn:quest_library_state` | Schreibt den eigenen Stand in den Chat: Runde, ausgegebene und einsortierte Bücher pro Studiengang, in welches Regal jedes Buch kam, den Bibliotheksbereich. |
 | `/scriptevent dhsn:library_highscores_add <Name> <Sekunden>` | Trägt eine Fake-Zeit ein, z. B. `Kai 42,5`. So lassen sich Sortierung und „Top 3“ ohne viele Durchläufe prüfen. |

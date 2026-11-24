@@ -5,6 +5,7 @@ import "./smart_board.js";
 import "./questlog.js";
 import "./volleyball.js";
 import "./questlog.js";
+import "./util/storage.js";
 import "./custom_bookshelf.js";
 import "./quests/library-quest.js";
 import "./events/test.js";
