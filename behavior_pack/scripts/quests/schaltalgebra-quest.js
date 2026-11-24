@@ -1,7 +1,9 @@
 import { system, world } from "@minecraft/server";
-import { addEcts } from "../ects.js";
+import { addEcts, getEcts, MAX_ECTS } from "../ects.js";
 import { createArea, isInArea, isSameBlock } from "../events/area.js";
 import { questlog } from "../questlog.js";
+import { commandSource, parseCoordinates, toVector } from "../util/command-coordinates.js";
+import { keepOnCleanup, parseJson, takeOverPerPlayerValue } from "../util/storage.js";
 
 // Quest "Schaltalgebra" (project#173):
 // 1. In a lecture room there is a redstone lamp with a stone button on top. Pressing the button
@@ -12,7 +14,11 @@ import { questlog } from "../questlog.js";
 //    solved as soon as the target lamp at the end of the room lights up.
 // 3. Solved: ECTS (once), the questlog line turns green, and the lamp in the lecture room stays lit.
 // 4. A return button teleports the player back at any time; the puzzle can be tried again.
-// The progress is stored in the world. Documentation: docs/quests/schaltalgebra-quest.md
+//
+// The game is single player: the progress is stored once per world. Steps that belong together
+// (quest done, ECTS given, lamp on) are checked again regularly and completed if one of them got
+// lost, e.g. because the game was closed in between or the lamp was not loaded.
+// Documentation: docs/quests/schaltalgebra-quest.md
 
 // --------------------------------------------------
 // CONFIGURATION
@@ -54,8 +60,15 @@ export const QUEST_ECTS = 10;
 // A stone button stays pressed for 20 ticks.
 const TELEPORT_DELAY = 20;
 
+// Ticks after the levers were switched off before the target lamp is checked, so the circuit
+// can settle and a lamp that was still lit from before does not count as a solution.
+const SETTLE_TICKS = 10;
+
 // How often the target lamp is checked while the player is in the puzzle room, in ticks.
 const CHECK_INTERVAL = 5;
+
+// How often unfinished completion steps (ECTS, lamp) are checked and repaired, in ticks.
+const RECONCILE_INTERVAL = 40;
 
 // Placeholder texts until the story team delivers the real ones. All chat output is yellow.
 const TEXTS = {
@@ -63,14 +76,19 @@ const TEXTS = {
     objective: "Löse das Rätsel der Schaltalgebra",
     needsItem: "Ohne Studierendenausweis kommst du hier nicht weiter.",
     arrived: "Stell die vier Schalter so ein, dass die Lampe am Ende des Raumes leuchtet. Mit dem Knopf kommst du jederzeit zurück.",
+    teleportFailed: "Der Teleport hat nicht geklappt. Versuch es noch einmal.",
     solved: "Die Lampe leuchtet! Du hast das Rätsel der Schaltalgebra gelöst.",
     solvedAgain: "Die Lampe leuchtet wieder. Das Rätsel hattest du schon gelöst.",
     reset: "Schaltalgebra wurde zurückgesetzt.",
 };
 
-const STATE_PREFIX = "dhsn:quest_schaltalgebra:";
-const LAMP_PROPERTY = "dhsn:schaltalgebra_lamp_on";
+// Saved in the world, once per world (single player). Older versions used
+// "dhsn:quest_schaltalgebra:<player id>" and a separate lamp flag; both are taken over / removed.
+const STATE_PROPERTY = "dhsn:quest_schaltalgebra";
+const OLD_LAMP_PROPERTY = "dhsn:schaltalgebra_lamp_on";
+// The floor block below the lamp before the script replaced it; part of the map, kept by the cleanup.
 const LAMP_BASE_PROPERTY = "dhsn:schaltalgebra_lamp_base";
+keepOnCleanup(LAMP_BASE_PROPERTY);
 const TEST_LAYOUT_PROPERTY = "dhsn:schaltalgebra_test_layout";
 const MAP_LAYOUT_PROPERTY = "dhsn:schaltalgebra_map_layout";
 
@@ -110,18 +128,34 @@ function chat(player, text) {
 }
 
 function readJson(id) {
-    const value = world.getDynamicProperty(id);
-    if (typeof value !== "string") return undefined;
-    try {
-        return JSON.parse(value);
-    } catch {
-        return undefined;
-    }
+    return parseJson(id, world.getDynamicProperty(id));
 }
 
 /** The layout of the test setup, otherwise the one set by command blocks, otherwise LAYOUT. */
 function getLayout() {
     return /** @type {Layout | undefined} */ (readJson(TEST_LAYOUT_PROPERTY)) ?? mapLayout() ?? LAYOUT;
+}
+
+function getDimension(layout) {
+    return world.getDimension(layout.dimension ?? "minecraft:overworld");
+}
+
+function below(location) {
+    return { x: location.x, y: location.y - 1, z: location.z };
+}
+
+function hasItem(player, typeId) {
+    const inventory = player.getComponent("minecraft:inventory")?.container;
+    if (!inventory) return false;
+    for (let slot = 0; slot < inventory.size; slot++) {
+        if (inventory.getItem(slot)?.typeId === typeId) return true;
+    }
+    return false;
+}
+
+function isInPuzzleRoom(player, layout) {
+    const area = createArea(layout.puzzleArea.from, layout.puzzleArea.to);
+    return player.dimension.id === layout.dimension && isInArea(area, player.location);
 }
 
 // --------------------------------------------------
@@ -155,24 +189,6 @@ function mapLayout() {
     };
 }
 
-/**
- * Parses coordinates like in Minecraft commands: absolute numbers or "~" / "~5" relative to `origin`.
- * @returns {number[] | undefined}
- */
-function parseCoordinates(tokens, origin) {
-    const axes = ["x", "y", "z"];
-    const numbers = [];
-    for (let i = 0; i < tokens.length; i++) {
-        const token = tokens[i].replace(",", ".");
-        const relative = token.startsWith("~");
-        const value = Number(relative ? token.slice(1) || "0" : token);
-        if (!Number.isFinite(value)) return undefined;
-        numbers.push(relative ? Math.floor(origin[axes[i % 3]]) + value : value);
-    }
-    return numbers;
-}
-
-const toVector = (n, offset = 0) => ({ x: n[offset], y: n[offset + 1], z: n[offset + 2] });
 // Arrival points given as block coordinates are moved to the middle of the block.
 const toBlockCenter = (v) => ({ x: Number.isInteger(v.x) ? v.x + 0.5 : v.x, y: v.y, z: Number.isInteger(v.z) ? v.z + 0.5 : v.z });
 
@@ -214,37 +230,30 @@ function describeMapVariables() {
     return lines;
 }
 
-function getDimension(layout) {
-    return world.getDimension(layout.dimension ?? "minecraft:overworld");
-}
-
-function below(location) {
-    return { x: location.x, y: location.y - 1, z: location.z };
-}
-
-function hasItem(player, typeId) {
-    const inventory = player.getComponent("minecraft:inventory")?.container;
-    if (!inventory) return false;
-    for (let slot = 0; slot < inventory.size; slot++) {
-        if (inventory.getItem(slot)?.typeId === typeId) return true;
-    }
-    return false;
-}
-
 // --------------------------------------------------
-// STATE
+// STATE (once per world)
 // --------------------------------------------------
 
-/** @typedef {{ status: "started" | "done" }} QuestState */
+/**
+ * @typedef {object} QuestState
+ * @property {"started" | "done"} status
+ * @property {boolean} [rewarded] Only with "done": whether the ECTS were given. Missing ECTS are given later.
+ */
 
 /** @returns {QuestState | undefined} */
-function readState(player) {
-    return readJson(`${STATE_PREFIX}${player.id}`);
+function readState() {
+    // Older per-player progress: take over a finished one if there is one.
+    const raw = takeOverPerPlayerValue(STATE_PROPERTY, (values) => values.find((v) => typeof v === "string" && v.includes('"done"')) ?? values[0]);
+    const state = parseJson(STATE_PROPERTY, raw);
+    if (!state || (state.status !== "started" && state.status !== "done")) return undefined;
+    // Done states of older versions had no "rewarded"; their ECTS were given right away.
+    if (state.status === "done" && state.rewarded === undefined) state.rewarded = true;
+    return state;
 }
 
 /** @param {QuestState | undefined} state */
-function writeState(player, state) {
-    world.setDynamicProperty(`${STATE_PREFIX}${player.id}`, state ? JSON.stringify(state) : undefined);
+function writeState(state) {
+    world.setDynamicProperty(STATE_PROPERTY, state ? JSON.stringify(state) : undefined);
 }
 
 // --------------------------------------------------
@@ -253,30 +262,43 @@ function writeState(player, state) {
 
 /**
  * Switches the lamp in the lecture room on or off for good. On: a redstone block below the lamp
- * powers it. Off: the block that was there before comes back.
+ * powers it. Off: the block that was there before comes back. Whether the lamp should be on is not
+ * saved separately: it is on exactly when the quest is done (see reconcile).
  * Everything that switches the lamp goes through here, so a different lamp (e.g. the LED tube,
  * see the plan) would only change this function.
+ * @returns {boolean} Whether the lamp is now in the wanted state (false if not loaded).
  */
 function setStartLamp(on) {
     const layout = getLayout();
-    if (!layout) return;
+    if (!layout) return false;
 
     try {
-        const dimension = getDimension(layout);
-        const location = below(layout.startLamp);
-        const block = dimension.getBlock(location);
-        if (!block) return;
+        const block = getDimension(layout).getBlock(below(layout.startLamp));
+        if (!block) return false;
 
-        if (on) {
-            if (block.typeId !== POWER_BLOCK) world.setDynamicProperty(LAMP_BASE_PROPERTY, block.typeId);
+        if (on && block.typeId !== POWER_BLOCK) {
+            world.setDynamicProperty(LAMP_BASE_PROPERTY, block.typeId);
             block.setType(POWER_BLOCK);
-        } else if (block.typeId === POWER_BLOCK) {
+        } else if (!on && block.typeId === POWER_BLOCK) {
             const base = world.getDynamicProperty(LAMP_BASE_PROPERTY);
             block.setType(typeof base === "string" ? base : "minecraft:stone");
         }
-        world.setDynamicProperty(LAMP_PROPERTY, on);
+        return true;
     } catch (error) {
         console.warn(`[schaltalgebra] Could not switch the lamp: ${error}`);
+        return false;
+    }
+}
+
+/** @returns {boolean | undefined} Whether the lamp is powered; undefined if it is not loaded. */
+function isStartLampOn() {
+    const layout = getLayout();
+    if (!layout) return undefined;
+    try {
+        const block = getDimension(layout).getBlock(below(layout.startLamp));
+        return block ? block.typeId === POWER_BLOCK : undefined;
+    } catch {
+        return undefined;
     }
 }
 
@@ -284,41 +306,103 @@ function setStartLamp(on) {
 // QUESTLOG
 // --------------------------------------------------
 
-// The questlog is shared by all players, so every player gets an own entry.
-const questlogEntries = new Map();
-// Players who solved the puzzle and are still in the puzzle room: their line is shown green.
-const solvedInRoom = new Set();
+/** @type {any} The entry of this quest in the shared questlog, if shown. */
+let questlogEntry;
 
+/**
+ * Shown while the quest is started, and green while the quest is done and the player is still in
+ * the puzzle room. Derived from the saved state and the player's position, so it is right after
+ * a reload as well.
+ */
 function updateQuestlog(player) {
-    const state = readState(player);
-    const existing = questlogEntries.get(player.id);
-    const show = state?.status === "started" || solvedInRoom.has(player.id);
+    const state = readState();
+    const layout = getLayout();
+    const inRoom = layout ? isInPuzzleRoom(player, layout) : false;
+    const show = state?.status === "started" || (state?.status === "done" && inRoom);
+
     if (!show) {
-        if (existing) questlog.removeEntry(existing);
-        questlogEntries.delete(player.id);
+        if (questlogEntry) questlog.removeEntry(questlogEntry);
+        questlogEntry = undefined;
         return;
     }
 
-    const line = state?.status === "done" ? `§a${TEXTS.objective}§r` : TEXTS.objective;
-    const title = world.getAllPlayers().length > 1 ? `${TEXTS.questTitle} (${player.name})` : TEXTS.questTitle;
-    if (existing) {
-        existing.title = title;
-        existing.lines = [line];
+    const lines = [state?.status === "done" ? `§a${TEXTS.objective}§r` : TEXTS.objective];
+    if (questlogEntry) {
+        questlogEntry.lines = lines;
     } else {
-        questlogEntries.set(player.id, questlog.createEntry({ title, lines: [line], order: 3 }));
+        questlogEntry = questlog.createEntry({ title: TEXTS.questTitle, lines, order: 3 });
     }
 }
 
 // --------------------------------------------------
-// TELEPORTS
+// COMPLETION (with repair of lost steps)
 // --------------------------------------------------
 
-// Players whose teleport is under way; further button presses are ignored meanwhile.
-const teleporting = new Set();
+/**
+ * Gives the ECTS once. "rewarded" is only saved if the ECTS count really went up (or was already
+ * full), so a failed attempt is repeated later and a successful one is never repeated.
+ */
+function giveReward(player) {
+    const state = readState();
+    if (state?.status !== "done" || state.rewarded) return;
 
-/** Fades the screen out and back in and teleports the player while it is black. */
+    const before = getEcts(player);
+    try {
+        addEcts(player, QUEST_ECTS);
+    } catch (error) {
+        console.warn(`[schaltalgebra] Could not give the ECTS: ${error}`);
+    }
+    if (getEcts(player) > before || before >= MAX_ECTS) writeState({ status: "done", rewarded: true });
+}
+
+/**
+ * Completes steps that should have happened but are missing (ECTS, lamp on), and keeps the lamp in
+ * the lecture room equal to the quest state: on exactly when the quest is done. So the lamp also
+ * goes off again after the progress was deleted (reset, /scriptevent dhsn:map_cleanup).
+ */
+function reconcile() {
+    const state = readState();
+    const done = state?.status === "done";
+
+    const player = world.getAllPlayers()[0];
+    if (done && player && !state.rewarded) giveReward(player);
+
+    const lampOn = isStartLampOn();
+    if (lampOn !== undefined && lampOn !== done) setStartLamp(done);
+}
+
+/** @param {{ force?: boolean }} [options] force: solve without a started quest (test command). */
+function solve(player, options = {}) {
+    const state = readState();
+    if (state?.status === "done") {
+        chat(player, TEXTS.solvedAgain);
+        return;
+    }
+    if (state?.status !== "started" && !options.force) return;
+
+    // First the state, so nothing is lost; ECTS and lamp follow and are repaired by reconcile if needed.
+    writeState({ status: "done", rewarded: false });
+    chat(player, TEXTS.solved);
+    giveReward(player);
+    setStartLamp(true);
+    updateQuestlog(player);
+}
+
+// --------------------------------------------------
+// TELEPORTS AND ARRIVAL
+// --------------------------------------------------
+
+// Whether a teleport is under way; further button presses are ignored meanwhile.
+let teleporting = false;
+// Tick from which the target lamp may count as a solution; undefined = not armed.
+/** @type {number | undefined} */
+let armedFrom;
+
+/**
+ * Fades the screen out and back in and teleports the player while it is black.
+ * @returns {Promise<boolean>} Whether the player arrived at the target.
+ */
 function teleportWithFade(player, target, layout) {
-    teleporting.add(player.id);
     try {
         player.camera.fade({ fadeColor: { red: 0, green: 0, blue: 0 }, fadeTime: { fadeInTime: 0.3, holdTime: 0.4, fadeOutTime: 0.3 } });
     } catch {
@@ -327,19 +411,27 @@ function teleportWithFade(player, target, layout) {
     return new Promise((resolve) => {
         system.runTimeout(() => {
             try {
+                /** @type {import("@minecraft/server").TeleportOptions} */
                 const options = { dimension: getDimension(layout) };
                 if (target.facing) options.facingLocation = target.facing;
                 player.teleport(target.location, options);
+                const { x, y, z } = player.location;
+                const distance = Math.hypot(x - target.location.x, y - target.location.y, z - target.location.z);
+                resolve(distance < 3);
             } catch (error) {
                 console.warn(`[schaltalgebra] Teleport failed: ${error}`);
+                resolve(false);
             }
-            teleporting.delete(player.id);
-            resolve(undefined);
         }, 8);
     });
 }
 
-function resetLevers(layout) {
+/**
+ * Called when the player is in the puzzle room (after the teleport, or after joining there):
+ * switches the levers off now that the room is loaded, and only checks the target lamp after the
+ * circuit had time to settle.
+ */
+function arrive(layout) {
     const dimension = getDimension(layout);
     for (const location of layout.levers) {
         try {
@@ -349,6 +441,11 @@ function resetLevers(layout) {
             // Lever not loaded or missing.
         }
     }
+    armedFrom = system.currentTick + SETTLE_TICKS;
+    // The first check after settling only records whether the lamp is lit; only a change from off
+    // to on counts. So a lamp that is still lit from before (e.g. the levers could not be switched
+    // off) is not taken for a solution.
+    baselinePending = true;
 }
 
 function enterPuzzleRoom(player, layout) {
@@ -357,27 +454,35 @@ function enterPuzzleRoom(player, layout) {
         return;
     }
 
-    teleporting.add(player.id);
+    teleporting = true;
     // Wait until the brief light of the lamp was visible, then teleport.
     system.runTimeout(async () => {
-        resetLevers(layout);
-        await teleportWithFade(player, layout.puzzleArrival, layout);
-        if (!readState(player)) writeState(player, { status: "started" });
+        const arrived = await teleportWithFade(player, layout.puzzleArrival, layout);
+        teleporting = false;
+        if (!arrived) {
+            chat(player, TEXTS.teleportFailed);
+            return;
+        }
+        if (!readState()) writeState({ status: "started" });
+        arrive(layout);
+        wasInRoom = true;
         updateQuestlog(player);
         chat(player, TEXTS.arrived);
     }, TELEPORT_DELAY);
 }
 
 async function leavePuzzleRoom(player, layout) {
+    teleporting = true;
+    armedFrom = undefined;
     await teleportWithFade(player, layout.returnArrival, layout);
-    solvedInRoom.delete(player.id);
+    teleporting = false;
+    wasInRoom = false;
     updateQuestlog(player);
 }
 
 world.afterEvents.buttonPush.subscribe(({ block, source }) => {
-    if (source?.typeId !== "minecraft:player") return;
+    if (source?.typeId !== "minecraft:player" || teleporting) return;
     const player = /** @type {import("@minecraft/server").Player} */ (source);
-    if (teleporting.has(player.id)) return;
 
     const layout = getLayout();
     if (!layout || block.dimension.id !== layout.dimension) return;
@@ -387,89 +492,82 @@ world.afterEvents.buttonPush.subscribe(({ block, source }) => {
 });
 
 // --------------------------------------------------
-// PUZZLE
+// PUZZLE DETECTION
 // --------------------------------------------------
 
-function solve(player) {
-    const state = readState(player);
-    if (state?.status === "done") {
-        chat(player, TEXTS.solvedAgain);
-        return;
-    }
-
-    writeState(player, { status: "done" });
-    solvedInRoom.add(player.id);
-    updateQuestlog(player);
-    chat(player, TEXTS.solved);
-    addEcts(player, QUEST_ECTS);
-    setStartLamp(true);
-}
-
-// Remembers whether the target lamp was lit at the last check, so "solved again" is said once per lighting.
-const lampWasLit = new Map();
+// Whether the target lamp was lit at the last check: only a change from off to on counts.
+let lampWasLit = false;
+// Whether the next check after arriving only records the lamp state (see arrive).
+let baselinePending = false;
+// Whether the player was in the puzzle room at the last check, to notice joining inside or leaving.
+let wasInRoom = false;
 
 system.runInterval(() => {
     const layout = getLayout();
-    if (!layout) return;
+    const player = world.getAllPlayers()[0];
+    if (!layout || !player || teleporting) return;
 
-    const area = createArea(layout.puzzleArea.from, layout.puzzleArea.to);
-    let lit = false;
+    const inRoom = isInPuzzleRoom(player, layout);
+    if (inRoom !== wasInRoom) {
+        wasInRoom = inRoom;
+        // E.g. joined the world inside the puzzle room: switch the levers off and settle, like on arrival.
+        if (inRoom && armedFrom === undefined) arrive(layout);
+        if (!inRoom) armedFrom = undefined;
+        updateQuestlog(player);
+    }
+    if (!inRoom || armedFrom === undefined || system.currentTick < armedFrom) return;
+
+    let lit;
     try {
         lit = getDimension(layout).getBlock(layout.targetLamp)?.typeId === LIT_LAMP;
     } catch {
         return; // Puzzle room not loaded.
     }
-
-    for (const player of world.getAllPlayers()) {
-        const inside = player.dimension.id === layout.dimension && isInArea(area, player.location);
-        const wasLit = lampWasLit.get(player.id) ?? false;
-        lampWasLit.set(player.id, inside && lit);
-        if (inside && lit && !wasLit && !teleporting.has(player.id)) solve(player);
+    if (baselinePending) {
+        baselinePending = false;
+        lampWasLit = lit;
+        return;
     }
+    if (lit && !lampWasLit) solve(player);
+    lampWasLit = lit;
 }, CHECK_INTERVAL);
+
+// Repair lost completion steps regularly.
+system.runInterval(reconcile, RECONCILE_INTERVAL);
 
 // --------------------------------------------------
 // WORLD LOAD, JOIN, COMMANDS
 // --------------------------------------------------
 
-// The redstone block below the lamp is part of the world, but restore it if it got lost.
 world.afterEvents.worldLoad.subscribe(() => {
-    if (world.getDynamicProperty(LAMP_PROPERTY) === true) setStartLamp(true);
+    // The lamp flag of older versions is no longer needed; the lamp follows the quest state.
+    world.setDynamicProperty(OLD_LAMP_PROPERTY, undefined);
+    reconcile();
 });
 
 world.afterEvents.playerSpawn.subscribe(({ player, initialSpawn }) => {
-    if (initialSpawn) updateQuestlog(player);
-});
-
-world.afterEvents.playerLeave.subscribe(({ playerId }) => {
-    const entry = questlogEntries.get(playerId);
-    if (entry) questlog.removeEntry(entry);
-    questlogEntries.delete(playerId);
-    solvedInRoom.delete(playerId);
-    teleporting.delete(playerId);
-    lampWasLit.delete(playerId);
+    if (!initialSpawn) return;
+    // Let the detection loop look at the position fresh (joined inside the room -> arrive again).
+    wasInRoom = false;
+    armedFrom = undefined;
+    updateQuestlog(player);
 });
 
 /**
- * Saves the layout of the test setup in the world; it takes precedence over LAYOUT.
+ * Saves the layout of the test setup in the world; it takes precedence over the map values and LAYOUT.
  * @param {Layout} layout
  */
 export function setSchaltalgebraTestLayout(layout) {
     world.setDynamicProperty(TEST_LAYOUT_PROPERTY, JSON.stringify(layout));
 }
 
-/** @returns {boolean} Whether the lamp in the lecture room is switched on for good. */
-export function isStartLampOn() {
-    return world.getDynamicProperty(LAMP_PROPERTY) === true;
-}
-
 // Setting up the finished map: works from command blocks (no player needed). Feedback goes to the chat
 // of everyone in the world, so it is visible when the command block is triggered.
-system.afterEvents.scriptEventReceive.subscribe(({ id, message, sourceEntity, sourceBlock }) => {
+system.afterEvents.scriptEventReceive.subscribe((event) => {
+    const { id, message } = event;
     if (![MAP_SET_COMMAND, MAP_SHOW_COMMAND, MAP_CLEAR_COMMAND].includes(id)) return;
 
-    const origin = sourceBlock?.location ?? sourceEntity?.location ?? { x: 0, y: 0, z: 0 };
-    const dimensionId = sourceBlock?.dimension.id ?? sourceEntity?.dimension.id ?? "minecraft:overworld";
+    const { origin, dimensionId } = commandSource(event);
     /** @type {string[]} */
     let lines;
     switch (id) {
@@ -493,24 +591,25 @@ system.afterEvents.scriptEventReceive.subscribe(({ id, sourceEntity }) => {
 
     switch (id) {
         case RESET_COMMAND:
-            writeState(player, undefined);
-            solvedInRoom.delete(player.id);
-            updateQuestlog(player);
+            writeState(undefined);
             setStartLamp(false);
+            updateQuestlog(player);
             chat(player, TEXTS.reset);
             break;
         case STATE_COMMAND: {
-            const state = readState(player);
-            chat(player, `Schaltalgebra: ${state?.status ?? "nicht begonnen"}, Lampe im Hochschulraum: ${isStartLampOn() ? "an" : "aus"}`);
-            chat(player, getLayout() ? "Layout: gesetzt" : "Layout: fehlt (Testaufbau oder LAYOUT im Code)");
+            const state = readState();
+            const status = state ? `${state.status}${state.status === "done" ? (state.rewarded ? ", ECTS vergeben" : ", ECTS ausstehend") : ""}` : "nicht begonnen";
+            const lamp = isStartLampOn();
+            chat(player, `Schaltalgebra: ${status}, Lampe im Hochschulraum: ${lamp === undefined ? "nicht geladen" : lamp ? "an" : "aus"}`);
+            chat(player, getLayout() ? "Layout: gesetzt" : "Layout: fehlt (Testaufbau, Befehlsblöcke oder LAYOUT im Code)");
             break;
         }
         case SOLVE_COMMAND:
-            solve(player);
+            solve(player, { force: true });
             break;
         case TEST_CLEAR_COMMAND:
             world.setDynamicProperty(TEST_LAYOUT_PROPERTY, undefined);
-            chat(player, "Test-Layout der Schaltalgebra gelöscht. Es gilt wieder LAYOUT aus dem Code.");
+            chat(player, "Test-Layout der Schaltalgebra gelöscht. Es gelten wieder die Map-Werte oder LAYOUT aus dem Code.");
             break;
     }
 });

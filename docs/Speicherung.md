@@ -8,7 +8,7 @@ Alles, was das Add-on sich merkt, liegt **in der Welt (Map)** als World-Dynamic-
 
 Das Spiel ist **Einzelspieler**. Quest-Fortschritt wird deshalb **einmal pro Welt** gespeichert, ohne Spieler-ID im Schlüssel, z. B. `dhsn:quest_library`. So macht es auch Operation Erstsemester (`dhsn:operation_freshman_…`).
 
-Frühere Versionen speicherten pro Spieler (`dhsn:quest_library:<Spieler-ID>`). `takeOverPerPlayerValue(key)` übernimmt solche Werte beim ersten Lesen unter den neuen Schlüssel und löscht die alten.
+Frühere Versionen speicherten pro Spieler (`dhsn:quest_library:<Spieler-ID>`). `takeOverPerPlayerValue(key)` übernimmt solche Werte beim ersten Lesen unter den neuen Schlüssel und löscht die alten. Werte, die zur Map gehören, aber nicht auf `_map_layout` enden, meldet eine Quest mit `keepOnCleanup(key)` an, damit `dhsn:map_cleanup` sie behält.
 
 ```js
 import { takeOverPerPlayerValue } from "../util/storage.js";
@@ -20,10 +20,11 @@ const raw = takeOverPerPlayerValue("dhsn:quest_meine_quest"); // alter Wert wird
 
 | Art | Beispiele | Bei `dhsn:map_cleanup` |
 | --- | --- | --- |
-| Quest-Fortschritt | `dhsn:quest_library`, `dhsn:ects` | gelöscht |
+| Quest-Fortschritt | `dhsn:quest_library`, `dhsn:ects`, `dhsn:quest_schaltalgebra` | gelöscht |
+| Bodenblock unter der Schaltalgebra-Lampe | `dhsn:schaltalgebra_lamp_base` | **bleibt** (gehört zur Map, per `keepOnCleanup`) |
 | Zustand der Map-Welt | `dhsn:library_highscores`, `dhsn:shelf_contents:…` | gelöscht |
-| Testaufbauten | `dhsn:library_test_area`, `dhsn:library_test_sign` | gelöscht |
-| Einstellungen der fertigen Map | `dhsn:library_map_layout` (per Befehlsblock gesetzt) | **bleibt** |
+| Testaufbauten | `dhsn:library_test_area`, `dhsn:library_test_sign`, `dhsn:schaltalgebra_test_layout`, `dhsn:schaltalgebra_test_substitute` | gelöscht |
+| Einstellungen der fertigen Map | `dhsn:library_map_layout`, `dhsn:schaltalgebra_map_layout` (per Befehlsblock gesetzt) | **bleibt** |
 
 Weitere Quests ergänzen hier ihre Schlüssel (ECTS, Schaltalgebra, …).
 

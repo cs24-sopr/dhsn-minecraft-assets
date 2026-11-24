@@ -22,8 +22,8 @@ All texts are **placeholders** until the story team delivers the real ones. All 
 
 | Step | Player | Script |
 | --- | --- | --- |
-| Start | presses the stone button on the lamp in the lecture room | Without the student ID (`dhsn:studierendenausweis`): only a hint in the chat. With it: after 1 s (the lamp lights briefly by itself, vanilla redstone) the screen fades and the player is teleported into the puzzle room. All levers are switched off first. The first time, the questlog shows "Schaltalgebra – Löse das Rätsel der Schaltalgebra". |
-| Puzzle | sets the four levers | Every 5 ticks: if the player is in the puzzle room and the target lamp is lit, the puzzle is solved. |
+| Start | presses the stone button on the lamp in the lecture room | Without the student ID (`dhsn:studierendenausweis`): only a hint in the chat. With it: after 1 s (the lamp lights briefly by itself, vanilla redstone) the screen fades and the player is teleported into the puzzle room. Only if the player really arrived (checked by position) is the quest saved as started; otherwise "Der Teleport hat nicht geklappt." After arriving, all levers are switched off (the room is loaded now). The first time, the questlog shows "Schaltalgebra – Löse das Rätsel der Schaltalgebra". |
+| Puzzle | sets the four levers | Every 5 ticks while the player is in the puzzle room. After arriving, the circuit gets 10 ticks to settle; then the first check only records the lamp. **Only a change of the target lamp from off to on counts** as a solution, so a lamp still lit from before is never taken for a solution. The quest must be started. |
 | Solved | sees the target lamp light up | Chat message, **ECTS** (`QUEST_ECTS`, once, via `addEcts` from [ects.js](../Ects.md)), the questlog line turns green, the lamp in the lecture room is switched on for good. |
 | Return | presses the return button | Fade, teleport back into the lecture room. Possible at any time, also without solving. After solving, the questlog entry disappears. |
 
@@ -39,6 +39,15 @@ The script does **not** know the logic of the circuit. The building team builds 
 ### Lamp in the lecture room
 
 A redstone lamp only stays lit with power. To keep it on, the script puts a **redstone block directly below the lamp** (hidden in the floor) and remembers the block that was there before; resetting the quest puts it back. Everything that switches this lamp goes through `setStartLamp(on)`, so a different lamp (e.g. the LED tube, see the plan) would only change this function.
+
+Whether the lamp should be on is not saved separately: **it is on exactly when the quest is done.**
+
+### Completion that repairs itself
+
+Solving consists of several steps: save "done", give the ECTS, switch the lamp on. If one of them fails (e.g. the game is closed in between, or the lecture room is not loaded), a check every 2 seconds and on world load completes the missing steps:
+
+- **ECTS:** the state stores `rewarded`. It is set only if the ECTS count really went up (or was already 180). A failed attempt is repeated; a successful one is never repeated, so there are no double ECTS.
+- **Lamp:** the lamp follows the quest state in both directions. Done and not powered → switched on; not done (e.g. after a reset or `/scriptevent dhsn:map_cleanup`) and powered → switched off, with the original floor block back. Only while its block is loaded.
 
 ## Configuration
 
@@ -114,11 +123,14 @@ In the world (the map):
 
 | Property | Content |
 | --- | --- |
-| `dhsn:quest_schaltalgebra:<player id>` | `{ "status": "started" }` or `{ "status": "done" }`; none = not started |
-| `dhsn:schaltalgebra_lamp_on` | whether the lamp in the lecture room is on for good |
-| `dhsn:schaltalgebra_lamp_base` | the floor block below the lamp before the redstone block was placed |
+| `dhsn:quest_schaltalgebra` | `{ "status": "started" }` or `{ "status": "done", "rewarded": true/false }`; none = not started. **Once per world** (single player), see [Speicherung](../Speicherung.md) (German). |
+| `dhsn:schaltalgebra_lamp_base` | the floor block below the lamp before the redstone block was placed; belongs to the map and survives `dhsn:map_cleanup` |
 | `dhsn:schaltalgebra_map_layout` | positions set with `/scriptevent dhsn:schaltalgebra_set` (finished map) |
 | `dhsn:schaltalgebra_test_layout` | layout of the test setup (only while testing) |
+
+Older versions stored the progress per player (`dhsn:quest_schaltalgebra:<player id>`) and the lamp in a separate flag (`dhsn:schaltalgebra_lamp_on`). The progress is taken over when read (a finished one is preferred); the old lamp flag is deleted on world load.
+
+The questlog entry is derived from the saved state and the player's position: shown while the quest is started, green while it is done and the player is in the puzzle room. So it is right after a reload, too.
 
 ## Commands
 
@@ -149,7 +161,7 @@ Test environment: flat world, adventure mode, cheats on, DHSN packs active, cont
 ## Known limitations
 
 - **Not tested in game yet.** Checked with `node --check`, `tsc` and a logic test with a mocked `@minecraft/server`.
-- **Lever reset:** whether a lever switched by script (`setPermutation`) updates the circuit has to be checked in game. If not, the reset has no visible effect and the player switches the levers themselves.
+- **Lever reset:** whether a lever switched by script (`setPermutation`) updates the circuit has to be checked in game. If not, the reset has no visible effect and the player switches the levers themselves; a lamp that stays lit from before still does not count as a solution.
 - **Rooms not built yet:** until `project#174` is done, the quest only works with the test setup.
-- **Lamp state is per world, not per player:** the game is single player.
+- **Single player:** progress, lamp and puzzle room exist once per world. With several players, whoever solves the puzzle solves it for the world, and an arriving player switches the levers off for everyone.
 - **Placeholders:** texts and ECTS amount.
