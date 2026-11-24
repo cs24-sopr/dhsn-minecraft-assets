@@ -14,7 +14,10 @@
         },
         "components": {
             "minecraft:collision_box": false,
-            "minecraft:selection_box": true,
+            "minecraft:selection_box": {
+                "origin": [-7, 1, 7.6],
+                "size": [13, 14, 0.2]
+            },
             "minecraft:destructible_by_mining": {
                 "seconds_to_destroy": 0.4
             },
@@ -35,22 +38,6 @@
             "minecraft:tick": {
                 "interval_range": [40, 40],
                 "looping": true
-            },
-            "minecraft:random_offset": {
-                "x": {
-                    "range": {
-                        "min": -0.25,
-                        "max": 0.25
-                    },
-                    "steps": 2
-                },
-                "z": {
-                    "range": {
-                        "min": -0.25,
-                        "max": 0.25
-                    },
-                    "steps": 2
-                }
             }
         },
         "permutations": [
@@ -59,6 +46,15 @@
                 "components": {
                     "minecraft:transformation": {
                         "rotation": [0, 180, 0]
+                    },
+                    "minecraft:random_offset": {
+                        "x": {
+                            "range": {
+                                "min": -2,
+                                "max": 2
+                            },
+                            "steps": 0.5
+                        }
                     }
                 }
             },
@@ -67,6 +63,15 @@
                 "components": {
                     "minecraft:transformation": {
                         "rotation": [0, 0, 0]
+                    },
+                    "minecraft:random_offset": {
+                        "x": {
+                            "range": {
+                                "min": -2,
+                                "max": 2
+                            },
+                            "steps": 0.5
+                        }
                     }
                 }
             },
@@ -75,6 +80,15 @@
                 "components": {
                     "minecraft:transformation": {
                         "rotation": [0, 90, 0]
+                    },
+                    "minecraft:random_offset": {
+                        "z": {
+                            "range": {
+                                "min": -2,
+                                "max": 2
+                            },
+                            "steps": 0.5
+                        }
                     }
                 }
             },
@@ -83,6 +97,15 @@
                 "components": {
                     "minecraft:transformation": {
                         "rotation": [0, 270, 0]
+                    },
+                    "minecraft:random_offset": {
+                        "z": {
+                            "range": {
+                                "min": -2,
+                                "max": 2
+                            },
+                            "steps": 0.5
+                        }
                     }
                 }
             }
