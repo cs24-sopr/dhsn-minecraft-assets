@@ -1,5 +1,7 @@
 # Anleitung: Quest „Das Erwachen“ in die echte Map einbauen
 
+> **Diese Anleitung erst nach dem Merge ausführen.** Der Branch `106-quest-das-erwachen` (und `91-quest-library`, auf dem er aufbaut) muss zuerst in `main` sein. Erst dann ist die Quest im Code vorhanden, in die du die Koordinaten einträgst.
+
 Für das Team, das die Quest in die fertige Map einbaut. Du brauchst dafür **keine Programmierkenntnisse**, aber Zugriff auf die Map (Creative-Modus, Cheats an) und auf das Repository (eine Datei bearbeiten, committen).
 
 Die Quest selbst ist fertig und im Spiel mit einem Testaufbau geprüft. Sie weiß nur nicht, **wo** in der Map die Dinge stehen (Fenster, Truhe, Portal, …). Genau das trägst du hier ein. Hintergrund zur Quest: [awakening-quest.md](awakening-quest.md) (Englisch). Ticket: cs24-sopr/project#106.
