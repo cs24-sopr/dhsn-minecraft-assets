@@ -12,6 +12,9 @@
 		"bamboo_key": {
 			"textures": "textures/items/bamboo_key.png"
 		},
+"toolbox": {
+			"textures": "textures/items/toolbox.png"
+		},
 		"studierendenausweis": {
             "textures": "textures/items/studierendenausweis.png"
         },

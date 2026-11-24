@@ -39,6 +39,8 @@ entity.dhsn:cafeteria_cook.name=Cafeteria Cook
 item.spawn_egg.entity.dhsn:cafeteria_cook.name=Cafeteria Cook Egg
 entity.dhsn:ersti_coach.name=Ersti Coach
 item.spawn_egg.entity.dhsn:ersti_coach.name=Ersti Coach Egg
+entity.myname:adrian_breun.name=adrian_breun
+item.spawn_egg.entity.myname:adrian_breun.name=Adrian Breun
 
 item.myname:cs_book=Buch Informatik
 item.myname:niia_book=Buch Nachhaltige Ingenieurwissenschaft
@@ -54,11 +56,9 @@ item.dhsn:bamboo_key=bamboo key
 item.dhsn:cherry_key=cherry key
 item.dhsn:crimson_key=crimson key
 item.dhsn:warped_key=warped key
+item.dhsn:toolbox=Toolbox
 
 item.myname:builder_helmet=Builder Helmet
 item.myname:doctor_hat=Doctor Hat
 
 tile.myname:test_block.name=test_block
-
-entity.myname:adrian_breun.name=adrian_breun
-item.spawn_egg.entity.myname:adrian_breun.name=Adrian Breun
