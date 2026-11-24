@@ -233,6 +233,22 @@ function fadeScreen(player, fadeInTime, holdTime, fadeOutTime) {
     }
 }
 
+/**
+ * A fade to black during which the player cannot move (waking up, the portal). Movement comes back when
+ * the fade is over, unless a camera ride took over. If the player leaves meanwhile, restorePlayer gives
+ * the movement back on the next join.
+ */
+function fadeAndLock(player, fadeInTime, holdTime, fadeOutTime) {
+    fadeScreen(player, fadeInTime, holdTime, fadeOutTime);
+
+    const playerId = player.id;
+    runCommand(player, "inputpermission set @s movement disabled");
+    system.runTimeout(() => {
+        const current = findPlayer(playerId);
+        if (current && !rides.has(playerId)) runCommand(current, "inputpermission set @s movement enabled");
+    }, Math.ceil((fadeInTime + holdTime + fadeOutTime) * 20));
+}
+
 function center(location) {
     return { x: Math.floor(location.x) + 0.5, y: Math.floor(location.y) + 0.5, z: Math.floor(location.z) + 0.5 };
 }
@@ -500,7 +516,7 @@ export function startAwakening(player, teleport = false) {
     }
 
     // Waking up: the screen is black first and clears up slowly.
-    fadeScreen(player, 0, 1.5, 2);
+    fadeAndLock(player, 0, 1.5, 2);
     startAlarm(player, layout);
     system.runTimeout(() => {
         chat(player, TEXTS.wakeUp);
@@ -557,7 +573,7 @@ function useTeleporter(player, layout) {
 
     chat(player, TEXTS.teleporting);
     playSound(player, "mob.endermen.portal");
-    fadeScreen(player, 0.5, 0.5, 0.7);
+    fadeAndLock(player, 0.5, 0.5, 0.7);
 
     const playerId = player.id;
     system.runTimeout(() => {
