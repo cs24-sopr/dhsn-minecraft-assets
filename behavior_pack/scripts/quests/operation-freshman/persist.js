@@ -12,6 +12,28 @@ const LUCAS_DIALOG_PROPERTY = 'dhsn:operation_freshman_lucas_dialog'
 /** @type {string} Persistent world property containing Frau Sommer's last dialogue result. */
 const MRS_SOMMER_DIALOG_PROPERTY = 'dhsn:operation_freshman_mrs_sommer_dialog'
 
+/** @type {string} Persistent entity ID of the Lucas selected by the first zone entry. */
+const SELECTED_LUCAS_PROPERTY = 'dhsn:operation_freshman_selected_lucas'
+
+/**
+ * Reads the selected Lucas identity, including while his chunk is unloaded.
+ * @returns {string | undefined} Selected entity ID, if an entrance was claimed.
+ */
+export function readSelectedLucasId() {
+    const value = world.getDynamicProperty(SELECTED_LUCAS_PROPERTY)
+    return typeof value === 'string' ? value : undefined
+}
+
+/**
+ * Persists the selected Lucas before removing the other coaches.
+ * @param {string} entityId Selected Lucas entity ID.
+ * @returns {void}
+ * @throws {Error} If writing world storage fails.
+ */
+export function writeSelectedLucasId(entityId) {
+    world.setDynamicProperty(SELECTED_LUCAS_PROPERTY, entityId)
+}
+
 /**
  * Supported course identifiers for Operation Erstsemester.
  * @typedef {

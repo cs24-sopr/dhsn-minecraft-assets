@@ -6,6 +6,7 @@ import {
 } from '@minecraft/server'
 
 import * as Config from './config.js'
+import * as Persist from './persist.js'
 
 /**
  * Outcomes of a walk; invalid arguments and unexpected API failures still reject.
@@ -684,22 +685,6 @@ export async function walkTo(
 }
 
 /**
- * Try and fetch the entity of lucas
- * @returns {import('@minecraft/server').Entity} The entity of lucas
- */
-export function getLucas() {
-    const entities = world.getDimension('overworld').getEntities({
-        type: 'dhsn:ersti_coach',
-    })
-
-    if (entities.length !== 1) {
-        throw Error('TODO') // TODO
-    }
-
-    return entities[0]
-}
-
-/**
  * Reuses or spawns Frau Sommer, then applies the configured study office position and rotation.
  * @param {'113' | '114'} room Study office room whose placement to use.
  * @returns {import('@minecraft/server').Entity} The existing or newly spawned Frau Sommer entity.
@@ -739,3 +724,99 @@ export function getMrsSommerRoom(playerCourse) {
 
     return '114'
 }
+
+/** @type {string} Existing coach entity type; every instance participates in this quest. */
+const LUCAS_TYPE = 'dhsn:ersti_coach'
+
+/**
+ * Removes other loaded coaches after an entrance has been claimed.
+ * The selected ID remains authoritative even if its entity is currently unloaded.
+ * @returns {void}
+ * @throws {Error} If storage, entity queries, or removal fails.
+ */
+export function removeOtherLucases() {
+    const selectedId = Persist.readSelectedLucasId()
+    if (!selectedId) return
+
+    for (const dimensionId of ['overworld', 'nether', 'the_end']) {
+        for (const lucas of world
+            .getDimension(dimensionId)
+            .getEntities({ type: LUCAS_TYPE })) {
+            if (lucas.id !== selectedId) lucas.remove()
+        }
+    }
+}
+
+/**
+ * Selects the nearest loaded coach in the entering player's dimension.
+ * Equal distances are resolved by entity ID. A saved selection is never replaced.
+ * @param {import('@minecraft/server').Player} player Player entering a quest zone.
+ * @returns {import('@minecraft/server').Entity | undefined} Selected loaded coach.
+ * @throws {Error} If querying entities or saving the selection fails.
+ */
+export function selectLucas(player) {
+    const selectedId = Persist.readSelectedLucasId()
+    const candidates = player.dimension.getEntities({ type: LUCAS_TYPE })
+    if (selectedId) {
+        return candidates.find((lucas) => lucas.id === selectedId)
+    }
+
+    const origin = player.location
+    /**
+     * Computes squared distance without changing the entity's location.
+     * @param {import('@minecraft/server').Entity} entity Candidate coach.
+     * @returns {number} Squared distance from the entering player.
+     */
+    function distanceSquared(entity) {
+        const location = entity.location
+        return (
+            (location.x - origin.x) ** 2 +
+            (location.y - origin.y) ** 2 +
+            (location.z - origin.z) ** 2
+        )
+    }
+
+    /**
+     * Orders loaded coaches by distance, then by stable identity for ties.
+     * @param {import('@minecraft/server').Entity} left First candidate.
+     * @param {import('@minecraft/server').Entity} right Second candidate.
+     * @returns {number} Candidate ordering.
+     */
+    function compareCandidates(left, right) {
+        return (
+            distanceSquared(left) - distanceSquared(right) ||
+            left.id.localeCompare(right.id)
+        )
+    }
+
+    candidates.sort(compareCandidates)
+    const lucas = candidates[0]
+    if (lucas) Persist.writeSelectedLucasId(lucas.id)
+    return lucas
+}
+
+/**
+ * Removes a previously unloaded duplicate when its chunk becomes available.
+ * @param {import('@minecraft/server').EntityLoadAfterEvent} event Loaded entity.
+ * @returns {void}
+ */
+function onEntityLoad(event) {
+    const entity = event.entity
+    if (entity.typeId !== LUCAS_TYPE) return
+
+    try {
+        const selectedId = Persist.readSelectedLucasId()
+        if (selectedId && entity.id !== selectedId) entity.remove()
+    } catch (error) {
+        console.error(`[Operation Erstsemester]: ${String(error)}`)
+    }
+}
+
+world.afterEvents.entityLoad.subscribe(onEntityLoad)
+system.run(() => {
+    try {
+        removeOtherLucases()
+    } catch (error) {
+        console.error(`[Operation Erstsemester]: ${String(error)}`)
+    }
+})

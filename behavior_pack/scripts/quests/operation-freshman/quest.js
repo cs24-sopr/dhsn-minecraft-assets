@@ -69,11 +69,45 @@ async function stepInitialLucasDialog() {
     /** @type {Array<() => void>} Cleanup callbacks for the entrance listeners. */
     const unsubscribers = []
 
-    /** @type {import('@minecraft/server').Player} Player entering either entrance. */
-    let player
+    /** @returns {void} Removes each registered listener at most once. */
+    function stopListening() {
+        for (const unsubscribe of unsubscribers.splice(0)) unsubscribe()
+    }
+
+    /** @type {boolean} Prevents competing zone callbacks from starting another sequence. */
+    let claimed = false
+
+    /** @type {{ player: import('@minecraft/server').Player, lucas: import('@minecraft/server').Entity }} Selected participants. */
+    let participants
 
     try {
-        player = await new Promise((resolve, reject) => {
+        participants = await new Promise((resolve, reject) => {
+            /**
+             * Claims the first usable zone before any asynchronous dialogue work.
+             * Missing coaches leave the listeners active for a later zone entry.
+             * @param {import('../../events/enter-territory.js').TerritoryEvent} event Entering player.
+             * @returns {void}
+             */
+            function onZoneEntry(event) {
+                if (claimed) return
+                claimed = true
+                try {
+                    const lucas = Utils.selectLucas(event.player)
+                    if (!lucas) {
+                        claimed = false
+                        event.player.sendMessage(
+                            'Kein verfügbarer Lucas gefunden. Bitte die Quest-Platzierung und geladene Chunks prüfen und die Zone erneut betreten.'
+                        )
+                        return
+                    }
+                    stopListening()
+                    Utils.removeOtherLucases()
+                    resolve({ player: event.player, lucas })
+                } catch (error) {
+                    reject(error)
+                }
+            }
+
             /** @returns {void} Rejects the entrance wait when the single player leaves. */
             function onPlayerLeave() {
                 reject(new Error('Player left before entering a quest zone.'))
@@ -91,16 +125,16 @@ async function stepInitialLucasDialog() {
                             to: zone.to,
                             interval: 1,
                         },
-                        (event) => resolve(event.player)
+                        onZoneEntry
                     )
                 )
             }
         })
     } finally {
-        unsubscribers.forEach((unsubscriber) => unsubscriber())
+        stopListening()
     }
 
-    await sequenceInitialLucasDialog(player, Utils.getLucas())
+    await sequenceInitialLucasDialog(participants.player, participants.lucas)
 }
 
 /**
@@ -154,7 +188,12 @@ export async function initializeQuest() {
         lines: [firstLine],
     })
 
-    if (!Persist.readLucasDialogResult()) {
+    const lucasDialogResult = Persist.readLucasDialogResult()
+    // Older unfinished saves have dialogue progress but no selected coach yet.
+    if (
+        !lucasDialogResult ||
+        (!lucasDialogResult.confirmed && !Persist.readSelectedLucasId())
+    ) {
         await stepInitialLucasDialog()
     }
 

@@ -190,6 +190,7 @@ export async function completedLucasDialog() {
     function onLucasInteraction(event) {
         if (event.target.typeId !== 'dhsn:ersti_coach') return
         event.cancel = true
+        if (event.target.id !== Persist.readSelectedLucasId()) return
         if (!waiting || retryActive || retryError) return
 
         retryActive = true

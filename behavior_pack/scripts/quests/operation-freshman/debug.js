@@ -165,61 +165,23 @@ export function findTriggerZones() {
 }
 
 /**
- * Starting placement for an NPC in the temporary development area.
- * @typedef {object} NpcPlacement
- * @property {string} typeId Existing behavior-pack entity identifier.
- * @property {string} nameTag German display name.
- * @property {string} dimensionId Dimension containing the NPC.
- * @property {import('@minecraft/server').Vector3} location Starting position.
- * @property {import('@minecraft/server').Vector2} rotation Starting pitch and yaw.
- */
-
-/** @type {string[]} Entity types removed from the configured dimensions during a debug reset. */
-const NPC_TYPES_TO_REMOVE = ['dhsn:ersti_coach', 'dhsn:studienorganisation']
-
-// Temporary development coordinates, matching the reset command in command.js.
-/** @type {NpcPlacement[]} */
-const NPC_PLACEMENTS = [
-    {
-        typeId: 'dhsn:ersti_coach',
-        nameTag: 'Lucas',
-        dimensionId: 'minecraft:overworld',
-        location: { x: 20, y: -60, z: 0.5 },
-        rotation: { x: 0, y: 0 },
-    },
-]
-
-/**
- * Removes loaded NPCs of the configured types and recreates the debug placements.
- * Checks destination chunks before removing any existing NPCs.
+ * Removes all loaded Lucas NPCs across dimensions without spawning replacements.
+ * Also preserves the existing cleanup of Frau Sommer in the overworld.
+ * Entities in unloaded chunks cannot be removed by this query.
  * @returns {void}
- * @throws {Error} If a destination is unloaded or an NPC operation fails.
+ * @throws {Error} If an entity query or removal fails.
  */
 export function resetNpcs() {
-    for (const placement of NPC_PLACEMENTS) {
-        const dimension = world.getDimension(placement.dimensionId)
-        if (!dimension.getBlock(placement.location)) {
-            throw new Error(
-                `Debug-Position für ${placement.nameTag} ist noch nicht geladen.`
-            )
-        }
-    }
-
-    const dimensions = new Set(
-        NPC_PLACEMENTS.map((placement) => placement.dimensionId)
-    )
-    for (const dimensionId of dimensions) {
+    for (const dimensionId of ['overworld', 'nether', 'the_end']) {
         const dimension = world.getDimension(dimensionId)
-        for (const type of NPC_TYPES_TO_REMOVE) {
-            for (const npc of dimension.getEntities({ type })) npc.remove()
+        for (const lucas of dimension.getEntities({ type: 'dhsn:ersti_coach' })) {
+            lucas.remove()
         }
     }
 
-    for (const placement of NPC_PLACEMENTS) {
-        const npc = world
-            .getDimension(placement.dimensionId)
-            .spawnEntity(placement.typeId, placement.location)
-        npc.nameTag = placement.nameTag
-        npc.setRotation(placement.rotation)
+    for (const sommer of world
+        .getDimension('overworld')
+        .getEntities({ type: 'dhsn:studienorganisation' })) {
+        sommer.remove()
     }
 }
