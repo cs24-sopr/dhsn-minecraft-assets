@@ -4,6 +4,7 @@
     - [Standard Blocks](#1-for-standard-blocks-format-bedrock-block)
     - [Entities & Animated Objects](#2-for-entities--animated-objects-format-bedrock-entity)
 - [Scripts: Quest Events](#scripts-quest-events)
+- [Scripts: ECTS](#scripts-ects)
 - [Testing In-Game (Bedrock on Linux)](#testing-in-game-bedrock-on-linux)
 - [Formatting JSON with Prettier](#formatting-json-with-prettier)
 
@@ -184,7 +185,11 @@ Tells Minecraft how to render materials, textures, and geometry.
 
 ## Scripts: Quest Events
 
-Reusable building blocks for detecting what players do in quests (picking up items, items in hoppers and shelves, placing blocks, entering areas) live in `behavior_pack/scripts/events/`. See the German documentation in [docs/Events.md](docs/Events.md); the in-game test course is described in [docs/events/test.md](docs/events/test.md).
+Reusable building blocks for detecting what players do in quests (picking up items, items in hoppers and shelves, placing blocks, entering areas) live in `behavior_pack/scripts/events/`. See the German documentation in [docs/Events.md](docs/Events.md); the in-game test course is described in [docs/events/test.md](docs/events/test.md). The first quest built on them is the library quest, see [docs/quests/library-quest.md](docs/quests/library-quest.md).
+
+## Scripts: ECTS
+
+Students collect ECTS (at most 180) as experience levels: 1 ECTS = 1 level, stored in the world and kept in sync with the level. Quests give them with `addEcts(player, amount)` from `behavior_pack/scripts/ects.js`; command blocks can use `/scriptevent dhsn:ects_add <n>`. The title (Erstie, Fortgeschritten, bald fertig!, Abschluss) is shown in a label above the XP bar (`resource_pack/ui/hud_screen.json`). See the German documentation in [docs/Ects.md](docs/Ects.md).
 
 ---
 
