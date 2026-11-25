@@ -12,6 +12,10 @@ tile.myname:led_roehre.name=LED Tube
 tile.myname:projector.name=Projector
 tile.myname:smart_board.name=Smart Board
 tile.myname:smart_board_206.name=Smart Board 206
+tile.dhsn:server_a.name=Server A
+tile.dhsn:server_b.name=Server B
+tile.dhsn:server_c.name=Server C
+tile.dhsn:server_d.name=Server D
 
 tile.myname:desk.name=Desk
 tile.myname:computer_science_bookshelf.name=Computer Science Bookshelf
@@ -68,5 +72,3 @@ item.myname:builder_helmet=Builder Helmet
 item.myname:doctor_hat=Doctor Hat
 
 tile.myname:test_block.name=test_block
-
-tile.dhsn:server_a.name=Server A
