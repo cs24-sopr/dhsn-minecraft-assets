@@ -23,9 +23,9 @@ const raw = takeOverPerPlayerValue("dhsn:quest_meine_quest"); // alter Wert wird
 | Quest-Fortschritt | `dhsn:quest_library`, `dhsn:ects` | gelöscht |
 | Zustand der Map-Welt | `dhsn:library_highscores`, `dhsn:shelf_contents:…` | gelöscht |
 | Testaufbauten | `dhsn:library_test_area`, `dhsn:library_test_sign` | gelöscht |
-| Einstellungen der fertigen Map | `dhsn:library_map_layout` (per Befehlsblock gesetzt) | **bleibt** |
+| Einstellungen der fertigen Map | `dhsn:library_map_layout` (mit dem Setup-Menü gesetzt, `/scriptevent dhsn:library_setup`) | **bleibt** |
 
-Weitere Quests ergänzen hier ihre Schlüssel (ECTS, Schaltalgebra, …).
+Weitere Quests ergänzen hier ihre Schlüssel (ECTS, Schaltalgebra, …). Orte der fertigen Map setzt man am einfachsten mit einem Setup-Menü (Kompass „Quest-Setup“, siehe [setup-menu.md](setup-menu.md)).
 
 ## Befehle
 
@@ -47,4 +47,4 @@ Gebaute Blöcke (z. B. Testaufbauten in der Welt) entfernt der Befehl nicht.
 
 ## Koordinaten in Befehlen
 
-Befehle für die fertige Map (z. B. `/scriptevent dhsn:library_set`) nehmen Koordinaten wie normale Minecraft-Befehle: absolut oder mit `~` relativ zum Befehlsblock. Minecraft löst `~` in `/scriptevent`-Nachrichten nicht selbst auf; das übernimmt `parseCoordinates` aus `util/command-coordinates.js`.
+Script-Event-Befehle, die Koordinaten im Befehl erwarten (z. B. aus einem Befehlsblock), nehmen Koordinaten wie normale Minecraft-Befehle: absolut oder mit `~` relativ zum Befehlsblock. Minecraft löst `~` in `/scriptevent`-Nachrichten nicht selbst auf; das übernimmt `parseCoordinates` aus `util/command-coordinates.js`.

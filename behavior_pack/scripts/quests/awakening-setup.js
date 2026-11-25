@@ -1,11 +1,14 @@
-import { ItemStack, system, world } from "@minecraft/server";
-import { ActionFormData, FormCancelationReason, ModalFormData } from "@minecraft/server-ui";
+import { system, world } from "@minecraft/server";
+import { ActionFormData, ModalFormData } from "@minecraft/server-ui";
+import { LOOK_RANGE, boxOf, confirm, feetBlock, format, giveSetupCompass, lookPoint, lookedBlock, mark, registerSetupMenu, runMenu, showForm, vec } from "../util/setup-menu.js";
 import { PROFESSOR_TAG, getAwakeningLayoutSource, previewAwakeningRide, resetAwakening, setAwakeningSetupLayout, startAwakening } from "./awakening-quest.js";
 
 // Setup menu for the quest "Das Erwachen": the places of the real map are entered in the game instead of in the code.
 // The builder stands at a place, opens the menu and clicks the matching button; the menu takes the position of the
 // player (or the block the player looks at). Camera shots are taken the same way.
-//   /scriptevent dhsn:awakening_setup   opens the menu and gives a compass; right-clicking the compass opens it too.
+//   /scriptevent dhsn:awakening_setup   opens the menu and gives the compass "Quest-Setup"; right-clicking the
+//                                       compass offers this menu (and the menus of other quests).
+// The general parts (compass, forms, positions, boxes) are shared with other quests: util/setup-menu.js.
 // When all places are set, the menu saves a layout in the world (see setAwakeningSetupLayout in the quest) that
 // replaces the one of the test setup and takes precedence over LAYOUT. The raw values are kept in the world too.
 // Documentation: docs/quests/awakening-setup.md
@@ -15,13 +18,7 @@ import { PROFESSOR_TAG, getAwakeningLayoutSource, previewAwakeningRide, resetAwa
 
 const SETUP_COMMAND = "dhsn:awakening_setup";
 const RAW_PROPERTY = "dhsn:awakening_setup";
-const ITEM_TYPE = "minecraft:compass";
-const ITEM_NAME = "§bQuest-Setup §7(Rechtsklick)";
 
-// How far a click on "look at a block" reaches.
-const LOOK_DISTANCE = 10;
-// How far in front of the player the camera looks after a shot or a teleport (a point in the view direction).
-const FACING_DISTANCE = 10;
 // The default flight time of a camera shot in seconds.
 const DEFAULT_SECONDS = 3;
 
@@ -70,15 +67,6 @@ function saveRaw(raw) {
     setAwakeningSetupLayout(buildLayout(raw));
 }
 
-function boxOf(corners, spec) {
-    const { a, b } = corners ?? {};
-    if (!a || !b) return undefined;
-    return {
-        from: { x: Math.min(a.x, b.x), y: Math.min(a.y, b.y) - spec.below, z: Math.min(a.z, b.z) },
-        to: { x: Math.max(a.x, b.x), y: Math.max(a.y, b.y) + spec.above, z: Math.max(a.z, b.z) },
-    };
-}
-
 /**
  * The layout of the quest, or undefined while something is missing.
  * @param {RawSetup} raw
@@ -120,80 +108,28 @@ function missing(raw) {
 }
 
 // --------------------------------------------------
-// CAPTURING
-// --------------------------------------------------
-
-const round = (value) => Math.round(value * 100) / 100;
-const vec = (v) => ({ x: round(v.x), y: round(v.y), z: round(v.z) });
-const format = (v) => `${v.x} ${v.y} ${v.z}`;
-
-/** The block position of the player's feet. */
-function feetBlock(player) {
-    const { x, y, z } = player.location;
-    return { x: Math.floor(x), y: Math.floor(y), z: Math.floor(z) };
-}
-
-/** A point some blocks in front of the player's eyes: what the camera should look at. */
-function lookPoint(player) {
-    const head = player.getHeadLocation();
-    const dir = player.getViewDirection();
-    return vec({ x: head.x + dir.x * FACING_DISTANCE, y: head.y + dir.y * FACING_DISTANCE, z: head.z + dir.z * FACING_DISTANCE });
-}
-
-/** The block the player looks at. Returns undefined plus a reason if it is not one of the allowed types. */
-function lookedBlock(player, accepts, what) {
-    const hit = player.getBlockFromViewDirection({ maxDistance: LOOK_DISTANCE });
-    if (!hit) return { error: `Du schaust auf keinen Block (max. ${LOOK_DISTANCE} Blöcke). Das Menü merkt sich die Blickrichtung beim Öffnen.` };
-    const block = hit.block;
-    if (!accepts(block.typeId)) return { error: `Du schaust auf ${block.typeId}, erwartet: ${what}.` };
-    return { location: { x: block.x, y: block.y, z: block.z } };
-}
-
-// --------------------------------------------------
 // MENU
 // --------------------------------------------------
-
-/** Shows a form; a form that is refused because the chat or another screen is open is retried for a few seconds. */
-async function show(player, form) {
-    for (let attempt = 0; attempt < 40; attempt++) {
-        let response;
-        try {
-            response = await form.show(player);
-        } catch {
-            return undefined; // The player left.
-        }
-        if (response.canceled && response.cancelationReason === FormCancelationReason.UserBusy) {
-            await system.waitTicks(10);
-            continue;
-        }
-        return response.canceled ? undefined : response;
-    }
-    return undefined;
-}
-
-const open = new Set();
 
 /**
  * The main menu. Every click saves something and shows the menu again, until it is closed.
  * @param {import("@minecraft/server").Player} player
  * @param {string} [note] Shown at the top: the result of the last click.
  */
-async function openMenu(player, note) {
-    if (!note && open.has(player.id)) return;
-    open.add(player.id);
-    try {
-        for (;;) {
+function openMenu(player, note) {
+    return runMenu(player, {
+        id: "awakening",
+        title: "Quest-Setup: Das Erwachen",
+        note,
+        render: () => {
             const raw = readRaw();
             const todo = missing(raw);
-            const mark = (ok) => (ok ? "§a✔ §r" : "§c✘ §r");
             const source = getAwakeningLayoutSource() ?? "keines";
 
             const lines = [];
-            if (note) lines.push(`§e${note}§r`, "");
             lines.push(todo.length === 0 ? "§aAlles gesetzt: das Layout ist aktiv.§r" : `§7Es fehlt noch: ${todo.join(", ")}§r`);
             lines.push(`§7Aktives Layout: ${source}. Kamerafahrt: ${raw.cameraPath?.length ?? 0} Aufnahmen.§r`);
 
-            /** @type {{ text: string, run: () => string | undefined | Promise<string | undefined> }[]} */
             const entries = [
                 { text: `${mark((raw.cameraPath?.length ?? 0) > 0)}Kamerafahrt …`, run: () => cameraMenu(player) },
                 { text: `${mark(raw.wake)}Aufwachpunkt (Position + Blick)`, run: () => setPoint(player, "wake", "wakeFacing", "Aufwachpunkt") },
@@ -212,20 +148,9 @@ async function openMenu(player, note) {
                 { text: "Alles löschen", run: () => clearAll(player) },
                 { text: "Schließen", run: () => "close" },
             ];
-
-            const form = new ActionFormData().title("Quest-Setup: Das Erwachen").body(lines.join("\n"));
-            for (const entry of entries) form.button(entry.text);
-
-            const response = await show(player, form);
-            if (!response || response.selection === undefined) return;
-
-            const result = await entries[response.selection].run();
-            if (result === "close") return;
-            note = result;
-        }
-    } finally {
-        open.delete(player.id);
-    }
+            return { lines, entries };
+        },
+    });
 }
 
 /** A position and, if given, the view direction of the player. */
@@ -270,8 +195,8 @@ function hasProfessor(player) {
 
 /** Tags the NPC the player looks at as the professor. The tag is on the entity, not in the layout. */
 function setProfessor(player) {
-    const hit = player.getEntitiesFromViewDirection({ maxDistance: LOOK_DISTANCE }).find((h) => h.entity.id !== player.id);
-    if (!hit) return `Kein NPC im Blick (max. ${LOOK_DISTANCE} Blöcke). Das Menü merkt sich die Blickrichtung beim Öffnen.`;
+    const hit = player.getEntitiesFromViewDirection({ maxDistance: LOOK_RANGE }).find((h) => h.entity.id !== player.id);
+    if (!hit) return `Kein NPC im Blick (max. ${LOOK_RANGE} Blöcke). Das Menü merkt sich die Blickrichtung beim Öffnen.`;
     for (const old of player.dimension.getEntities({ tags: [PROFESSOR_TAG] })) old.removeTag(PROFESSOR_TAG);
     hit.entity.addTag(PROFESSOR_TAG);
     return `Professor gesetzt: ${hit.entity.nameTag || hit.entity.typeId}`;
@@ -285,8 +210,7 @@ function restartQuest(player) {
 }
 
 async function clearAll(player) {
-    const response = await show(player, new ActionFormData().title("Alles löschen?").body("Alle gesetzten Orte und die Kamerafahrt werden gelöscht.").button("Ja, löschen").button("Abbrechen"));
-    if (response?.selection !== 0) return "Nichts gelöscht.";
+    if (!(await confirm(player, "Alles löschen?", "Alle gesetzten Orte und die Kamerafahrt werden gelöscht.", "Ja, löschen"))) return "Nichts gelöscht.";
     world.setDynamicProperty(RAW_PROPERTY, undefined);
     setAwakeningSetupLayout(undefined);
     return "Alles gelöscht.";
@@ -313,14 +237,14 @@ async function cameraMenu(player) {
             .button("Alle Aufnahmen löschen")
             .button("Vorschau abspielen")
             .button("Zurück");
-        const response = await show(player, form);
+        const response = await showForm(player, form);
         if (!response || response.selection === 4) return note || undefined;
 
         switch (response.selection) {
             case 0: {
                 let seconds = 0;
                 if (path.length > 0) {
-                    const modal = await show(player, new ModalFormData().title("Neue Aufnahme").textField("Flugzeit zu dieser Aufnahme in Sekunden", String(DEFAULT_SECONDS)));
+                    const modal = await showForm(player, new ModalFormData().title("Neue Aufnahme").textField("Flugzeit zu dieser Aufnahme in Sekunden", String(DEFAULT_SECONDS)));
                     if (!modal) {
                         note = "Abgebrochen.";
                         break;
@@ -364,32 +288,12 @@ async function cameraMenu(player) {
 // OPENING THE MENU
 // --------------------------------------------------
 
-function hasItem(player) {
-    const container = player.getComponent("minecraft:inventory")?.container;
-    if (!container) return true;
-    for (let slot = 0; slot < container.size; slot++) {
-        if (container.getItem(slot)?.nameTag === ITEM_NAME) return true;
-    }
-    return false;
-}
-
-function giveItem(player) {
-    if (hasItem(player)) return;
-    const item = new ItemStack(ITEM_TYPE, 1);
-    item.nameTag = ITEM_NAME;
-    item.lockMode = "inventory";
-    player.getComponent("minecraft:inventory")?.container?.addItem(item);
-}
+registerSetupMenu({ id: "awakening", title: "Das Erwachen", open: (player) => openMenu(player) });
 
 system.afterEvents.scriptEventReceive.subscribe(({ id, sourceEntity }) => {
     if (id !== SETUP_COMMAND || sourceEntity?.typeId !== "minecraft:player") return;
     const player = /** @type {import("@minecraft/server").Player} */ (sourceEntity);
-    giveItem(player);
+    giveSetupCompass(player);
     player.sendMessage("§eQuest-Setup: Rechtsklick mit dem Kompass öffnet das Menü. Es öffnet sich gleich, sobald der Chat zu ist.");
     openMenu(player);
-});
-
-world.afterEvents.itemUse.subscribe(({ source, itemStack }) => {
-    if (itemStack.typeId !== ITEM_TYPE || itemStack.nameTag !== ITEM_NAME) return;
-    openMenu(source);
 });

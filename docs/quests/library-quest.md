@@ -10,7 +10,7 @@ All dialog texts are **placeholders** in German until the story team delivers th
 
 - [Features](#features)
 - [Customization](#customization)
-- [Setting up the finished map (command blocks)](#setting-up-the-finished-map-command-blocks)
+- [Setting up the finished map (setup menu)](#setting-up-the-finished-map-setup-menu)
 - [Testing](#testing)
   - [Resetting the test](#resetting-the-test)
 - [Known limitations](#known-limitations)
@@ -151,9 +151,7 @@ No value means the quest was never started. Progress saved by earlier versions i
 | `/scriptevent dhsn:library_highscores_reset` | Empties the highscore list. |
 | `/scriptevent dhsn:quest_test_library` | Test setup: builds a small library, see [Testing](#testing). Starts nothing by itself. |
 | `/scriptevent dhsn:quest_test_library_clear` | Removes the library area and sign saved by the test setup. |
-| `/scriptevent dhsn:library_set <variable> <coordinates>` | Sets the library area or the highscore sign of the finished map (command block). |
-| `/scriptevent dhsn:library_layout` | Lists the positions set for the map. |
-| `/scriptevent dhsn:library_layout_clear` | Deletes the positions set for the map. |
+| `/scriptevent dhsn:library_setup` | Gives the compass "Quest-Setup" and opens the setup menu of the library (finished map). |
 
 All need cheats to be enabled.
 
@@ -173,12 +171,12 @@ const LIBRARY_AREA = { from: { x: 100, y: 64, z: 40 }, to: { x: 120, y: 70, z: 6
 - Include some height above the floor, so jumping or standing on a shelf does not count as leaving.
 - The room should have one exit and no shelves directly at its border, so leaving is detected clearly.
 - `undefined` (current value): every own bookshelf in the world counts, every program counts as having **one** shelf (so one book per program), and leaving is not checked. The corners come from the build team.
-- Usually not needed: in the finished map the area is set with a command block (see [Setting up the finished map](#setting-up-the-finished-map-command-blocks)).
-- An area saved by the test setup (`dhsn:library_test_area`) takes precedence over the command block value, which takes precedence over this constant. Remove a test area with `/scriptevent dhsn:quest_test_library_clear`.
+- Usually not needed: in the finished map the area is set with the setup menu (see [Setting up the finished map](#setting-up-the-finished-map-setup-menu)).
+- An area saved by the test setup (`dhsn:library_test_area`) takes precedence over the setup menu value, which takes precedence over this constant. Remove a test area with `/scriptevent dhsn:quest_test_library_clear` (or save anything in the menu).
 
 ### Highscore sign – `HIGHSCORE_SIGN`
 
-Position `{ x, y, z }` of a sign block in the library, placed by the build team. `undefined` (current value): no sign. Usually set with a command block instead (`/scriptevent dhsn:library_set highscore_sign …`). A sign saved by the test setup (`dhsn:library_test_sign`) takes precedence, then the command block value, then this constant. `HIGHSCORE_SIZE` (3) is the number of places.
+Position `{ x, y, z }` of a sign block in the library, placed by the build team. `undefined` (current value): no sign. Usually set with the setup menu instead (button "Highscore-Schild"). A sign saved by the test setup (`dhsn:library_test_sign`) takes precedence, then the menu value, then this constant. `HIGHSCORE_SIZE` (3) is the number of places.
 
 ### Study programs – `PROGRAMS`
 
@@ -310,36 +308,29 @@ The quest takes part in the shelves' decisions through `setShelfInsertCheck` (on
 
 ### Command and property names
 
-`RESET_COMMAND`, `STATE_COMMAND`, `HIGHSCORES_RESET_COMMAND`, `HIGHSCORES_ADD_COMMAND` and `TEST_CLEAR_COMMAND` are the script event ids of the commands. `STATE_PROPERTY` (`dhsn:quest_library`) is the world property of the stored progress; changing it makes the quest start from scratch. `MAP_LAYOUT_PROPERTY` (`dhsn:library_map_layout`) holds the positions set with `dhsn:library_set`. `HIGHSCORE_PROPERTY`, `TEST_AREA_PROPERTY` and `TEST_SIGN_PROPERTY` are the world properties of the highscores and the test setup.
+`RESET_COMMAND`, `STATE_COMMAND`, `HIGHSCORES_RESET_COMMAND`, `HIGHSCORES_ADD_COMMAND` and `TEST_CLEAR_COMMAND` are the script event ids of the commands. `STATE_PROPERTY` (`dhsn:quest_library`) is the world property of the stored progress; changing it makes the quest start from scratch. `MAP_LAYOUT_PROPERTY` (`dhsn:library_map_layout`) holds the positions set with the setup menu. `HIGHSCORE_PROPERTY`, `TEST_AREA_PROPERTY` and `TEST_SIGN_PROPERTY` are the world properties of the highscores and the test setup.
 
-## Setting up the finished map (command blocks)
+## Setting up the finished map (setup menu)
 
-In the finished map, the library area and the highscore sign do not have to be written into the code. They are set **once with command blocks** and saved in the world (`dhsn:library_map_layout`):
-
-```text
-/scriptevent dhsn:library_set <variable> <coordinates>
-```
-
-| Variable | Numbers | Position |
-| --- | --- | --- |
-| `library_area` | x y z x y z | two opposite corners of the library room |
-| `highscore_sign` | x y z | the sign that shows the best times of the challenge (a sign block placed by the builders) |
-
-- **Coordinates** are absolute numbers or relative to the command block with `~` (`~`, `~3`, `~-2`), like in normal Minecraft commands. Minecraft does not resolve `~` inside script event messages; the script does, starting from the command block.
-- **The dimension** is the one of the command block.
-- **Feedback:** the chat says which variable was set and what is still missing, or what was wrong with the input.
-- **Each variable works on its own:** with only `library_area` the quest already uses the library (shelves counted there, leaving resets the round); without `highscore_sign` there is just no sign.
-- **Check:** `/scriptevent dhsn:library_layout` lists the values, `/scriptevent dhsn:library_layout_clear` deletes them.
-- **Order of precedence:** test setup (if saved) → command block values → `LIBRARY_AREA` / `HIGHSCORE_SIGN` in the code. If a test area is still saved in the map, remove it with `/scriptevent dhsn:quest_test_library_clear`.
-- Use **impulse command blocks** (run once), not repeating ones.
-- **Area:** include some height above the floor, so jumping or standing on a shelf does not count as leaving; the room should have one exit and no shelves directly at its border.
-
-Example, command block standing in a corner of the library on floor level:
+In the finished map, the library area and the highscore sign are set **in the game with the setup menu** (compass "Quest-Setup"), like for "Das Erwachen". Nothing has to be written into the code. Step-by-step guide for the map team: [library-quest-map-guide.md](library-quest-map-guide.md) (German).
 
 ```text
-/scriptevent dhsn:library_set library_area ~1 ~-1 ~1 ~20 ~4 ~15
-/scriptevent dhsn:library_set highscore_sign ~3 ~ ~2
+/scriptevent dhsn:library_setup
 ```
+
+| Button | What is saved |
+| --- | --- |
+| Bibliothek: Ecke 1 / Ecke 2 (am Boden) | the blocks the player stands in, at two opposite corners on floor level; the area reaches 1 block below the feet (floor) and 4 blocks above them |
+| Highscore-Schild (ansehen) | the sign the player looks at (only signs are accepted) |
+| Regale prüfen | shows the number of own bookshelves per study program in the area; programs without a shelf are marked |
+| Bibliothekarin prüfen | shows whether a librarian (`dhsn:librarian`) stands in the area |
+| Quest-Stand zurücksetzen | like `/scriptevent dhsn:quest_reset_library` |
+| Alles löschen | deletes area and sign of the menu |
+
+- **Saved in the world** as `dhsn:library_map_layout` (`library_area`, `library_area_corners`, `highscore_sign`, `dimension`); it travels with the map file and survives `/scriptevent dhsn:map_cleanup`.
+- **Only the area is required.** Without a highscore sign there is just no best list.
+- **Order of precedence:** test setup → setup menu → `LIBRARY_AREA` / `HIGHSCORE_SIGN` in the code. Saving anything in the menu removes a saved test setup, so the last saved one always applies. The test setup does not delete the menu values.
+- The menu is built on the shared setup tools [`util/setup-menu.js`](../../behavior_pack/scripts/util/setup-menu.js), see [setup-menu.md](../setup-menu.md) (German). The command block command `dhsn:library_set` of earlier versions was removed; values it saved are still used and shown in the menu.
 
 ## Testing
 
@@ -379,7 +370,7 @@ Counter-checks:
 | `/scriptevent dhsn:quest_reset_library` | Your own quest progress; the books of a running round or challenge (inventory and shelves). | Highscores, library, librarian |
 | `/scriptevent dhsn:library_highscores_reset` | The highscore list and sign. | Quest progress |
 | `/scriptevent dhsn:quest_test_library` | The library: clears the area above the floor, lays the floor, rebuilds shelves, signs, librarian and highscore sign at your position, empties the shelf counters, saves the area. | **Your quest progress** and the highscores |
-| `/scriptevent dhsn:quest_test_library_clear` | The saved test area and sign; afterwards `LIBRARY_AREA` and `HIGHSCORE_SIGN` from the code apply. | The blocks in the world |
+| `/scriptevent dhsn:quest_test_library_clear` | The saved test area and sign; afterwards the setup menu values apply, otherwise `LIBRARY_AREA` and `HIGHSCORE_SIGN` from the code. | The blocks in the world |
 
 Complete restart, in this order:
 
@@ -419,4 +410,4 @@ If you moved between two runs, the old floor and shelves stay where they were. T
 | Test setup | `setLibraryTestSetup(area, sign)` | Saves area and sign as world dynamic properties. |
 | Questlog | `behavior_pack/scripts/questlog.js` | One entry per player, `order: 2`. |
 | Progress | World dynamic property `dhsn:quest_library` (once per world) | JSON, see [Progress storage](#progress-storage). Older per-player progress is moved over when read (`takeOverPerPlayerValue` in `util/storage.js`). |
-| Map positions | World dynamic property `dhsn:library_map_layout` | Set with `/scriptevent dhsn:library_set`; coordinates parsed by `util/command-coordinates.js`. |
+| Map positions | World dynamic property `dhsn:library_map_layout` | Set with the setup menu (`quests/library-setup.js`, shared tools in `util/setup-menu.js`); saved via `setLibraryMapValues`. |

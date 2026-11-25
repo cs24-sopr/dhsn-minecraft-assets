@@ -41,7 +41,7 @@ Die Map läuft im **Abenteuermodus**, alles muss in **einer Dimension** liegen.
 /scriptevent dhsn:awakening_setup
 ```
 
-Du bekommst einen **Kompass „Quest-Setup“**. Rechtsklick öffnet das Menü. Jeder Klick speichert sofort, ✔ und ✘ zeigen, was fehlt. Zum Laufen das Menü schließen und mit dem Kompass neu öffnen.
+Du bekommst einen **Kompass „Quest-Setup“**. Der Befehl öffnet das Menü direkt. Rechtsklick mit dem Kompass fragt zuerst, welche Quest du einrichten willst (derselbe Kompass dient auch der [Bibliothek](library-quest-map-guide.md)); wähle „Das Erwachen“. Jeder Klick speichert sofort, ✔ und ✘ zeigen, was fehlt. Zum Laufen das Menü schließen und mit dem Kompass neu öffnen.
 
 ## 3. Orte setzen
 
