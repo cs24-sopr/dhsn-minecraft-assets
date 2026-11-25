@@ -1,5 +1,17 @@
 {
     "format_version": "1.21.0",
+    "dhsn:server_a": {
+        "sound": "stone"
+    },
+    "dhsn:server_b": {
+        "sound": "stone"
+    },
+    "dhsn:server_c": {
+        "sound": "stone"
+    },
+    "dhsn:server_d": {
+        "sound": "stone"
+    },
     "dhsn:cracks": {
         "sound": "packed_mud"
     },
