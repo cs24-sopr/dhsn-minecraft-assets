@@ -7,6 +7,9 @@
         "server_a_off": {
             "textures": "textures/blocks/server_a_off"
         },
+        "server_a_on": {
+            "textures": "textures/blocks/server_a_on"
+        },
         "cracks": {
             "textures": "textures/blocks/cracks"
         },

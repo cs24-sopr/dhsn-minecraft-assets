@@ -6,6 +6,9 @@
             "menu_category": {
                 "category": "construction"
             },
+            "states": {
+                "dhsn:powered": [false, true]
+            },
             "traits": {
                 "minecraft:placement_direction": {
                     "enabled_states": ["minecraft:cardinal_direction"]
@@ -19,6 +22,7 @@
         },
         "components": {
             "minecraft:geometry": "geometry.server_bottom",
+            "dhsn:server_toggle": {},
             "minecraft:collision_box": true,
             "minecraft:selection_box": true,
             "minecraft:movable": {
@@ -55,7 +59,7 @@
                 "condition": "q.block_state('minecraft:cardinal_direction') == 'east'",
                 "components": {
                     "minecraft:transformation": {
-                        "rotation": [0, 0, 0]
+                        "rotation": [0, 90, 0]
                     }
                 }
             },
@@ -63,7 +67,7 @@
                 "condition": "q.block_state('minecraft:cardinal_direction') == 'north'",
                 "components": {
                     "minecraft:transformation": {
-                        "rotation": [0, 90, 0]
+                        "rotation": [0, 180, 0]
                     }
                 }
             },
@@ -71,7 +75,7 @@
                 "condition": "q.block_state('minecraft:cardinal_direction') == 'west'",
                 "components": {
                     "minecraft:transformation": {
-                        "rotation": [0, 180, 0]
+                        "rotation": [0, 270, 0]
                     }
                 }
             },
@@ -79,7 +83,19 @@
                 "condition": "q.block_state('minecraft:cardinal_direction') == 'south'",
                 "components": {
                     "minecraft:transformation": {
-                        "rotation": [0, 270, 0]
+                        "rotation": [0, 0, 0]
+                    }
+                }
+            },
+            {
+                "condition": "q.block_state('dhsn:powered') == true",
+                "components": {
+                    "minecraft:light_emission": 8,
+                    "minecraft:material_instances": {
+                        "*": {
+                            "texture": "server_a_on",
+                            "render_method": "alpha_test"
+                        }
                     }
                 }
             }
