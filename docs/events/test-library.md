@@ -2,7 +2,43 @@
 
 Datei: [test-library.js](../../behavior_pack/scripts/events/test-library.js) · [Übersicht](../Events.md)
 
-Baut eine kleine Bibliothek für die [Bibliotheks-Quest](../quests/library-quest.md) auf: Regale aller fünf Studiengänge, einen Holzboden als Bibliotheksbereich, die Bibliothekarin und das Highscore-Schild der Challenge. **Der Befehl startet nichts.** Quest, Bücher und Questlog-Eintrag beginnen erst, wenn man die Bibliothekarin anspricht.
+Testaufbau für die [Bibliotheks-Quest](../quests/library-quest.md). Zwei Varianten:
+
+| Befehl | Wofür |
+| --- | --- |
+| `/scriptevent dhsn:quest_test_library` | **Test des Setup-Menüs:** Du bekommst das Material und baust die Bibliothek selbst, dann richtest du sie mit dem Kompass „Quest-Setup“ ein, wie das Map-Team. Siehe [Material für das Setup-Menü](#material-für-das-setup-menü). |
+| `/scriptevent dhsn:quest_test_library aufbau` | **Schneller Test der Quest:** Baut eine fertige kleine Bibliothek auf (Regale aller fünf Studiengänge, Holzboden als Bereich, Bibliothekarin, Highscore-Schild). Siehe [Automatischer Aufbau](#testumgebung). |
+
+**Keiner der Befehle startet die Quest.** Quest, Bücher und Questlog-Eintrag beginnen erst, wenn man die Bibliothekarin anspricht.
+
+## Material für das Setup-Menü
+
+`/scriptevent dhsn:quest_test_library` (ohne Zusatz) gibt:
+
+| Material | Anzahl | Warum so viele |
+| --- | --- | --- |
+| `myname:computer_science_bookshelf` | 6 | Mehr als 5: zeigt, dass es pro Studiengang höchstens 5 Bücher gibt. |
+| `myname:controlling_bookshelf` | 5 | |
+| `myname:immobilienwirtschaft_bookshelf` | 4 | |
+| `myname:nachhaltige_ingenieurwissenschaften_bookshelf` | 3 | |
+| `myname:steuerberatung_bookshelf` | 3 | Zusammen sind über 14 Bücher möglich: zeigt die Grenze von 14 pro Runde. |
+| Eichenschild (`minecraft:oak_sign`) | 6 | 1 für die Bestenliste, 5 zum Beschriften der Regale. |
+| Spawn-Ei der Bibliothekarin (`dhsn:librarian_spawn_egg`) | 1 | Gibt es das Ei nicht, erscheint die Bibliothekarin stattdessen 2 Blöcke östlich von dir. |
+| Kompass „Quest-Setup“ | 1 | Nur, wenn du ihn noch nicht hast. |
+
+Außerdem wird ein vorher gespeicherter Testbereich (`dhsn:library_test_area`, `dhsn:library_test_sign`) **gelöscht**, damit die Werte aus dem Setup-Menü gelten. Volles Inventar: Der Rest fällt vor dir auf den Boden.
+
+Ablauf (steht auch im Chat):
+
+1. `/gamemode creative`, Bibliothek bauen: Regale aufstellen (je Studiengang mindestens 1), Bibliothekarin mit dem Ei setzen, ein Schild für die Bestenliste aufstellen.
+2. Kompass → „Bibliothek“: Ecke 1 und 2 am Boden setzen, Schild ansehen und „Highscore-Schild“ klicken, „Regale prüfen“, „Bibliothekarin prüfen“.
+3. `/gamemode adventure`, Quest bei der Bibliothekarin starten.
+
+Die Schritte im Menü erklärt die [Anleitung für das Map-Team](../quests/library-quest-map-guide.md).
+
+## Automatischer Aufbau
+
+`/scriptevent dhsn:quest_test_library aufbau` baut die folgende Bibliothek.
 
 Jedes Regal nimmt nur das Buch seines Studiengangs an:
 
@@ -14,21 +50,21 @@ Jedes Regal nimmt nur das Buch seines Studiengangs an:
 | Nachhaltige Ingenieurwissenschaften (`myname:niia_book`) | `myname:nachhaltige_ingenieurwissenschaften_bookshelf` | 3 |
 | Steuerberatung (`myname:stwp_book`) | `myname:steuerberatung_bookshelf` | 3 |
 
-Informatik hat absichtlich 4 Regale: Eine normale Runde kann dort bis zu 4 Bücher ausgeben, die Challenge höchstens 3. Wie die Regale funktionieren, steht unter [Eigene Bücherregale](item-in-shelf.md#eigene-bücherregale).
+Informatik hat absichtlich 4 Regale: Eine normale Runde kann dort bis zu 4 Bücher ausgeben (mehr als Regale gibt es nie, höchstens 5 pro Studiengang, höchstens 14 insgesamt), die Challenge höchstens 3. Wie die Regale funktionieren, steht unter [Eigene Bücherregale](item-in-shelf.md#eigene-bücherregale).
 
-## Testumgebung
+### Testumgebung
 
 - **Flache Welt**, **Abenteuermodus** (wie die Map), **Cheats an**.
 - DHSN Behavior Pack und Resource Pack aktiv.
 - Empfohlen: Content-Log einschalten (Einstellungen → Creator → Content-Log), dort erscheinen Skriptfehler.
 
-## Starten
+### Starten
 
 1. Auf eine freie, ebene Stelle stellen.
 2. Ausführen:
 
    ```text
-   /scriptevent dhsn:quest_test_library
+   /scriptevent dhsn:quest_test_library aufbau
    ```
 
 3. Es entsteht:
@@ -38,7 +74,7 @@ Informatik hat absichtlich 4 Regale: Eine normale Runde kann dort bis zu 4 Büch
    - **Highscore-Schild** östlich der dritten Reihe. Es zeigt die 3 besten Zeiten der Challenge.
 4. Im Chat steht eine Kurzfassung der Quest und eine Zeile zu den ECTS: dein aktueller Stand und wie viele ECTS die Quest gibt (siehe [ECTS](../Ects.md)). Der Testaufbau ändert die ECTS nicht; zum Zurücksetzen `/scriptevent dhsn:ects_reset`.
 
-Bibliotheksbereich und Position des Highscore-Schildes werden **in der Welt gespeichert** (`dhsn:library_test_area`, `dhsn:library_test_sign`). Sie gelten also auch nach `/reload` und nach einem Neustart der Welt und haben Vorrang vor den Werten, die für die fertige Map per Befehlsblock gesetzt wurden (`/scriptevent dhsn:library_set`), und vor den Werten im Code (`LIBRARY_AREA`, `HIGHSCORE_SIGN`).
+Bibliotheksbereich und Position des Highscore-Schildes werden **in der Welt gespeichert** (`dhsn:library_test_area`, `dhsn:library_test_sign`). Sie gelten also auch nach `/reload` und nach einem Neustart der Welt und haben Vorrang vor den Werten aus dem [Setup-Menü](../setup-menu.md) und vor den Werten im Code (`LIBRARY_AREA`, `HIGHSCORE_SIGN`).
 
 ## Danach
 
@@ -48,8 +84,9 @@ Weiter geht es mit der Bibliotheks-Quest: Bibliothekarin ansprechen, Quest anneh
 
 | Befehl | Wirkung |
 | --- | --- |
-| `/scriptevent dhsn:quest_test_library` | Baut die Bibliothek an der aktuellen Position (neu) auf. |
-| `/scriptevent dhsn:quest_test_library_clear` | Löscht den gespeicherten Bibliotheksbereich und das Test-Schild. Danach gelten wieder die per Befehlsblock gesetzten Werte, sonst `LIBRARY_AREA` und `HIGHSCORE_SIGN` aus dem Code. Die Blöcke bleiben stehen. |
+| `/scriptevent dhsn:quest_test_library` | Gibt das Material für den Test des Setup-Menüs und löscht einen gespeicherten Testbereich. |
+| `/scriptevent dhsn:quest_test_library aufbau` | Baut die Bibliothek an der aktuellen Position (neu) auf. |
+| `/scriptevent dhsn:quest_test_library_clear` | Löscht den gespeicherten Bibliotheksbereich und das Test-Schild. Danach gelten wieder die Werte aus dem Setup-Menü, sonst `LIBRARY_AREA` und `HIGHSCORE_SIGN` aus dem Code. Die Blöcke bleiben stehen. |
 | `/scriptevent dhsn:quest_reset_library` | Setzt den eigenen Quest-Stand zurück, nimmt die Bücher einer laufenden Runde oder Challenge weg und trägt sie aus den Regalen aus. |
 | `/scriptevent dhsn:quest_library_state` | Schreibt den eigenen Stand in den Chat: Runde, ausgegebene und einsortierte Bücher pro Studiengang, in welches Regal jedes Buch kam, den Bibliotheksbereich. |
 | `/scriptevent dhsn:library_highscores_add <Name> <Sekunden>` | Trägt eine Fake-Zeit ein, z. B. `Kai 42,5`. So lassen sich Sortierung und „Top 3“ ohne viele Durchläufe prüfen. |
@@ -57,7 +94,7 @@ Weiter geht es mit der Bibliotheks-Quest: Bibliothekarin ansprechen, Quest anneh
 
 ## Zurücksetzen
 
-Ein erneutes `/scriptevent dhsn:quest_test_library` **leert den ganzen Bereich** über dem Boden (setzt alles auf Luft, entfernt also auch alte Regale und Schilder an derselben Stelle), legt den Boden neu und baut alles wieder auf. Die Zähler der neuen Regale werden geleert. Die Bibliothekarin aus dem vorherigen Durchlauf wird entfernt und neu gesetzt; erkannt wird sie am Tag `dhsn:library_test`.
+Ein erneutes `/scriptevent dhsn:quest_test_library aufbau` **leert den ganzen Bereich** über dem Boden (setzt alles auf Luft, entfernt also auch alte Regale und Schilder an derselben Stelle), legt den Boden neu und baut alles wieder auf. Die Zähler der neuen Regale werden geleert. Die Bibliothekarin aus dem vorherigen Durchlauf wird entfernt und neu gesetzt; erkannt wird sie am Tag `dhsn:library_test`.
 
 **Den Fortschritt der Bibliotheks-Quest und die Bestenliste setzt der Testbefehl nicht zurück.** Kompletter Neustart in dieser Reihenfolge:
 
@@ -65,7 +102,7 @@ Ein erneutes `/scriptevent dhsn:quest_test_library` **leert den ganzen Bereich**
 /clear
 /scriptevent dhsn:quest_reset_library
 /scriptevent dhsn:library_highscores_reset
-/scriptevent dhsn:quest_test_library
+/scriptevent dhsn:quest_test_library aufbau
 ```
 
 `/clear` entfernt Bücher und Smaragde aus dem Inventar; das ist optional.

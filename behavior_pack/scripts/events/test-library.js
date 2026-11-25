@@ -1,11 +1,19 @@
-import { BlockPermutation, BlockVolume, SignSide, system } from "@minecraft/server";
+import { BlockPermutation, BlockVolume, ItemStack, SignSide, system } from "@minecraft/server";
 import { getEcts, MAX_ECTS } from "../ects.js";
-import { QUEST_ECTS, setLibraryTestSetup } from "../quests/library-quest.js";
+import { QUEST_ECTS, clearLibraryTestSetup, setLibraryTestSetup } from "../quests/library-quest.js";
+import { giveSetupCompass } from "../util/setup-menu.js";
 import { clearShelfContents } from "./shelf-contents.js";
 
-// Test setup for the library quest (see quests/library-quest.js). Stand on flat ground
-// (best: flat world, adventure mode, cheats on) and run
+// Test setup for the library quest (see quests/library-quest.js). Two ways:
+//
 //   /scriptevent dhsn:quest_test_library
+// Test of the setup menu: gives the materials to build a library yourself and set it up with the compass
+// "Quest-Setup", like the map team does (docs/quests/library-quest-map-guide.md): bookshelves of all study
+// programs, a librarian spawn egg, signs and the setup compass. A test area saved earlier is removed, so the
+// values of the setup menu apply. Instructions are written to the chat.
+//
+//   /scriptevent dhsn:quest_test_library aufbau
+// Quick test of the quest itself: stand on flat ground (best: flat world, adventure mode, cheats on).
 // It builds a small library around you:
 // - one row of bookshelves per study program, north of you (Informatik has 4 shelves, the others 3),
 //   with a sign on the last shelf of each row that names the study program,
@@ -17,6 +25,32 @@ import { clearShelfContents } from "./shelf-contents.js";
 // Running the command again clears the area and rebuilds the library at your new position.
 
 const TEST_COMMAND = "dhsn:quest_test_library";
+const BUILD_ARGUMENT = "aufbau";
+
+// Materials for the test of the setup menu. The numbers of shelves make the book rule visible: Informatik
+// has more than 5 shelves (at most 5 books per program), and together more than 14 books are possible
+// (at most 14 per round).
+const MATERIALS = [
+    { item: "myname:computer_science_bookshelf", amount: 6 },
+    { item: "myname:controlling_bookshelf", amount: 5 },
+    { item: "myname:immobilienwirtschaft_bookshelf", amount: 4 },
+    { item: "myname:nachhaltige_ingenieurwissenschaften_bookshelf", amount: 3 },
+    { item: "myname:steuerberatung_bookshelf", amount: 3 },
+    // One for the highscore sign, five to label the shelves.
+    { item: "minecraft:oak_sign", amount: 6 },
+];
+// Spawn egg of the librarian; if the item does not exist, the librarian is spawned next to the player instead.
+const LIBRARIAN_EGG = "dhsn:librarian_spawn_egg";
+
+const SETUP_STEPS = [
+    "Test des Setup-Menüs der Bibliothek:",
+    " 1. /gamemode creative und eine Bibliothek bauen: Regale aufstellen (je Studiengang mindestens 1),",
+    "    Bibliothekarin mit dem Ei setzen, ein Schild für die Bestenliste aufstellen.",
+    " 2. Mit dem Kompass „Quest-Setup“ (Rechtsklick → Bibliothek) Ecke 1 und 2 am Boden setzen,",
+    "    das Schild ansehen und „Highscore-Schild“ klicken, „Regale prüfen“ und „Bibliothekarin prüfen“.",
+    " 3. /gamemode adventure und die Quest bei der Bibliothekarin starten.",
+    "Anleitung: docs/quests/library-quest-map-guide.md. Automatischer Aufbau: /scriptevent dhsn:quest_test_library aufbau",
+];
 
 // One row per study program, from south (closest to the player) to north.
 // sign: text on the sign at the end of the row. Signs are narrow, so long names are split by hand.
@@ -117,7 +151,33 @@ function buildScene(player) {
     say(player, `ECTS: du hast ${getEcts(player)}/${MAX_ECTS}, die Quest gibt beim Abschluss ${QUEST_ECTS} (nicht die Challenge).`);
 }
 
-system.afterEvents.scriptEventReceive.subscribe(({ id, sourceEntity }) => {
+function giveItem(player, typeId, amount) {
+    const stack = new ItemStack(typeId, amount);
+    const leftover = player.getComponent("minecraft:inventory")?.container?.addItem(stack);
+    if (leftover) player.dimension.spawnItem(leftover, player.location);
+}
+
+/** Gives everything needed to build a library and set it up with the setup menu. */
+function giveSetupMaterials(player) {
+    // The menu values must apply, not an area of an earlier automatic test setup.
+    clearLibraryTestSetup();
+
+    for (const { item, amount } of MATERIALS) giveItem(player, item, amount);
+    try {
+        giveItem(player, LIBRARIAN_EGG, 1);
+    } catch {
+        // No spawn egg item for the librarian: spawn her next to the player instead.
+        const librarian = player.dimension.spawnEntity(LIBRARIAN, { x: player.location.x + 2, y: player.location.y, z: player.location.z });
+        librarian.nameTag = "Bibliothekarin";
+        say(player, "Kein Spawn-Ei für die Bibliothekarin gefunden, sie steht jetzt neben dir.");
+    }
+    giveSetupCompass(player);
+
+    for (const line of SETUP_STEPS) say(player, line);
+    say(player, `ECTS: du hast ${getEcts(player)}/${MAX_ECTS}, die Quest gibt beim Abschluss ${QUEST_ECTS} (nicht die Challenge).`);
+}
+
+system.afterEvents.scriptEventReceive.subscribe(({ id, message, sourceEntity }) => {
     if (id !== TEST_COMMAND) return;
 
     if (sourceEntity?.typeId !== "minecraft:player") {
@@ -125,5 +185,6 @@ system.afterEvents.scriptEventReceive.subscribe(({ id, sourceEntity }) => {
         return;
     }
 
-    buildScene(sourceEntity);
+    if (message.trim() === BUILD_ARGUMENT) buildScene(sourceEntity);
+    else giveSetupMaterials(sourceEntity);
 });

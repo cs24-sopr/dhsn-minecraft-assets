@@ -1011,7 +1011,8 @@ export function resetLibraryQuest(player) {
     chat(player, TEXTS.reset);
 }
 
-function clearLibraryTestSetup() {
+/** Removes the library area and sign saved by the test setup, so the setup menu values (or the constants) apply. */
+export function clearLibraryTestSetup() {
     world.setDynamicProperty(TEST_AREA_PROPERTY, undefined);
     world.setDynamicProperty(TEST_SIGN_PROPERTY, undefined);
 }

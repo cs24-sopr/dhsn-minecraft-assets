@@ -60,6 +60,8 @@ Regeln:
 
 Abenteuermodus, Content-Log an (Einstellungen → Creator). Vorher im Menü **Quest-Stand zurücksetzen**.
 
+**Ohne fertige Map üben** (z. B. in einer flachen Testwelt): `/scriptevent dhsn:quest_test_library` gibt alles, was du für eine kleine Bibliothek brauchst (Regale aller Studiengänge, Schilder, Spawn-Ei der Bibliothekarin, Kompass) und erklärt die Schritte im Chat. Details: [test-library.md](../events/test-library.md).
+
 | # | Prüfen | Erwartung |
 | --- | --- | --- |
 | 1 | „Regale prüfen“ | Alle 5 Studiengänge mit mindestens 1 Regal. |
@@ -73,7 +75,7 @@ Abkürzungen (brauchen Cheats): `dhsn:quest_library_state` zeigt den Stand und d
 
 ## 5. Testaufbau nicht mitliefern
 
-Der Befehl `dhsn:quest_test_library` **baut eine Test-Bibliothek und setzt deren Bereich** (er hat Vorrang vor dem Menü). In der echten Map darf er nie laufen. Lösch dafür `behavior_pack/scripts/events/test-library.js` und die Import-Zeile dazu in `behavior_pack/scripts/main.js`. Lief er doch, im Menü irgendeinen Ort neu setzen: Das löscht den Testbereich.
+Der Befehl `dhsn:quest_test_library aufbau` **baut eine Test-Bibliothek und setzt deren Bereich** (er hat Vorrang vor dem Menü). Ohne `aufbau` gibt er nur Material und löscht einen Testbereich. In der echten Map darf er nie laufen. Lösch dafür `behavior_pack/scripts/events/test-library.js` und die Import-Zeile dazu in `behavior_pack/scripts/main.js`. Lief er doch, im Menü irgendeinen Ort neu setzen: Das löscht den Testbereich.
 
 Das Setup-Menü darf bleiben. Du kannst `quests/library-setup.js` samt Import auch löschen, wenn alles fertig ist; die gespeicherten Orte gelten weiter.
 

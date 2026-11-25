@@ -149,7 +149,8 @@ No value means the quest was never started. Progress saved by earlier versions i
 | `/scriptevent dhsn:quest_library_state` | Writes your progress to the chat: round, status, books per program (sorted/handed out), the shelf of every sorted book, the library area. |
 | `/scriptevent dhsn:library_highscores_add <name> <seconds>` | Adds a fake time to the highscore list, e.g. `Kai 42,5`. For testing the sign without playing many challenges. |
 | `/scriptevent dhsn:library_highscores_reset` | Empties the highscore list. |
-| `/scriptevent dhsn:quest_test_library` | Test setup: builds a small library, see [Testing](#testing). Starts nothing by itself. |
+| `/scriptevent dhsn:quest_test_library` | Test of the setup menu: gives shelves of all programs (Informatik 6, Controlling 5, Immobilienwirtschaft 4, the others 3), signs, a librarian spawn egg and the setup compass, and removes a saved test area. Starts nothing by itself. |
+| `/scriptevent dhsn:quest_test_library aufbau` | Test setup: builds a small library, see [Testing](#testing). Starts nothing by itself. |
 | `/scriptevent dhsn:quest_test_library_clear` | Removes the library area and sign saved by the test setup. |
 | `/scriptevent dhsn:library_setup` | Gives the compass "Quest-Setup" and opens the setup menu of the library (finished map). |
 
@@ -338,7 +339,7 @@ In the finished map, the library area and the highscore sign are set **in the ga
 
 Test environment: **flat world, adventure mode** (like the map), **cheats on**, DHSN behavior and resource pack active. Turn on the content log (Settings → Creator) to see script errors.
 
-1. Stand on a free spot and run `/scriptevent dhsn:quest_test_library`. It builds a small library (see [test-library.md](../events/test-library.md), German): an oak plank floor (the library area), five rows of shelves (Informatik 4, the others 3, a sign at the end of each row), the librarian and the highscore sign.
+1. Stand on a free spot and run `/scriptevent dhsn:quest_test_library aufbau`. It builds a small library (see [test-library.md](../events/test-library.md), German): an oak plank floor (the library area), five rows of shelves (Informatik 4, the others 3, a sign at the end of each row), the librarian and the highscore sign.
 2. **Adventure mode first:** put any book into its shelf before starting the quest. If the shelf does not react, stop here: the quest cannot work in the map.
 3. Right-click the librarian and accept. You get 1–4 Informatik books and 1–3 of every other program (at most 14 in total), in mixed order in the inventory; `/scriptevent dhsn:quest_library_state` shows the numbers. The questlog shows `Runde 1/2` and `Bücher sortiert: 0/<total>`.
 4. Put a book into the shelf of another program: refused, the librarian names the shelf. Put two books of the same program into the same shelf: the second is refused.
@@ -371,7 +372,7 @@ Counter-checks:
 | --- | --- | --- |
 | `/scriptevent dhsn:quest_reset_library` | Your own quest progress; the books of a running round or challenge (inventory and shelves). | Highscores, library, librarian |
 | `/scriptevent dhsn:library_highscores_reset` | The highscore list and sign. | Quest progress |
-| `/scriptevent dhsn:quest_test_library` | The library: clears the area above the floor, lays the floor, rebuilds shelves, signs, librarian and highscore sign at your position, empties the shelf counters, saves the area. | **Your quest progress** and the highscores |
+| `/scriptevent dhsn:quest_test_library aufbau` | The library: clears the area above the floor, lays the floor, rebuilds shelves, signs, librarian and highscore sign at your position, empties the shelf counters, saves the area. | **Your quest progress** and the highscores |
 | `/scriptevent dhsn:quest_test_library_clear` | The saved test area and sign; afterwards the setup menu values apply, otherwise `LIBRARY_AREA` and `HIGHSCORE_SIGN` from the code. | The blocks in the world |
 
 Complete restart, in this order:
@@ -380,7 +381,7 @@ Complete restart, in this order:
 /clear
 /scriptevent dhsn:quest_reset_library
 /scriptevent dhsn:library_highscores_reset
-/scriptevent dhsn:quest_test_library
+/scriptevent dhsn:quest_test_library aufbau
 ```
 
 `/clear` removes books and emeralds from the inventory. It is optional but keeps the test clear.
