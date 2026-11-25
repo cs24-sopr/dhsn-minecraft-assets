@@ -33,6 +33,15 @@
                 "pitch": [0.8, 1.2],
                 "volume": 1
             },
+            "dhsn:tanaka_sakura": {
+                "events": {
+                    "death": "dig.wood",
+                    "hurt": "mob.villager.hit",
+                    "spawn": "mob.villager.idle"
+                },
+                "pitch": [0.8, 1.2],
+                "volume": 1
+            },
             "dhsn:cafeteria_cook": {
                 "events": {
                     "death": "dig.wood",
