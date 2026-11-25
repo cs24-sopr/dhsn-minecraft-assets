@@ -68,3 +68,5 @@ item.myname:builder_helmet=Builder Helmet
 item.myname:doctor_hat=Doctor Hat
 
 tile.myname:test_block.name=test_block
+
+tile.dhsn:server_a.name=Server A
