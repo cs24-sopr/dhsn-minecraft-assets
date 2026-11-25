@@ -12,7 +12,7 @@ Hintergrund: [library-quest.md](library-quest.md) (Englisch), [setup-menu.md](..
 
 | Schritt | Spieler |
 | --- | --- |
-| 1 | Spricht die **Bibliothekarin** an und nimmt die erste Runde an. Er bekommt pro Studiengang 1 bis so viele Bücher, wie der Studiengang Regale hat. |
+| 1 | Spricht die **Bibliothekarin** an und nimmt die erste Runde an. Er bekommt gemischt Bücher: pro Studiengang 1 bis 5, insgesamt höchstens 14. |
 | 2 | Stellt jedes Buch in ein **Regal seines Studiengangs**, pro Regal und Runde nur ein Buch. Falsches Regal: Die Bibliothekarin sagt Bescheid. |
 | 3 | Verlässt er währenddessen die Bibliothek, kommt ein Countdown (5 s), danach ist die Runde zurückgesetzt. |
 | 4 | Gibt die Runde bei der Bibliothekarin ab. Nach Runde 2 ist die Quest beendet (Belohnung, ECTS). |
@@ -23,7 +23,7 @@ Hintergrund: [library-quest.md](library-quest.md) (Englisch), [setup-menu.md](..
 | Was | Anforderung |
 | --- | --- |
 | Bibliothek | Ein Raum, möglichst mit **einem** Ausgang. Wer ihn während einer Runde verlässt, verliert die Bücher. |
-| Regale | Die eigenen Studiengangs-Regale (`myname:computer_science_bookshelf`, `…controlling…`, `…immobilienwirtschaft…`, `…nachhaltige_ingenieurwissenschaften…`, `…steuerberatung…`). **Pro Studiengang mindestens ein Regal**, mehr Regale heißt mehr mögliche Bücher. Nicht direkt an die Raumgrenze stellen. |
+| Regale | Die eigenen Studiengangs-Regale (`myname:computer_science_bookshelf`, `…controlling…`, `…immobilienwirtschaft…`, `…nachhaltige_ingenieurwissenschaften…`, `…steuerberatung…`). **Pro Studiengang mindestens ein Regal**, mehr Regale heißt mehr mögliche Bücher (bis 5). Nicht direkt an die Raumgrenze stellen. |
 | Bibliothekarin | Eine Bibliothekarin (`dhsn:librarian`) in der Bibliothek. |
 | Highscore-Schild | Optional: ein Schild in der Bibliothek für die Bestenliste. Ohne Schild gibt es keine Bestenliste, die Quest funktioniert trotzdem. |
 
@@ -63,7 +63,7 @@ Abenteuermodus, Content-Log an (Einstellungen → Creator). Vorher im Menü **Qu
 | # | Prüfen | Erwartung |
 | --- | --- | --- |
 | 1 | „Regale prüfen“ | Alle 5 Studiengänge mit mindestens 1 Regal. |
-| 2 | Bibliothekarin ansprechen, Runde annehmen | Bücher aller Studiengänge im Inventar. |
+| 2 | Bibliothekarin ansprechen, Runde annehmen | Bücher bunt gemischt im Inventar, höchstens 14. |
 | 3 | Buch ins Regal eines anderen Studiengangs | Abgelehnt, die Bibliothekarin nennt das Regal. |
 | 4 | Bibliothek verlassen | Countdown „Halt!“; zurückkommen bricht ihn ab, draußen bleiben setzt die Runde zurück. |
 | 5 | Alle Bücher einsortieren, abgeben, Runde 2 genauso | Belohnung und ECTS, danach Angebot der Challenge. |

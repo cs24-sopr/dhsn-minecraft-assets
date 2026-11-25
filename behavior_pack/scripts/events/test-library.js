@@ -38,7 +38,7 @@ const LIBRARIAN_TAG = "dhsn:library_test";
 const QUEST_SUMMARY = [
     "Bibliotheks-Quest \"Aushilfe in der Bibliothek\" in Kürze:",
     " 1. Bibliothekarin (östlich der Regale) per Rechtsklick ansprechen und Hilfe annehmen.",
-    " 2. Du bekommst pro Studiengang 1 bis so viele Bücher, wie er Regale hat.",
+    " 2. Du bekommst gemischt pro Studiengang 1 bis 5 Bücher (höchstens so viele, wie er Regale hat), insgesamt höchstens 14.",
     " 3. Jedes Buch in ein Regal seines Studiengangs stellen, pro Regal nur ein Buch.",
     " 4. Zurück zur Bibliothekarin: Runde abgeben, danach folgt Runde 2, dann die Challenge auf Zeit.",
     " 5. Den Holzboden während einer Runde nicht verlassen, sonst ist die Runde nach 5 s zurückgesetzt.",

@@ -33,7 +33,7 @@ talk to librarian ──► offer round 1 ──accept──► round 1 active �
 ```
 
 1. **Offer.** Right-clicking the librarian (`dhsn:librarian`) opens a dialog that offers the first round. If the player accepts, `playIntro(player)` is called (hook for the camera ride, empty for now), the player receives the round's books and a questlog entry appears.
-2. **Books.** For every study program, the round hands out a **random number of books between 1 and the number of that program's bookshelves in the library**. The numbers are rolled when the round is accepted and stored, so they stay the same after rejoining.
+2. **Books.** Every study program with shelves in the library gets a **random number of books from 1 to 5**, but not more than it has shelves. All of them go into one **shuffled** list, and the librarian hands out **at most 14**; every study program keeps at least one book. The books arrive in random order in the inventory. The numbers are rolled when the round is accepted and stored, so they stay the same after rejoining (see `planRoundBooks`).
 3. **Sorting.** Every book has to go into a bookshelf of its study program inside the library, and **every shelf takes only one book per round**. Books cannot be taken out of the shelves again. Each book sorted writes `Buch einsortiert: Informatik (1/9)` to the chat and updates the questlog.
 4. **Hand in.** Once all books of the round are sorted, the questlog line turns green and "Zurück zur Bibliothekarin" appears. Talking to the librarian shows the round's finish dialog. She then takes the round's books out of the shelves again ("tidies up"), so the shelves are free for the next round.
 5. **Next round.** Right after finishing a round, the librarian offers the next one in the same conversation. Accepting hands out newly rolled books.
@@ -222,7 +222,9 @@ Each entry is one round, played in the order of the list. To add a third round, 
 | Constant | Value | Meaning |
 | --- | --- | --- |
 | `LEAVE_GRACE_SECONDS` | `5` | Seconds outside the library before a round is reset. |
-| `CHALLENGE_MAX_PER_PROGRAM` | `3` | Books per program in the challenge: one per shelf, at most this many. |
+| `CHALLENGE_MAX_PER_PROGRAM` | `3` | Books per program in the challenge: one per shelf, at most this many. The challenge has no overall limit, so times stay comparable; its books are handed out shuffled as well. |
+| `MAX_BOOKS_PER_PROGRAM` | `5` | Normal rounds: at most this many books per program (and not more than it has shelves). |
+| `MAX_BOOKS_PER_ROUND` | `14` | Normal rounds: at most this many books in total; every program keeps at least one. |
 | `HIGHSCORE_SIZE` | `3` | Places on the highscore sign. |
 
 ### Common texts – `TEXTS`
@@ -338,7 +340,7 @@ Test environment: **flat world, adventure mode** (like the map), **cheats on**, 
 
 1. Stand on a free spot and run `/scriptevent dhsn:quest_test_library`. It builds a small library (see [test-library.md](../events/test-library.md), German): an oak plank floor (the library area), five rows of shelves (Informatik 4, the others 3, a sign at the end of each row), the librarian and the highscore sign.
 2. **Adventure mode first:** put any book into its shelf before starting the quest. If the shelf does not react, stop here: the quest cannot work in the map.
-3. Right-click the librarian and accept. You get 1–4 Informatik books and 1–3 of every other program; `/scriptevent dhsn:quest_library_state` shows the numbers. The questlog shows `Runde 1/2` and `Bücher sortiert: 0/<total>`.
+3. Right-click the librarian and accept. You get 1–4 Informatik books and 1–3 of every other program (at most 14 in total), in mixed order in the inventory; `/scriptevent dhsn:quest_library_state` shows the numbers. The questlog shows `Runde 1/2` and `Bücher sortiert: 0/<total>`.
 4. Put a book into the shelf of another program: refused, the librarian names the shelf. Put two books of the same program into the same shelf: the second is refused.
 5. Right-click a shelf with an empty hand: nothing comes out.
    Drop two books (`Q`) and talk to her: she hands them out again, and the two books on the ground disappear.

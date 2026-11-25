@@ -63,6 +63,12 @@ const LEAVE_GRACE_SECONDS = 5;
 // Books per study program in the challenge: one per shelf, but at most this many.
 const CHALLENGE_MAX_PER_PROGRAM = 3;
 
+// Books of a normal round: every study program gets a random number from 1 to this (but not more
+// than it has shelves); all of them are shuffled, and at most MAX_BOOKS_PER_ROUND are handed out.
+// Every study program keeps at least one book. See planRoundBooks.
+const MAX_BOOKS_PER_PROGRAM = 5;
+const MAX_BOOKS_PER_ROUND = 14;
+
 // How many times the highscore sign shows.
 const HIGHSCORE_SIZE = 3;
 
@@ -254,11 +260,32 @@ function giveItem(player, typeId, amount = 1) {
     if (leftover) player.dimension.spawnItem(leftover, player.location);
 }
 
-/** Our books stack only to 1, so each one is handed out separately. */
-function giveBooks(player, books) {
-    for (const [book, amount] of Object.entries(books)) {
-        for (let i = 0; i < amount; i++) giveItem(player, book);
+/**
+ * Shuffles a list in place (Fisher-Yates) and returns it.
+ * @template T
+ * @param {T[]} list
+ * @param {() => number} [random]
+ */
+export function shuffle(list, random = Math.random) {
+    for (let i = list.length - 1; i > 0; i--) {
+        const j = Math.floor(random() * (i + 1));
+        [list[i], list[j]] = [list[j], list[i]];
     }
+    return list;
+}
+
+/** Book id -> amount, as a shuffled list of single books. */
+function shuffledBooks(books) {
+    const list = [];
+    for (const [book, amount] of Object.entries(books)) {
+        for (let i = 0; i < amount; i++) list.push(book);
+    }
+    return shuffle(list);
+}
+
+/** Our books stack only to 1, so each one is handed out separately, in random order. */
+function giveBooks(player, books) {
+    for (const book of shuffledBooks(books)) giveItem(player, book);
 }
 
 function totalBooks(books) {
@@ -394,14 +421,38 @@ function countShelves() {
     return counts;
 }
 
-/** Normal round: for every program a random number from 1 to its number of shelves. */
-function rollRoundBooks() {
+/**
+ * The books of a normal round:
+ * 1. every study program with shelves gets a random number from 1 to MAX_BOOKS_PER_PROGRAM, but not more than
+ *    it has shelves (only one book fits per shelf and round),
+ * 2. all books go into one shuffled list,
+ * 3. at most MAX_BOOKS_PER_ROUND are handed out. Every study program keeps at least one book: first one book
+ *    of each program is taken, then the list fills up to the limit.
+ * @param {Record<string, number>} shelfCounts Book id -> number of shelves.
+ * @param {() => number} [random]
+ * @returns {Record<string, number>} Book id -> number of books.
+ */
+export function planRoundBooks(shelfCounts, random = Math.random) {
+    /** @type {string[]} */
+    const firsts = [];
+    /** @type {string[]} */
+    const extras = [];
+    for (const [book, shelves] of Object.entries(shelfCounts)) {
+        if (shelves <= 0) continue;
+        const amount = 1 + Math.floor(random() * Math.min(shelves, MAX_BOOKS_PER_PROGRAM));
+        firsts.push(book);
+        for (let i = 1; i < amount; i++) extras.push(book);
+    }
+    const chosen = [...firsts, ...shuffle(extras, random)].slice(0, Math.max(MAX_BOOKS_PER_ROUND, firsts.length));
+
     /** @type {Record<string, number>} */
     const books = {};
-    for (const [book, shelves] of Object.entries(countShelves())) {
-        if (shelves > 0) books[book] = 1 + Math.floor(Math.random() * shelves);
-    }
+    for (const book of chosen) books[book] = (books[book] ?? 0) + 1;
     return books;
+}
+
+function rollRoundBooks() {
+    return planRoundBooks(countShelves());
 }
 
 /** Challenge: one book per shelf, at most CHALLENGE_MAX_PER_PROGRAM per program, the same for everyone. */
@@ -662,9 +713,7 @@ function returnMissingBooks(player, run) {
 
     // Books lying on the ground would be duplicates of the new ones, so they disappear.
     removeQuestBooksOnGround(player.dimension);
-    for (const [book, count] of missing) {
-        for (let i = 0; i < count; i++) giveItem(player, book);
-    }
+    giveBooks(player, Object.fromEntries(missing));
     return true;
 }
 
