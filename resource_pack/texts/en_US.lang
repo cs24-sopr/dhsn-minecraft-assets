@@ -6,6 +6,9 @@ tile.myname:small_trashcan.name=Small Trashcan
 
 tile.myname:computerdesk.name=Computerdesk
 tile.myname:monitor.name=Monitor
+tile.myname:monitor_1.name=Monitor 1
+tile.myname:monitor_2.name=Monitor 2
+tile.myname:monitor_3.name=Monitor 3
 tile.myname:computerdesk_mirrored.name=Computerdesk Mirrored
 tile.myname:computerdesk_short.name=Computerdesk Short
 tile.myname:led_roehre.name=LED Tube
