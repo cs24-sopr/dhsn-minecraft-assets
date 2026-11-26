@@ -58,6 +58,8 @@ entity.myname:adrian_breun.name=adrian_breun
 item.spawn_egg.entity.myname:adrian_breun.name=Adrian Breun Egg
 entity.dhsn:martina_thoenert.name=Martina Thoenert
 item.spawn_egg.entity.dhsn:martina_thoenert.name=Martina Thoenert Egg
+entity.dhsn:prof_dr_brenner.name=Prof. Dr. Brenner
+item.spawn_egg.entity.dhsn:prof_dr_brenner.name=Prof. Dr. Brenner Egg
 
 item.myname:cs_book=Buch Informatik
 item.myname:niia_book=Buch Nachhaltige Ingenieurwissenschaft
