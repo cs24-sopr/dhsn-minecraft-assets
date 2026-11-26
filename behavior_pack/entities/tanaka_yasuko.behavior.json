@@ -2,7 +2,7 @@
 	"format_version": "1.19.30",
 	"minecraft:entity": {
 		"description": {
-			"identifier": "dhsn:tanaka_sakura",
+			"identifier": "dhsn:tanaka_yasuko",
 			"runtime_identifier": "minecraft:npc",
 			"is_spawnable": true,
 			"is_summonable": true,

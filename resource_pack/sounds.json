@@ -33,7 +33,7 @@
                 "pitch": [0.8, 1.2],
                 "volume": 1
             },
-            "dhsn:tanaka_sakura": {
+            "dhsn:tanaka_yasuko": {
                 "events": {
                     "death": "dig.wood",
                     "hurt": "mob.villager.hit",
