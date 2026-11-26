@@ -1,6 +1,6 @@
 import { BlockPermutation, system, world } from "@minecraft/server";
 
-const SMART_BOARDS = ["myname:smart_board", "myname:smart_board_206"];
+const SMART_BOARDS = ["myname:smart_board", "myname:smart_board_206", "myname:smart_board_graph"];
 const PART_STATE = "myname:smart_board_part";
 const FACING_STATE = "minecraft:cardinal_direction";
 const WIDTH_STATE = "myname:smart_board_width";

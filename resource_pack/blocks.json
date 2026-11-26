@@ -48,6 +48,9 @@
     "myname:smart_board_206": {
         "sound": "amethyst_block"
     },
+    "myname:smart_board_graph": {
+        "sound": "amethyst_block"
+    },
     "dhsn:frontdoor_empty": {
         "sound": "wood"
     },
