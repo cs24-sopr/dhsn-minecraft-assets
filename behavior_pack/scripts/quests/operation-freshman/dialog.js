@@ -71,7 +71,7 @@ const lucasDialogPages = [
         text: `Ich bin ${highlight('Lucas (mit c)')}, dein Ersti-Coach und sozusagen dein ganz persönlicher Wegweiser durch den Hochschulalltag. Und glaub mir, ich habe einiges zu zeigen! Bevor du dich allerdings direkt ins Getümmel stürzt, sollten wir ein paar Dinge klären.`,
     },
     {
-        text: 'Dafür zunächst ein paar organisatorische Hinweise:\nAuf deinem Weg über den Campus wirst du in verschiedenen Etagen, in Räumen und Gebieten die eine oder andere Aufgabe entdecken, die dir unseren Hochschulalltag näherbringen soll',
+        text: 'Dafür zunächst ein paar organisatorische Hinweise:\nAuf deinem Weg über den Campus wirst du in verschiedenen Etagen, in Räumen und Gebieten die eine oder andere Aufgabe entdecken, die dir unseren Hochschulalltag näherbringen soll.',
     },
     {
         text: 'Halte also stets Augen und Ohren offen und sei hilfsbereit! Es gibt jede Menge zu entdecken, zu lernen und natürlich auch zu erleben.',
@@ -287,7 +287,9 @@ export async function completedMrsSommerDialog() {
         })
     }
 
-    world.beforeEvents.playerInteractWithEntity.subscribe(onMrsSommerInteraction)
+    world.beforeEvents.playerInteractWithEntity.subscribe(
+        onMrsSommerInteraction
+    )
     try {
         while (true) {
             if (dialogError) throw dialogError
