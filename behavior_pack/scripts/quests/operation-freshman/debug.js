@@ -9,6 +9,7 @@ import {
 } from '@minecraft/server'
 import * as Config from './config.js'
 import { initializeQuest } from './quest.js'
+import { initializeLucasCleanup } from './utils.js'
 
 /**
  * Registers operator-only quest commands during script startup.
@@ -64,6 +65,7 @@ async function setupQuestEnvironment(player) {
         }
         Config.configureQuest(sommer, zones)
         resetPersist()
+        initializeLucasCleanup()
         player.sendMessage(
             `Operation Erstsemester neu eingerichtet: Räume 113 und 114, ${zones.length} Goldblock-Trigger. Die Quest ist bereit.`
         )

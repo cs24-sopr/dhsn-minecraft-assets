@@ -812,11 +812,19 @@ function onEntityLoad(event) {
     }
 }
 
-world.afterEvents.entityLoad.subscribe(onEntityLoad)
-system.run(() => {
-    try {
-        removeOtherLucases()
-    } catch (error) {
-        console.error(`[Operation Erstsemester]: ${String(error)}`)
+/** @type {boolean} Whether command setup has registered the Lucas load handler. */
+let lucasCleanupRegistered = false
+
+/**
+ * Activates Lucas cleanup when the quest start command runs.
+ * Repeated calls keep a single entity-load subscription.
+ * @returns {void}
+ * @throws {Error} If registration, storage access, or entity cleanup fails.
+ */
+export function initializeLucasCleanup() {
+    if (!lucasCleanupRegistered) {
+        world.afterEvents.entityLoad.subscribe(onEntityLoad)
+        lucasCleanupRegistered = true
     }
-})
+    removeOtherLucases()
+}
