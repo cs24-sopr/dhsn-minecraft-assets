@@ -38,6 +38,7 @@ tile.dhsn:logical_and_poster.name=Logisches UND Poster
 tile.dhsn:logical_or_poster.name=Logisches ODER Poster
 tile.dhsn:logical_not_poster.name=Logisches NICHT Poster
 tile.dhsn:cracks.name=Cracks
+tile.dhsn:postit.name=Post-It
 
 entity.dhsn:librarian.name=Librarian
 item.spawn_egg.entity.dhsn:librarian.name=Librarian Egg

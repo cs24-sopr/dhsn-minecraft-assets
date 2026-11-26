@@ -1,5 +1,8 @@
 {
     "format_version": "1.21.0",
+    "dhsn:postit": {
+        "sound": "wood"
+    },
     "dhsn:server_a": {
         "sound": "stone"
     },
