@@ -1,117 +1,120 @@
 {
-    "format_version": "1.21.0",
-    "dhsn:server_a": {
-        "sound": "stone"
-    },
-    "dhsn:server_b": {
-        "sound": "stone"
-    },
-    "dhsn:server_c": {
-        "sound": "stone"
-    },
-    "dhsn:server_d": {
-        "sound": "stone"
-    },
-    "dhsn:cracks": {
-        "sound": "packed_mud"
-    },
-    "dhsn:logical_not_poster": {
-        "sound": "azalea_leaves"
-    },
-    "dhsn:logical_or_poster": {
-        "sound": "azalea_leaves"
-    },
-    "dhsn:logical_and_poster": {
-        "sound": "azalea_leaves"
-    },
-    "myname:papers": {
-        "sound": "stone"
-    },
-    "myname:pile_of_paper": {
-        "sound": "stone"
-    },
-    "myname:three_eggs_in_mustard_sauce": {
-        "sound": "glass"
-    },
-    "myname:desk": {
-        "sound": "wood"
-    },
-    "dhsn:red_chair": {
-        "sound": "wood"
-    },
-    "dhsn:mensa_chair": {
-        "sound": "wood"
-    },
-    "myname:smart_board": {
-        "sound": "amethyst_block"
-    },
-    "myname:smart_board_206": {
-        "sound": "amethyst_block"
-    },
-    "dhsn:frontdoor_empty": {
-        "sound": "wood"
-    },
-    "myname:computerdesk_short": {
-        "sound": "wood"
-    },
-    "myname:computerdesk_mirrored": {
-        "sound": "wood"
-    },
-    "myname:projector": {
-        "sound": "stone"
-    },
-    "myname:green_fence": {
-        "sound": "wood"
-    },
-    "myname:led_roehre": {
-        "sound": "glass"
-    },
-    "myname:window": {
-        "sound": "glass"
-    },
-    "myname:greenchair": {
-        "sound": "wood"
-    },
-    "myname:paper_towel_dispenser": {
-        "sound": "stone"
-    },
-    "myname:small_trashcan": {
-        "sound": "stone"
-    },
-    "myname:urinal": {
-        "sound": "stone"
-    },
-    "myname:light_gray_brick": {
-        "sound": "stone"
-    },
-    "myname:monitor": {
-        "sound": "glass"
-    },
-    "myname:toilet": {
-        "sound": "stone"
-    },
-    "myname:test_block": {
-        "sound": "stone"
-    },
-    "myname:sink": {
-        "sound": "stone"
-    },
-    "myname:computerdesk": {
-        "sound": "wood"
-    },
-    "myname:controlling_bookshelf": {
-        "sound": "wood"
-    },
-    "myname:immobilienwirtschaft_bookshelf": {
-        "sound": "wood"
-    },
-    "myname:nachhaltige_ingenieurwissenschaften_bookshelf": {
-        "sound": "wood"
-    },
-    "myname:steuerberatung_bookshelf": {
-        "sound": "wood"
-    },
-    "myname:computer_science_bookshelf": {
-        "sound": "wood"
-    }
+	"format_version": "1.21.0",
+	"dhsn:pile_of_papers_2": {
+		"sound": "stone"
+	},
+	"dhsn:server_a": {
+		"sound": "stone"
+	},
+	"dhsn:server_b": {
+		"sound": "stone"
+	},
+	"dhsn:server_c": {
+		"sound": "stone"
+	},
+	"dhsn:server_d": {
+		"sound": "stone"
+	},
+	"dhsn:cracks": {
+		"sound": "packed_mud"
+	},
+	"dhsn:logical_not_poster": {
+		"sound": "azalea_leaves"
+	},
+	"dhsn:logical_or_poster": {
+		"sound": "azalea_leaves"
+	},
+	"dhsn:logical_and_poster": {
+		"sound": "azalea_leaves"
+	},
+	"myname:papers": {
+		"sound": "stone"
+	},
+	"myname:pile_of_paper": {
+		"sound": "stone"
+	},
+	"myname:three_eggs_in_mustard_sauce": {
+		"sound": "glass"
+	},
+	"myname:desk": {
+		"sound": "wood"
+	},
+	"dhsn:red_chair": {
+		"sound": "wood"
+	},
+	"dhsn:mensa_chair": {
+		"sound": "wood"
+	},
+	"myname:smart_board": {
+		"sound": "amethyst_block"
+	},
+	"myname:smart_board_206": {
+		"sound": "amethyst_block"
+	},
+	"dhsn:frontdoor_empty": {
+		"sound": "wood"
+	},
+	"myname:computerdesk_short": {
+		"sound": "wood"
+	},
+	"myname:computerdesk_mirrored": {
+		"sound": "wood"
+	},
+	"myname:projector": {
+		"sound": "stone"
+	},
+	"myname:green_fence": {
+		"sound": "wood"
+	},
+	"myname:led_roehre": {
+		"sound": "glass"
+	},
+	"myname:window": {
+		"sound": "glass"
+	},
+	"myname:greenchair": {
+		"sound": "wood"
+	},
+	"myname:paper_towel_dispenser": {
+		"sound": "stone"
+	},
+	"myname:small_trashcan": {
+		"sound": "stone"
+	},
+	"myname:urinal": {
+		"sound": "stone"
+	},
+	"myname:light_gray_brick": {
+		"sound": "stone"
+	},
+	"myname:monitor": {
+		"sound": "glass"
+	},
+	"myname:toilet": {
+		"sound": "stone"
+	},
+	"myname:test_block": {
+		"sound": "stone"
+	},
+	"myname:sink": {
+		"sound": "stone"
+	},
+	"myname:computerdesk": {
+		"sound": "wood"
+	},
+	"myname:controlling_bookshelf": {
+		"sound": "wood"
+	},
+	"myname:immobilienwirtschaft_bookshelf": {
+		"sound": "wood"
+	},
+	"myname:nachhaltige_ingenieurwissenschaften_bookshelf": {
+		"sound": "wood"
+	},
+	"myname:steuerberatung_bookshelf": {
+		"sound": "wood"
+	},
+	"myname:computer_science_bookshelf": {
+		"sound": "wood"
+	}
 }

@@ -34,6 +34,7 @@ tile.myname:window.name=Window
 tile.dhsn:frontdoor_empty.name=Frontdoor
 tile.myname:pile_of_paper.name=Chaotische Schreibtischdeko 
 tile.myname:papers.name=Chaotische Zettel
+tile.dhsn:pile_of_papers_2.name=Zettelhaufen
 tile.dhsn:logical_and_poster.name=Logisches UND Poster
 tile.dhsn:logical_or_poster.name=Logisches ODER Poster
 tile.dhsn:logical_not_poster.name=Logisches NICHT Poster
