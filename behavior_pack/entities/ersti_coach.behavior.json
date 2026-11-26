@@ -8,7 +8,29 @@
             "is_summonable": true,
             "is_experimental": false
         },
+        "component_groups": {
+            "dhsn:following": {
+                "minecraft:behavior.follow_mob": {
+                    "priority": 0,
+                    "control_flags": ["move", "look", "jump"],
+                    "speed_multiplier": 0.75,
+                    "search_range": 128,
+                    "stop_distance": 2,
+                    "preferred_actor_type": "minecraft:player",
+                    "filters": {
+                        "test": "has_tag",
+                        "subject": "other",
+                        "value": "dhsn:lucas_follow_target"
+                    }
+                }
+            }
+        },
         "components": {
+            "minecraft:follow_range": {
+                "value": 128,
+                "max": 128
+            },
+
             "minecraft:damage_sensor": {
                 "triggers": {
                     "cause": "all",
@@ -18,10 +40,18 @@
             "minecraft:type_family": {
                 "family": ["npc", "mob"]
             },
-            "minecraft:fire_immune": true,
+            "minecraft:fire_immune": {},
             "minecraft:movement": {
                 "value": 0.5
             },
+            "minecraft:movement.basic": {},
+            "minecraft:navigation.walk": {
+                "can_walk": true,
+                "can_jump": true,
+                "avoid_water": true,
+                "avoid_damage_blocks": true
+            },
+            "minecraft:jump.static": {},
             "minecraft:loot": {
                 "table": "loot_tables/empty.json"
             },
@@ -30,7 +60,7 @@
                 "height": 2.1
             },
             "minecraft:behavior.look_at_player": {
-                "priority": 0,
+                "priority": 1,
                 "look_distance": 6,
                 "probability": 0.02
             },
@@ -57,6 +87,18 @@
                 "allow_name_tag_renaming": false
             },
             "minecraft:physics": {}
+        },
+        "events": {
+            "dhsn:start_following": {
+                "add": {
+                    "component_groups": ["dhsn:following"]
+                }
+            },
+            "dhsn:stop_following": {
+                "remove": {
+                    "component_groups": ["dhsn:following"]
+                }
+            }
         }
     }
 }
