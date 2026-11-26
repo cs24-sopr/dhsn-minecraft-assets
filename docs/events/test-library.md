@@ -31,7 +31,7 @@ Außerdem wird ein vorher gespeicherter Testbereich (`dhsn:library_test_area`, `
 Ablauf (steht auch im Chat):
 
 1. `/gamemode creative`, Bibliothek bauen: Regale aufstellen (je Studiengang mindestens 1), Bibliothekarin mit dem Ei setzen, ein Schild für die Bestenliste aufstellen.
-2. Kompass → „Bibliothek“: Ecke 1 und 2 am Boden setzen, Schild ansehen und „Highscore-Schild“ klicken, „Regale prüfen“, „Bibliothekarin prüfen“.
+2. Kompass (Rechtsklick öffnet das zuletzt geöffnete Menü; andere Quest: Schleichen + Rechtsklick → „Bibliothek“): Ecke 1 und 2 am Boden setzen, Schild ansehen und „Highscore-Schild“ klicken, „Regale prüfen“, „Bibliothekarin prüfen“.
 3. `/gamemode adventure`, Quest bei der Bibliothekarin starten.
 
 Die Schritte im Menü erklärt die [Anleitung für das Map-Team](../quests/library-quest-map-guide.md).

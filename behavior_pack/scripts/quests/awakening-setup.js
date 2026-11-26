@@ -7,7 +7,7 @@ import { PROFESSOR_TAG, getAwakeningLayoutSource, previewAwakeningRide, resetAwa
 // The builder stands at a place, opens the menu and clicks the matching button; the menu takes the position of the
 // player (or the block the player looks at). Camera shots are taken the same way.
 //   /scriptevent dhsn:awakening_setup   opens the menu and gives the compass "Quest-Setup"; right-clicking the
-//                                       compass offers this menu (and the menus of other quests).
+//                                       compass opens the menu opened last, sneaking + right-click offers all quests.
 // The general parts (compass, forms, positions, boxes) are shared with other quests: util/setup-menu.js.
 // When all places are set, the menu saves a layout in the world (see setAwakeningSetupLayout in the quest) that
 // replaces the one of the test setup and takes precedence over LAYOUT. The raw values are kept in the world too.

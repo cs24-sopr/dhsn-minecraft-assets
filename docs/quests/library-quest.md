@@ -321,6 +321,8 @@ In the finished map, the library area and the highscore sign are set **in the ga
 /scriptevent dhsn:library_setup
 ```
 
+Right-clicking the compass reopens the menu the player opened last; sneaking + right-click shows the choice of all quests. If a button fails, the menu stays open and the error is written to the chat in yellow.
+
 | Button | What is saved |
 | --- | --- |
 | Bibliothek: Ecke 1 / Ecke 2 (am Boden) | the blocks the player stands in, at two opposite corners on floor level; the area reaches 1 block below the feet (floor) and 4 blocks above them |
@@ -333,7 +335,7 @@ In the finished map, the library area and the highscore sign are set **in the ga
 - **Saved in the world** as `dhsn:library_map_layout` (`library_area`, `library_area_corners`, `highscore_sign`, `dimension`); it travels with the map file and survives `/scriptevent dhsn:map_cleanup`.
 - **Only the area is required.** Without a highscore sign there is just no best list.
 - **Order of precedence:** test setup → setup menu → `LIBRARY_AREA` / `HIGHSCORE_SIGN` in the code. Saving anything in the menu removes a saved test setup, so the last saved one always applies. The test setup does not delete the menu values.
-- The menu is built on the shared setup tools [`util/setup-menu.js`](../../behavior_pack/scripts/util/setup-menu.js), see [setup-menu.md](../setup-menu.md) (German). The command block command `dhsn:library_set` of earlier versions was removed; values it saved are still used and shown in the menu.
+- The menu is built on the shared setup tools [`util/setup-menu.js`](../../behavior_pack/scripts/util/setup-menu.js), see [setup-menu.md](../setup-menu.md) (German). The command block command `dhsn:library_set` of earlier versions was removed. Values it may have saved are not supported: set the corners with the menu.
 
 ## Testing
 

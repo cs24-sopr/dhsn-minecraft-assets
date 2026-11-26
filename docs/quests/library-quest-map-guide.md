@@ -35,7 +35,7 @@ Die Map läuft im **Abenteuermodus**, alles muss in **einer Dimension** liegen. 
 /scriptevent dhsn:library_setup
 ```
 
-Du bekommst einen **Kompass „Quest-Setup“**, und das Menü der Bibliothek öffnet sich, sobald der Chat zu ist. Rechtsklick mit dem Kompass fragt, welche Quest du einrichten willst (derselbe Kompass dient auch „Das Erwachen“); wähle „Bibliothek“. Jeder Klick speichert sofort, ✔ und ✘ zeigen, was fehlt. Zum Laufen das Menü schließen und mit dem Kompass neu öffnen.
+Du bekommst einen **Kompass „Quest-Setup“**, und das Menü der Bibliothek öffnet sich, sobald der Chat zu ist. Rechtsklick mit dem Kompass öffnet wieder das Menü, das du zuletzt geöffnet hast. Derselbe Kompass dient auch „Das Erwachen“: Mit **Schleichen + Rechtsklick** wählst du die Quest. Mehrere können gleichzeitig einrichten: Jeder Kompass merkt sich sein eigenes Menü, die gesetzten Orte gelten für alle. Jeder Klick speichert sofort, ✔ und ✘ zeigen, was fehlt. Zum Laufen das Menü schließen und mit dem Kompass neu öffnen.
 
 ## 3. Orte setzen
 
@@ -99,7 +99,8 @@ Content-Log einschalten, dort stehen Skriptfehler.
 | Es gelten fremde Werte | Ein Testaufbau wurde zuletzt gespeichert: im Menü einen Ort neu setzen. |
 | Highscore-Schild bleibt leer | Kein Schild gesetzt, oder es wurde ein anderer Block angesehen. Neu setzen; der Text erscheint nach der ersten Challenge. |
 | Bibliothekarin öffnet das normale NPC-Fenster | Es ist nicht `dhsn:librarian`. |
-| Rechtsklick mit dem Kompass öffnet das falsche Menü | In der Auswahl „Bibliothek“ wählen, oder den Befehl `dhsn:library_setup` nutzen. |
+| Rechtsklick mit dem Kompass öffnet das falsche Menü | Der Kompass öffnet das zuletzt geöffnete Menü. Schleichen + Rechtsklick und „Bibliothek“ wählen, oder den Befehl `dhsn:library_setup` nutzen. |
+| Gelbe Meldung „Fehler bei „…““ im Chat | Ein Knopf im Menü ist fehlgeschlagen, z. B. weil der Block zu weit weg oder nicht geladen war. Das Menü bleibt offen: näher hingehen und erneut klicken. Kommt die Meldung wieder, sie dem Coding-Team schicken. |
 
 ## 8. Was noch Platzhalter ist
 

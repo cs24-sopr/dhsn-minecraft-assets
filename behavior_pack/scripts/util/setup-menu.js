@@ -6,12 +6,18 @@ import { ActionFormData, FormCancelationReason } from "@minecraft/server-ui";
 // stands at a place, opens the menu and clicks the matching button.
 //
 // ONE compass "Quest-Setup" serves all quests. Each quest registers its menu with registerSetupMenu and has
-// its own command that gives the compass and opens its menu directly. Right-clicking the compass shows a
-// choice of all registered menus (or opens the only one directly).
+// its own command that gives the compass and opens its menu directly. Right-clicking the compass opens the
+// menu the player opened last; sneaking + right-click shows a choice of all registered menus.
+// The places a menu sets are saved in the world by the quest. Only the last opened menu is saved on the player,
+// so several builders can set up different quests at the same time.
 // Documentation: docs/setup-menu.md
 
 const ITEM_TYPE = "minecraft:compass";
 const ITEM_NAME = "§bQuest-Setup §7(Rechtsklick)";
+
+// The id of the menu the player opened last, so the compass opens it again. Saved on the player (an exception
+// to "everything in the world"): every builder keeps their own. dhsn:map_cleanup does not touch it.
+const LAST_MENU_PROPERTY = "dhsn:setup_menu_last";
 
 // How far a click on "look at a block" reaches.
 const LOOK_DISTANCE = 10;
@@ -131,22 +137,48 @@ export async function runMenu(player, { id, title, render, note }) {
     const key = `${id}:${player.id}`;
     if (!note && openMenus.has(key)) return;
     openMenus.add(key);
+    rememberMenu(player, id);
     try {
         for (;;) {
             const { lines, entries } = render();
-            const body = note ? [`§e${note}§r`, "", ...lines] : lines;
+            const hint = menus.length > 1 ? ["§7Andere Quest einrichten: Schleichen + Rechtsklick mit dem Kompass.§r"] : [];
+            const body = note ? [`§e${note}§r`, "", ...lines, ...hint] : [...lines, ...hint];
             const form = new ActionFormData().title(title).body(body.join("\n"));
             for (const entry of entries) form.button(entry.text);
 
             const response = await showForm(player, form);
             if (!response || response.selection === undefined) return;
 
-            const result = await entries[response.selection].run();
+            const entry = entries[response.selection];
+            const result = await runEntry(player, entry);
             if (result === "close") return;
             note = result;
         }
     } finally {
         openMenus.delete(key);
+    }
+}
+
+/**
+ * Runs the action of a button. An error does not close the menu: it is written to the chat in yellow (and to the
+ * content log), and the menu shows a short note.
+ * @param {import("@minecraft/server").Player} player
+ * @param {MenuEntry} entry
+ * @returns {Promise<string | undefined>}
+ */
+async function runEntry(player, entry) {
+    try {
+        return await entry.run();
+    } catch (error) {
+        const button = entry.text.replace(/§./g, "").replace(/^[✔✘] /, "");
+        const message = error instanceof Error ? error.message : String(error);
+        console.warn(`[setup-menu] Button "${button}" failed: ${message}`);
+        try {
+            player.sendMessage(`§eFehler bei „${button}“: ${message}`);
+        } catch {
+            // The player left.
+        }
+        return `Fehler bei „${button}“, siehe Chat.`;
     }
 }
 
@@ -195,20 +227,56 @@ export function giveSetupCompass(player) {
     player.getComponent("minecraft:inventory")?.container?.addItem(item);
 }
 
+/**
+ * Saves on the player which menu they just opened.
+ * @param {import("@minecraft/server").Player} player
+ * @param {string} id
+ */
+function rememberMenu(player, id) {
+    try {
+        player.setDynamicProperty(LAST_MENU_PROPERTY, id);
+    } catch (error) {
+        console.warn(`[setup-menu] Could not save the last menu: ${error}`);
+    }
+}
+
+/**
+ * The registered menu the player opened last, or undefined (none yet, or its quest no longer has a setup menu).
+ * @param {import("@minecraft/server").Player} player
+ */
+function lastMenu(player) {
+    let id;
+    try {
+        id = player.getDynamicProperty(LAST_MENU_PROPERTY);
+    } catch {
+        return undefined;
+    }
+    return menus.find((menu) => menu.id === id);
+}
+
 const choosing = new Set();
 
-/** Right-click with the compass: the only menu directly, otherwise a choice of all registered menus. */
+/**
+ * Right-click with the compass: the only menu directly; otherwise the menu this player opened last, or a choice of all
+ * registered menus when sneaking or when no menu was opened yet.
+ * @param {import("@minecraft/server").Player} player
+ */
 async function openFromCompass(player) {
     if (menus.length === 0) return;
     if (menus.length === 1) {
         menus[0].open(player);
         return;
     }
+    const last = lastMenu(player);
+    if (last && !player.isSneaking) {
+        last.open(player);
+        return;
+    }
     if (choosing.has(player.id)) return;
     choosing.add(player.id);
     try {
-        const form = new ActionFormData().title("Quest-Setup").body("Welche Quest willst du einrichten?");
-        for (const menu of menus) form.button(menu.title);
+        const form = new ActionFormData().title("Quest-Setup").body("Welche Quest willst du einrichten?\n§7Der Kompass merkt sich deine Wahl. Wechseln: Schleichen + Rechtsklick.§r");
+        for (const menu of menus) form.button(menu === last ? `${menu.title} §7(zuletzt)§r` : menu.title);
         form.button("Schließen");
         const response = await showForm(player, form);
         const menu = response && menus[response.selection];

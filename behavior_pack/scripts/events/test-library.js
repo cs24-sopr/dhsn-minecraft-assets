@@ -46,7 +46,7 @@ const SETUP_STEPS = [
     "Test des Setup-Menüs der Bibliothek:",
     " 1. /gamemode creative und eine Bibliothek bauen: Regale aufstellen (je Studiengang mindestens 1),",
     "    Bibliothekarin mit dem Ei setzen, ein Schild für die Bestenliste aufstellen.",
-    " 2. Mit dem Kompass „Quest-Setup“ (Rechtsklick → Bibliothek) Ecke 1 und 2 am Boden setzen,",
+    " 2. Mit dem Kompass „Quest-Setup“ (Rechtsklick; andere Quest: Schleichen + Rechtsklick) Ecke 1 und 2 am Boden setzen,",
     "    das Schild ansehen und „Highscore-Schild“ klicken, „Regale prüfen“ und „Bibliothekarin prüfen“.",
     " 3. /gamemode adventure und die Quest bei der Bibliothekarin starten.",
     "Anleitung: docs/quests/library-quest-map-guide.md. Automatischer Aufbau: /scriptevent dhsn:quest_test_library aufbau",

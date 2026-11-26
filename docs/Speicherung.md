@@ -27,6 +27,8 @@ const raw = takeOverPerPlayerValue("dhsn:quest_meine_quest"); // alter Wert wird
 
 Weitere Quests ergänzen hier ihre Schlüssel (ECTS, Schaltalgebra, …). Orte der fertigen Map setzt man am einfachsten mit einem Setup-Menü (Kompass „Quest-Setup“, siehe [setup-menu.md](setup-menu.md)).
 
+**Einzige Ausnahme, am Spieler gespeichert:** `dhsn:setup_menu_last`, welches Setup-Menü der Kompass dieses Spielers zuletzt geöffnet hat. So können mehrere Spieler gleichzeitig verschiedene Quests einrichten. Die Orte selbst liegen weiter in der Welt. `dhsn:progress` und `dhsn:map_cleanup` sehen diesen Wert nicht.
+
 ## Befehle
 
 | Befehl | Wirkung |

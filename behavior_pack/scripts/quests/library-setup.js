@@ -13,7 +13,7 @@ import {
 // Setup menu for the library quest: the library area and the highscore sign of the real map are entered in
 // the game instead of in the code, like the setup menu of "Das Erwachen" (quests/awakening-setup.js).
 //   /scriptevent dhsn:library_setup   opens the menu and gives the compass "Quest-Setup"; right-clicking the
-//                                     compass offers this menu (and the menus of other quests).
+//                                     compass opens the menu opened last, sneaking + right-click offers all quests.
 // The values are saved in the world (dhsn:library_map_layout, see setLibraryMapValues in the quest).
 // The general parts (compass, forms, positions, boxes) are shared: util/setup-menu.js.
 // Documentation: docs/quests/library-quest-map-guide.md
