@@ -12,6 +12,10 @@ tile.myname:led_roehre.name=LED Tube
 tile.myname:projector.name=Projector
 tile.myname:smart_board.name=Smart Board
 tile.myname:smart_board_206.name=Smart Board 206
+tile.dhsn:server_a.name=Server A
+tile.dhsn:server_b.name=Server B
+tile.dhsn:server_c.name=Server C
+tile.dhsn:server_d.name=Server D
 
 tile.myname:desk.name=Desk
 tile.myname:computer_science_bookshelf.name=Computer Science Bookshelf
@@ -30,6 +34,10 @@ tile.myname:window.name=Window
 tile.dhsn:frontdoor_empty.name=Frontdoor
 tile.myname:pile_of_paper.name=Chaotische Schreibtischdeko 
 tile.myname:papers.name=Chaotische Zettel
+tile.dhsn:logical_and_poster.name=Logisches UND Poster
+tile.dhsn:logical_or_poster.name=Logisches ODER Poster
+tile.dhsn:logical_not_poster.name=Logisches NICHT Poster
+tile.dhsn:cracks.name=Cracks
 
 entity.dhsn:librarian.name=Librarian
 item.spawn_egg.entity.dhsn:librarian.name=Librarian Egg
@@ -39,6 +47,10 @@ entity.dhsn:cafeteria_cook.name=Cafeteria Cook
 item.spawn_egg.entity.dhsn:cafeteria_cook.name=Cafeteria Cook Egg
 entity.dhsn:ersti_coach.name=Ersti Coach
 item.spawn_egg.entity.dhsn:ersti_coach.name=Ersti Coach Egg
+entity.myname:adrian_breun.name=adrian_breun
+item.spawn_egg.entity.myname:adrian_breun.name=Adrian Breun Egg
+entity.dhsn:martina_thoenert.name=Martina Thoenert
+item.spawn_egg.entity.dhsn:martina_thoenert.name=Martina Thoenert Egg
 
 item.myname:cs_book=Buch Informatik
 item.myname:niia_book=Buch Nachhaltige Ingenieurwissenschaft
@@ -50,11 +62,13 @@ item.dhsn:volleyball=Volleyball
 entity.dhsn:volleyball.name=Volleyball
 item.dhsn:studierendenausweis=Studierendenausweis
 item.dhsn:certificate=Zeugnis
+item.dhsn:bamboo_key=bamboo key
+item.dhsn:cherry_key=cherry key
+item.dhsn:crimson_key=crimson key
+item.dhsn:warped_key=warped key
+item.dhsn:toolbox=Toolbox
 
 item.myname:builder_helmet=Builder Helmet
 item.myname:doctor_hat=Doctor Hat
 
 tile.myname:test_block.name=test_block
-
-entity.myname:adrian_breun.name=adrian_breun
-item.spawn_egg.entity.myname:adrian_breun.name=Adrian Breun

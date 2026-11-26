@@ -4,6 +4,42 @@
     "padding": 8,
     "num_mip_levels": 4,
     "texture_data": {
+        "server_a_off": {
+            "textures": "textures/blocks/server_a_off"
+        },
+        "server_a_on": {
+            "textures": "textures/blocks/server_a_on"
+        },
+        "server_b_off": {
+            "textures": "textures/blocks/server_b_off"
+        },
+        "server_b_on": {
+            "textures": "textures/blocks/server_b_on"
+        },
+        "server_c_off": {
+            "textures": "textures/blocks/server_c_off"
+        },
+        "server_c_on": {
+            "textures": "textures/blocks/server_c_on"
+        },
+        "server_d_off": {
+            "textures": "textures/blocks/server_d_off"
+        },
+        "server_d_on": {
+            "textures": "textures/blocks/server_d_on"
+        },
+        "cracks": {
+            "textures": "textures/blocks/cracks"
+        },
+        "logical_not_poster": {
+            "textures": "textures/blocks/logical_not_poster"
+        },
+        "logical_or_poster": {
+            "textures": "textures/blocks/logical_or_poster"
+        },
+        "logical_and_poster": {
+            "textures": "textures/blocks/logical_and_poster"
+        },
         "papers": {
             "textures": "textures/blocks/papers"
         },

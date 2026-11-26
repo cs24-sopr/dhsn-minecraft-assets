@@ -1,5 +1,29 @@
 {
     "format_version": "1.21.0",
+    "dhsn:server_a": {
+        "sound": "stone"
+    },
+    "dhsn:server_b": {
+        "sound": "stone"
+    },
+    "dhsn:server_c": {
+        "sound": "stone"
+    },
+    "dhsn:server_d": {
+        "sound": "stone"
+    },
+    "dhsn:cracks": {
+        "sound": "packed_mud"
+    },
+    "dhsn:logical_not_poster": {
+        "sound": "azalea_leaves"
+    },
+    "dhsn:logical_or_poster": {
+        "sound": "azalea_leaves"
+    },
+    "dhsn:logical_and_poster": {
+        "sound": "azalea_leaves"
+    },
     "myname:papers": {
         "sound": "stone"
     },
