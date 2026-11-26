@@ -710,9 +710,9 @@ export function spawnMrsSommer(room) {
 }
 
 /**
- * Checks whether a page requests the course dropdown.
- * @param {import('./persist.js').PlayerCourse} playerCourse Player course
- * @returns {'113' | '114'}
+ * Selects Frau Sommer's study office room for the player's course.
+ * @param {import('./persist.js').PlayerCourse | undefined} playerCourse Selected course, if available.
+ * @returns {'113' | '114'} Room 113 for Informatik and NIIA; room 114 for other or missing courses.
  */
 export function getMrsSommerRoom(playerCourse) {
     if (

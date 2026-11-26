@@ -31,6 +31,9 @@ const COURSE_OPTIONS = [
     },
 ]
 
+/** @type {number} Maximum number of characters accepted by Lucas's name input. */
+const MAX_NAME_LENGTH = 50
+
 /**
  * Builds the numeric dropdown entry for a course choice.
  * @param {CourseOption} option Course choice to display.
@@ -415,9 +418,9 @@ function showsCourseInput(page) {
 }
 
 /**
- * Replaces all supported markers with their persistently stored values.
+ * Replaces supported markers with saved values and German course labels.
  * Missing values leave their markers unchanged; inserted text is not processed again.
- * @param {string} text Text containing {{playerName}} or {{playerCourse}} markers.
+ * @param {string} text Text containing {{playerName}}, {{playerCourse}}, or {{mrsSommerRoom}} markers.
  * @returns {string} Text with available player values substituted literally.
  * @throws {Error} If reading persistent world storage fails.
  */
@@ -426,16 +429,22 @@ export function replaceMarkers(text) {
     const playerCourse = Persist.readPlayerCourse()
     const mrsSommerRoom = Utils.getMrsSommerRoom(playerCourse)
 
-    /** @type {{ playerName: string | undefined, mrsSommerRoom: string | undefined }} */
+    /** @type {{ playerName: string | undefined, playerCourse: import('./persist.js').PlayerCourse | undefined, mrsSommerRoom: string | undefined }} */
     const values = { playerName, playerCourse, mrsSommerRoom }
 
     /**
      * Supplies a literal replacement for one matched marker.
      * @param {string} marker Complete matched marker.
-     * @param {'playerName' | 'playerCourse'} key Stored value to substitute.
-     * @returns {string} Stored value or the original unresolved marker.
+     * @param {'playerName' | 'playerCourse' | 'mrsSommerRoom'} key Value to substitute.
+     * @returns {string} Saved value, German course label, or the original unresolved marker.
      */
     function replaceMarker(marker, key) {
+        if (key === 'playerCourse') {
+            return (
+                COURSE_OPTIONS.find((option) => option.course === playerCourse)
+                    ?.label ?? marker
+            )
+        }
         return values[key] ?? marker
     }
 
@@ -503,6 +512,9 @@ export async function showLucasDialog(player, startPage = 0) {
     /** @type {ObservableString} Input retained while navigating between pages. */
     const name = new ObservableString(savedName ?? '', { clientWritable: true })
 
+    /** @type {ObservableString} Feedback explaining invalid name input. */
+    const nameFeedback = new ObservableString('')
+
     /** @type {ObservableBoolean} Whether the previous button is disabled. */
     const previousDisabled = new ObservableBoolean(true)
 
@@ -537,13 +549,30 @@ export async function showLucasDialog(player, startPage = 0) {
     }
 
     /**
-     * Updates the forward button when the page, name, or course changes.
+     * Describes why the current name is invalid without changing the input.
+     * @returns {string} German validation message, or an empty string for a valid name.
+     */
+    function nameValidationMessage() {
+        const value = name.getData()
+        if (value.trim().length === 0) return 'Bitte gib einen Namen ein.'
+        if (value.length > MAX_NAME_LENGTH) {
+            return `Dein Name darf höchstens ${MAX_NAME_LENGTH} Zeichen lang sein.`
+        }
+        return ''
+    }
+
+    /**
+     * Updates name feedback and the forward button when input or the page changes.
      * @returns {void}
      */
     function updateNextDisabled() {
         const page = lucasDialogPages[pageIndex]
+        const nameError = nameValidationMessage()
+        nameFeedback.setData(nameError)
         nextDisabled.setData(
-            (showsNameInput(page) && name.getData().trim().length === 0) ||
+            ((showsNameInput(page) ||
+                (requiresName && pageIndex === lucasDialogPages.length - 1)) &&
+                nameError !== '') ||
                 (showsCourseInput(page) && selectedCourse() === undefined)
         )
     }
@@ -603,7 +632,11 @@ export async function showLucasDialog(player, startPage = 0) {
         const page = lucasDialogPages[pageIndex]
         const preferredName = name.getData().trim()
         const courseOption = selectedCourse()
-        if (showsNameInput(page) && preferredName.length === 0) {
+        if (
+            (showsNameInput(page) ||
+                (requiresName && pageIndex === lucasDialogPages.length - 1)) &&
+            nameValidationMessage() !== ''
+        ) {
             return
         }
         if (showsCourseInput(page) && courseOption === undefined) return
@@ -644,7 +677,10 @@ export async function showLucasDialog(player, startPage = 0) {
     form.divider()
         .label(text)
         .spacer({ visible: nameVisible })
-        .textField('Dein Name', name, { visible: nameVisible })
+        .textField('Dein Name', name, {
+            visible: nameVisible,
+            description: nameFeedback,
+        })
         .spacer({ visible: courseVisible })
         .dropdown(
             'Dein Studiengang',
@@ -660,7 +696,7 @@ export async function showLucasDialog(player, startPage = 0) {
         .button('Zurück', previousPage, { disabled: previousDisabled })
         .button(nextLabel, nextPage, { disabled: nextDisabled })
 
-    /** @type {(value: string) => void} Listener updating the button as the name is edited. */
+    /** @type {(value: string) => void} Listener updating name feedback and the button as the name is edited. */
     const nameChanged = name.subscribe(updateNextDisabled)
     /** @type {(value: number) => void} Listener updating the label and button as the course changes. */
     const courseChanged = course.subscribe(updateCourseSelection)

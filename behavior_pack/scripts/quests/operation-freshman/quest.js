@@ -91,9 +91,6 @@ async function stepInitialLucasDialog() {
                     const lucas = Utils.selectLucas(event.player)
                     if (!lucas) {
                         claimed = false
-                        event.player.sendMessage(
-                            'Kein verfügbarer Lucas gefunden. Bitte die Quest-Platzierung und geladene Chunks prüfen und die Zone erneut betreten.'
-                        )
                         return
                     }
                     stopListening()
@@ -164,7 +161,7 @@ async function stepCompletedSummerDialog() {
 
     /** @type {ItemStack} Personalized student ID reward. */
     const studentId = new ItemStack('dhsn:studierendenausweis', 1)
-    studentId.nameTag = `${name}s Studentenausweis`
+    studentId.nameTag = `${name}Studentenausweis von ${name}`
 
     const remainder = inventory.addItem(studentId)
     if (remainder) player.dimension.spawnItem(remainder, player.location)

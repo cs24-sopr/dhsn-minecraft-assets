@@ -36,13 +36,7 @@ export function writeSelectedLucasId(entityId) {
 
 /**
  * Supported course identifiers for Operation Erstsemester.
- * @typedef {
- *     'controlling-and-finance' |
- *     'real-estate-finance' |
- *     'computer-science' |
- *     'sustainable-engineering' |
- *     'tax-consulting-and-auditing'
- * } PlayerCourse
+ * @typedef {'controlling-and-finance' | 'real-estate-finance' | 'computer-science' | 'sustainable-engineering' | 'tax-consulting-and-auditing'} PlayerCourse
  */
 
 /** @type {Set<string>} Allowed values for the persistent course property. */
