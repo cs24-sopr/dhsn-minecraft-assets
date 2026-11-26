@@ -28,11 +28,11 @@ Ausgehend von der Position des Spielers:
 | -------------- | ------------------------------------ | ---------------------------------------------------------- |
 | Item aufheben  | 3 Blöcke östlich (+X)                 | Ein Zeugnis (`dhsn:certificate`) liegt auf dem Boden.   |
 | Item in Hopper | 4 Blöcke südlich (+Z)                 | Ein Trichter.                                              |
-| Item ins Regal | frei wählbar                         | Regale bekommt der Spieler ins Inventar.                   |
+| Item ins Regal | frei wählbar                         | Regale (Eichenregal, Chiseled Bookshelf) bekommt der Spieler ins Inventar. |
 | Block setzen   | 4 Blöcke nördlich (−Z)                | Gelbes Betonfeld im Boden.                                 |
 | Raum betreten  | ab 6 Blöcken östlich (+X), 5×5 groß    | Grüne Betonfläche im Boden; der Bereich reicht 3 Blöcke hoch. |
 
-Im Inventar landen: 3× Papier, 2× Goldblock, 1× Informatik-Buch (`myname:cs_book`), 6× Buch, 1× Eichenregal und 1× Chiseled Bookshelf.
+Im Inventar landen: 3× Papier, 2× Goldblock, 1× Informatik-Buch (`myname:cs_book`), 6× Buch, 1× Eichenregal, 1× Chiseled Bookshelf.
 
 ## Rückmeldung
 
@@ -51,6 +51,8 @@ Die genauen Schritte und Gegenproben stehen bei den Ereignissen:
 5. [Raum betreten](enter-territory.md#test)
 
 Sind alle sechs Zeilen im Questlog abgehakt, funktionieren alle Ereignisse.
+
+Das Sortieren der Bücher in unsere eigenen Bücherregale hat einen eigenen Test: [Bibliotheks-Test](test-library.md) mit `/scriptevent dhsn:quest_test_library`.
 
 ## Abhängigkeit
 

@@ -7,6 +7,7 @@ import { onBlockPlaced, onEnterTerritory, onItemInHopper, onItemInShelf, onItemP
 // It builds the course around you, gives you the needed items and registers every
 // event once. Each event writes a chat message and ticks off its line in the questlog.
 // Running the command again rebuilds the course at your new position.
+// Sorting books into our own bookshelves has its own test, see test-library.js.
 
 const TEST_COMMAND = "dhsn:event_test";
 

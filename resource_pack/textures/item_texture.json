@@ -1,6 +1,21 @@
 {
     "texture_data": {
-        "studierendenausweis": {
+        "warped_key": {
+			"textures": "textures/items/warped_key.png"
+		},
+		"crimson_key": {
+			"textures": "textures/items/crimson_key.png"
+		},
+		"cherry_key": {
+			"textures": "textures/items/cherry_key.png"
+		},
+		"bamboo_key": {
+			"textures": "textures/items/bamboo_key.png"
+		},
+"toolbox": {
+			"textures": "textures/items/toolbox.png"
+		},
+		"studierendenausweis": {
             "textures": "textures/items/studierendenausweis.png"
         },
         "builder_helmet": {
