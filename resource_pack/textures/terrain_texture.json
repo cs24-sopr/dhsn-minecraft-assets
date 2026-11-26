@@ -4,6 +4,9 @@
     "padding": 8,
     "num_mip_levels": 4,
     "texture_data": {
+        "postit": {
+            "textures": "textures/blocks/postit"
+        },
         "server_a_off": {
             "textures": "textures/blocks/server_a_off"
         },
