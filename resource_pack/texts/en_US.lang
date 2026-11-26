@@ -39,6 +39,8 @@ entity.dhsn:cafeteria_cook.name=Cafeteria Cook
 item.spawn_egg.entity.dhsn:cafeteria_cook.name=Cafeteria Cook Egg
 entity.dhsn:ersti_coach.name=Ersti Coach
 item.spawn_egg.entity.dhsn:ersti_coach.name=Ersti Coach Egg
+entity.dhsn:prof_dr_brenner.name=Prof. Dr. Brenner
+item.spawn_egg.entity.dhsn:prof_dr_brenner.name=Prof. Dr. Brenner Egg
 
 item.myname:cs_book=Buch Informatik
 item.myname:niia_book=Buch Nachhaltige Ingenieurwissenschaft
