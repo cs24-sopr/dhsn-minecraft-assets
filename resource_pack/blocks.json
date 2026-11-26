@@ -1,5 +1,11 @@
 {
     "format_version": "1.21.0",
+    "dhsn:server_monitor": {
+        "sound": "glass"
+    },
+    "dhsn:postit": {
+        "sound": "wood"
+    },
     "dhsn:server_a": {
         "sound": "stone"
     },
@@ -88,6 +94,15 @@
         "sound": "stone"
     },
     "myname:monitor": {
+        "sound": "glass"
+    },
+    "myname:monitor_1": {
+        "sound": "glass"
+    },
+    "myname:monitor_2": {
+        "sound": "glass"
+    },
+    "myname:monitor_3": {
         "sound": "glass"
     },
     "myname:toilet": {

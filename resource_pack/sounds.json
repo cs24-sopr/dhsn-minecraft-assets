@@ -6,6 +6,15 @@
                     "hurt": {}
                 }
             },
+            "dhsn:prof_dr_brenner": {
+                "events": {
+                    "death": "dig.wood",
+                    "hurt": "mob.villager.hit",
+                    "spawn": "mob.villager.idle"
+                },
+                "pitch": [1.5, 1.2],
+                "volume": 1
+            },
             "dhsn:librarian": {
                 "events": {
                     "death": "dig.wood",
@@ -25,6 +34,15 @@
                 "volume": 1
             },
             "dhsn:studienorganisation": {
+                "events": {
+                    "death": "dig.wood",
+                    "hurt": "mob.villager.hit",
+                    "spawn": "mob.villager.idle"
+                },
+                "pitch": [0.8, 1.2],
+                "volume": 1
+            },
+            "dhsn:tanaka_yasuko": {
                 "events": {
                     "death": "dig.wood",
                     "hurt": "mob.villager.hit",

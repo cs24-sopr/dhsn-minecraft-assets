@@ -4,6 +4,12 @@
     "padding": 8,
     "num_mip_levels": 4,
     "texture_data": {
+        "server_monitor": {
+            "textures": "textures/blocks/server_monitor"
+        },
+        "postit": {
+            "textures": "textures/blocks/postit"
+        },
         "server_a_off": {
             "textures": "textures/blocks/server_a_off"
         },
@@ -117,6 +123,15 @@
         },
         "monitor": {
             "textures": "textures/blocks/monitor"
+        },
+        "monitor_1": {
+            "textures": "textures/blocks/monitor_1"
+        },
+        "monitor_2": {
+            "textures": "textures/blocks/monitor_2"
+        },
+        "monitor_3": {
+            "textures": "textures/blocks/monitor_3"
         },
         "toilet": {
             "textures": "textures/blocks/toilet"

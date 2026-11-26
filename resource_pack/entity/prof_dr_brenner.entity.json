@@ -1,0 +1,41 @@
+{
+    "format_version": "1.12.0",
+    "minecraft:client_entity": {
+        "description": {
+            "identifier": "dhsn:prof_dr_brenner",
+            "materials": {
+                "default": "npc"
+            },
+            "textures": {
+                "default": "textures/entity/prof_dr_brenner"
+            },
+            "geometry": {
+                "default": "geometry.prof_dr_brenner"
+            },
+            "scripts": {
+                "animate": [
+                    {
+                        "move": "query.modified_move_speed"
+                    },
+                    {
+                        "look_between_points": "1.0"
+                    },
+                    {
+                        "confused_gesturing": "1.0"
+                    }
+                ]
+            },
+            "animations": {
+                "look_between_points": "animation.prof_dr_brenner.look_between_points",
+                "confused_gesturing": "animation.prof_dr_brenner.confused_gesturing",
+                "move": "animation.npc.move"
+            },
+            "render_controllers": ["controller.render.default"],
+            "enable_attachables": true,
+            "spawn_egg": {
+                "base_color": "#1a1c42",
+                "overlay_color": "#351c13"
+            }
+        }
+    }
+}
