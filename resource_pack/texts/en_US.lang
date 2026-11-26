@@ -6,6 +6,9 @@ tile.myname:small_trashcan.name=Small Trashcan
 
 tile.myname:computerdesk.name=Computerdesk
 tile.myname:monitor.name=Monitor
+tile.myname:monitor_1.name=Monitor 1
+tile.myname:monitor_2.name=Monitor 2
+tile.myname:monitor_3.name=Monitor 3
 tile.myname:computerdesk_mirrored.name=Computerdesk Mirrored
 tile.myname:computerdesk_short.name=Computerdesk Short
 tile.myname:led_roehre.name=LED Tube
@@ -39,11 +42,14 @@ tile.dhsn:logical_and_poster.name=Logisches UND Poster
 tile.dhsn:logical_or_poster.name=Logisches ODER Poster
 tile.dhsn:logical_not_poster.name=Logisches NICHT Poster
 tile.dhsn:cracks.name=Cracks
+tile.dhsn:postit.name=Post-It
 
 entity.dhsn:librarian.name=Librarian
 item.spawn_egg.entity.dhsn:librarian.name=Librarian Egg
 entity.dhsn:studienorganisation.name=Studienorganisation
 item.spawn_egg.entity.dhsn:studienorganisation.name=Studienorganisation Egg
+entity.dhsn:tanaka_yasuko.name=Tanaka Yasuko
+item.spawn_egg.entity.dhsn:tanaka_yasuko.name=Tanaka Yasuko Egg
 entity.dhsn:cafeteria_cook.name=Cafeteria Cook
 item.spawn_egg.entity.dhsn:cafeteria_cook.name=Cafeteria Cook Egg
 entity.dhsn:ersti_coach.name=Ersti Coach
