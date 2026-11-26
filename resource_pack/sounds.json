@@ -8,59 +8,57 @@
             },
             "dhsn:prof_dr_brenner": {
                 "events": {
-                    "events": {
-                        "death": "dig.wood",
-                        "hurt": "mob.villager.hit",
-                        "spawn": "mob.villager.idle"
-                    },
-                    "pitch": [1.5, 1.2],
-                    "volume": 1
+                    "death": "dig.wood",
+                    "hurt": "mob.villager.hit",
+                    "spawn": "mob.villager.idle"
                 },
-                "dhsn:librarian": {
-                    "events": {
-                        "death": "dig.wood",
-                        "hurt": "mob.villager.hit",
-                        "spawn": "mob.villager.idle"
-                    },
-                    "pitch": [1.5, 1.2],
-                    "volume": 1
+                "pitch": [1.5, 1.2],
+                "volume": 1
+            },
+            "dhsn:librarian": {
+                "events": {
+                    "death": "dig.wood",
+                    "hurt": "mob.villager.hit",
+                    "spawn": "mob.villager.idle"
                 },
-                "dhsn:ersti_coach": {
-                    "events": {
-                        "death": "dig.wood",
-                        "hurt": "mob.villager.hit",
-                        "spawn": "mob.villager.idle"
-                    },
-                    "pitch": [0.8, 1.2],
-                    "volume": 1
+                "pitch": [1.5, 1.2],
+                "volume": 1
+            },
+            "dhsn:ersti_coach": {
+                "events": {
+                    "death": "dig.wood",
+                    "hurt": "mob.villager.hit",
+                    "spawn": "mob.villager.idle"
                 },
-                "dhsn:studienorganisation": {
-                    "events": {
-                        "death": "dig.wood",
-                        "hurt": "mob.villager.hit",
-                        "spawn": "mob.villager.idle"
-                    },
-                    "pitch": [0.8, 1.2],
-                    "volume": 1
+                "pitch": [0.8, 1.2],
+                "volume": 1
+            },
+            "dhsn:studienorganisation": {
+                "events": {
+                    "death": "dig.wood",
+                    "hurt": "mob.villager.hit",
+                    "spawn": "mob.villager.idle"
                 },
-                "dhsn:cafeteria_cook": {
-                    "events": {
-                        "death": "dig.wood",
-                        "hurt": "mob.villager.hit",
-                        "spawn": "mob.villager.idle"
-                    },
-                    "pitch": [1.1, 1.2],
-                    "volume": 1
+                "pitch": [0.8, 1.2],
+                "volume": 1
+            },
+            "dhsn:cafeteria_cook": {
+                "events": {
+                    "death": "dig.wood",
+                    "hurt": "mob.villager.hit",
+                    "spawn": "mob.villager.idle"
                 },
-                "dhsn:martina_thoenert": {
-                    "events": {
-                        "death": "dig.wood",
-                        "hurt": "mob.villager.hit",
-                        "spawn": "mob.villager.idle"
-                    },
-                    "pitch": [0.8, 1.2],
-                    "volume": 1
-                }
+                "pitch": [1.1, 1.2],
+                "volume": 1
+            },
+            "dhsn:martina_thoenert": {
+                "events": {
+                    "death": "dig.wood",
+                    "hurt": "mob.villager.hit",
+                    "spawn": "mob.villager.idle"
+                },
+                "pitch": [0.8, 1.2],
+                "volume": 1
             }
         }
     }
