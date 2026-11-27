@@ -97,7 +97,7 @@ In the finished map, the positions do not have to be written into the code. They
 
 - **Coordinates** are absolute numbers or relative to the command block with `~` (`~`, `~3`, `~-2`), like in normal Minecraft commands. Arrival points given as whole numbers are moved to the middle of the block.
 - **The dimension** is the one of the command block.
-- **Feedback:** every call writes to the chat which variable was set and which are still missing. As soon as all 14 are set: "Alle Variablen gesetzt, die Quest ist aktiv."
+- **Feedback:** every call writes to the chat which variable was set and which are still missing. As soon as all 11 are set: "Alle Variablen gesetzt, die Quest ist aktiv."
 - **Check:** `/scriptevent dhsn:schaltalgebra_layout` lists all variables. `/scriptevent dhsn:schaltalgebra_layout_clear` deletes them.
 - **Order of precedence:** test setup (if one is saved) → command block values → `LAYOUT` in the code. If a test layout is still saved in the map, remove it with `/scriptevent dhsn:quest_test_schaltalgebra_clear`.
 - Use **impulse command blocks** (run once), not repeating ones.
@@ -136,7 +136,7 @@ The questlog entry is derived from the saved state and the player's position: sh
 
 | Command | Effect |
 | --- | --- |
-| `/scriptevent dhsn:quest_reset_schaltalgebra` | Resets your own progress and switches the lamp in the lecture room off. |
+| `/scriptevent dhsn:quest_reset_schaltalgebra` | Resets the quest progress (once per world) and switches the lamp in the lecture room off. |
 | `/scriptevent dhsn:quest_schaltalgebra_state` | Status and lamp in the chat. |
 | `/scriptevent dhsn:quest_schaltalgebra_solve` | Solves the puzzle without a circuit (testing). |
 | `/scriptevent dhsn:quest_test_schaltalgebra` | Test setup, see [test-schaltalgebra.md](../events/test-schaltalgebra.md). |

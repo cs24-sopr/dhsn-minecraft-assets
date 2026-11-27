@@ -145,7 +145,7 @@ No value means the quest was never started. Progress saved by earlier versions i
 
 | Command | Effect |
 | --- | --- |
-| `/scriptevent dhsn:quest_reset_library` | Resets **your own** quest progress. A running round or challenge is ended first: its books are taken out of your inventory and out of the shelves. |
+| `/scriptevent dhsn:quest_reset_library` | Resets the quest progress (once per world). A running round or challenge is ended first: its books are taken out of your inventory and out of the shelves. |
 | `/scriptevent dhsn:quest_library_state` | Writes your progress to the chat: round, status, books per program (sorted/handed out), the shelf of every sorted book, the library area. |
 | `/scriptevent dhsn:library_highscores_add <name> <seconds>` | Adds a fake time to the highscore list, e.g. `Kai 42,5`. For testing the sign without playing many challenges. |
 | `/scriptevent dhsn:library_highscores_reset` | Empties the highscore list. |
@@ -280,7 +280,7 @@ Called before the first round is offered. It returns `true` at the moment. This 
 
 ```js
 function canStartQuest(player) {
-    return countInInventory(player, "dhsn:student_id") > 0; // item id is a placeholder
+    return countInInventory(player, "dhsn:studierendenausweis") > 0; // the student ID from Operation Erstsemester
 }
 ```
 
@@ -376,7 +376,7 @@ Counter-checks:
 
 | Command | Resets | Does not reset |
 | --- | --- | --- |
-| `/scriptevent dhsn:quest_reset_library` | Your own quest progress; the books of a running round or challenge (inventory and shelves). | Highscores, library, librarian |
+| `/scriptevent dhsn:quest_reset_library` | The quest progress (once per world); the books of a running round or challenge (inventory and shelves). | Highscores, library, librarian |
 | `/scriptevent dhsn:library_highscores_reset` | The highscore list and sign. | Quest progress |
 | `/scriptevent dhsn:quest_test_library` | The library: clears the area above the floor, lays the floor, rebuilds shelves, signs, librarian and highscore sign at your position, empties the shelf counters, saves the area. | **Your quest progress** and the highscores |
 | `/scriptevent dhsn:quest_test_library_clear` | The saved test area and sign; afterwards `LIBRARY_AREA` and `HIGHSCORE_SIGN` from the code apply. | The blocks in the world |

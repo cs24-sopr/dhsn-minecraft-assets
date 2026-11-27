@@ -194,7 +194,7 @@ Students collect ECTS (at most 180) as experience levels: 1 ECTS = 1 level, stor
 
 ## Scripts: Saved data
 
-Everything the add-on remembers is stored in the world (world dynamic properties, prefix `dhsn:`), once per world because the game is single player. `/scriptevent dhsn:progress` lists it; `/scriptevent dhsn:map_cleanup confirm` deletes all progress and test data before the map is handed out and keeps only the map setup (`*_map_layout`). See the German documentation in [docs/Speicherung.md](docs/Speicherung.md).
+Everything the add-on remembers is stored in the world (world dynamic properties, prefix `dhsn:`), once per world because the game is single player. `/scriptevent dhsn:progress` lists it; `/scriptevent dhsn:map_cleanup confirm` deletes all progress and test data before the map is handed out and keeps only the map setup (`*_map_layout` and values registered with `keepOnCleanup`, e.g. `dhsn:schaltalgebra_lamp_power`). See the German documentation in [docs/Speicherung.md](docs/Speicherung.md).
 
 ---
 

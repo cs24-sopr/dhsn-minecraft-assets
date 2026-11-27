@@ -33,7 +33,7 @@ Weitere Quests ergänzen hier ihre Schlüssel (ECTS, Schaltalgebra, …).
 | Befehl | Wirkung |
 | --- | --- |
 | `/scriptevent dhsn:progress` | Listet alles, was in dieser Welt gespeichert ist. Regal-Zähler werden nur gezählt. |
-| `/scriptevent dhsn:map_cleanup confirm` | Löscht **allen Fortschritt und alle Testdaten** dieser Welt. Nur die Map-Einstellungen (`…_map_layout`) bleiben. Ohne `confirm` passiert nichts, es kommt nur eine Erklärung. |
+| `/scriptevent dhsn:map_cleanup confirm` | Löscht **allen Fortschritt und alle Testdaten** dieser Welt. Nur die Map-Einstellungen (`…_map_layout` und per `keepOnCleanup` angemeldete Werte wie `dhsn:schaltalgebra_lamp_power`) bleiben. Ohne `confirm` passiert nichts, es kommt nur eine Erklärung. |
 
 ### Vor dem Ausliefern der Map
 
@@ -42,7 +42,7 @@ Wer in der Map-Welt testet, hinterlässt dort Fortschritt, Bestzeiten, Regal-Zä
 1. `/scriptevent dhsn:progress`: prüfen, was gespeichert ist.
 2. `/scriptevent dhsn:map_cleanup confirm`
 3. Welt verlassen und neu betreten, damit Questlog und Anzeigen frisch starten.
-4. `/scriptevent dhsn:progress`: Es sollten nur noch die `…_map_layout`-Werte übrig sein.
+4. `/scriptevent dhsn:progress`: Es sollten nur noch die `…_map_layout`-Werte übrig sein (und `dhsn:schaltalgebra_lamp_power`, falls die Lampe gerade an ist; nach dem Cleanup geht sie aus, dann verschwindet auch dieser Wert).
 
 Gebaute Blöcke (z. B. Testaufbauten in der Welt) entfernt der Befehl nicht.
 

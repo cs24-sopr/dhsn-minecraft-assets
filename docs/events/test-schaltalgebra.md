@@ -34,7 +34,7 @@ Ersetzt die Räume, solange das Building-Team sie noch nicht gebaut hat (`projec
 
 4. Im Chat steht eine Kurzfassung.
 
-Das Layout wird **in der Welt gespeichert** (`dhsn:schaltalgebra_test_layout`) und hat Vorrang vor `LAYOUT` im Code, bis es mit `/scriptevent dhsn:quest_test_schaltalgebra_clear` gelöscht wird. Die Positionen der Ersatz-Schaltung (Hebel und Sockel) stehen ebenfalls in der Welt (`dhsn:schaltalgebra_test_substitute`), damit sie nach `/reload` und Neustart weiterläuft; der Clear-Befehl löscht auch sie.
+Das Layout wird **in der Welt gespeichert** (`dhsn:schaltalgebra_test_layout`) und hat Vorrang vor den per Befehlsblock gesetzten Werten und vor `LAYOUT` im Code, bis es mit `/scriptevent dhsn:quest_test_schaltalgebra_clear` gelöscht wird. Die Positionen der Ersatz-Schaltung (Hebel und Sockel) stehen ebenfalls in der Welt (`dhsn:schaltalgebra_test_substitute`), damit sie nach `/reload` und Neustart weiterläuft; der Clear-Befehl löscht auch sie.
 
 ## Ersatz-Schaltung
 
@@ -51,7 +51,7 @@ Die Quest merkt davon nichts. Sie prüft nur, ob die Ziel-Lampe leuchtet, genau 
 | --- | --- |
 | `/scriptevent dhsn:quest_test_schaltalgebra` | Baut den Testaufbau an der aktuellen Position (neu) auf. |
 | `/scriptevent dhsn:quest_test_schaltalgebra_clear` | Löscht das gespeicherte Layout und schaltet die Ersatz-Schaltung ab. Die Blöcke bleiben stehen. |
-| `/scriptevent dhsn:quest_reset_schaltalgebra` | Setzt den eigenen Quest-Stand zurück, Lampe im Hochschulraum aus. |
+| `/scriptevent dhsn:quest_reset_schaltalgebra` | Setzt den Quest-Stand zurück (einmal pro Welt), Lampe im Hochschulraum aus. |
 | `/scriptevent dhsn:quest_schaltalgebra_state` | Stand im Chat. |
 | `/scriptevent dhsn:quest_schaltalgebra_solve` | Löst das Rätsel ohne Schaltung. |
 | `/give @s dhsn:studierendenausweis` | Studierendenausweis ohne Kiste, z. B. nach `/clear`. |
