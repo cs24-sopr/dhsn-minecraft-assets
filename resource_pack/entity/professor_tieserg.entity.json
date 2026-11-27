@@ -10,7 +10,7 @@
 				"default": "textures/entity/professor_tieserg"
 			},
 			"geometry": {
-				"default": "geometry.npc"
+				"default": "geometry.professor_tieserg"
 			},
 			"scripts": {
 				"animate": [
