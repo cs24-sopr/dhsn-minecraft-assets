@@ -1,0 +1,24 @@
+{
+	"format_version": 2,
+	"header": {
+		"name": "Tieserg",
+		"description": "Tieserg Resource Pack",
+		"uuid": "f45d2a06-92f7-c27e-6823-e427668719a5",
+		"version": [1, 0, 0],
+		"min_engine_version": [1, 16, 0]
+	},
+	"metadata": {
+		"authors": ["Linda"],
+		"generated_with": {
+			"blockbench_entity_wizard": ["1.8.3"]
+		}
+	},
+	"modules": [
+		{
+			"description": "Tieserg",
+			"type": "resources",
+			"uuid": "892e0e78-0a40-62b4-b189-5235b972ae76",
+			"version": [1, 0, 0]
+		}
+	]
+}
