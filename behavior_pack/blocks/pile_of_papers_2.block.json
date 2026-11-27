@@ -28,9 +28,11 @@
             "minecraft:material_instances": {
                 "*": {
                     "texture": "pile_of_papers_2",
-                    "render_method": "alpha_test"
+                    "render_method": "opaque",
+                    "ambient_occlusion": false
                 }
             },
+            "minecraft:light_dampening": 0,
             "minecraft:map_color": "#ffffff"
         },
         "permutations": [
