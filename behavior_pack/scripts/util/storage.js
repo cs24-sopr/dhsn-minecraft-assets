@@ -44,16 +44,15 @@ const checkedKeys = new Set();
 export function takeOverPerPlayerValue(key, choose = (values) => values[0]) {
     const current = world.getDynamicProperty(key);
     if (current !== undefined || checkedKeys.has(key)) return current;
-    // New per-player values are never written any more, so one search per script load is enough.
-    checkedKeys.add(key);
 
     const oldIds = world.getDynamicPropertyIds().filter((id) => id.startsWith(`${key}:`));
-    if (oldIds.length === 0) return undefined;
-
     const values = oldIds.map((id) => world.getDynamicProperty(id)).filter((value) => value !== undefined);
     const value = values.length > 0 ? choose(values) : undefined;
     if (value !== undefined) world.setDynamicProperty(key, value);
     for (const id of oldIds) world.setDynamicProperty(id, undefined);
+    // New per-player values are never written any more, so one search per script load is enough.
+    // Marked only after the writes: if one fails, the next read tries again.
+    checkedKeys.add(key);
     return value;
 }
 

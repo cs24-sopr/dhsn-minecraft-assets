@@ -86,9 +86,13 @@ const TEXTS = {
 // "dhsn:quest_schaltalgebra:<player id>" and a separate lamp flag; both are taken over / removed.
 const STATE_PROPERTY = "dhsn:quest_schaltalgebra";
 const OLD_LAMP_PROPERTY = "dhsn:schaltalgebra_lamp_on";
-// The floor block below the lamp before the script replaced it; part of the map, kept by the cleanup.
-const LAMP_BASE_PROPERTY = "dhsn:schaltalgebra_lamp_base";
-keepOnCleanup(LAMP_BASE_PROPERTY);
+// Where the script put the redstone block below the lamp, and which block was there before:
+// { dimension, location, base }. Saved with the position, so the block is put back at the right place
+// even after the lamp was moved or the layout deleted. Part of the map, kept by the cleanup.
+const LAMP_POWER_PROPERTY = "dhsn:schaltalgebra_lamp_power";
+keepOnCleanup(LAMP_POWER_PROPERTY);
+// Older versions saved only the block type, without the position; taken over once (see readLampPower).
+const OLD_LAMP_BASE_PROPERTY = "dhsn:schaltalgebra_lamp_base";
 const TEST_LAYOUT_PROPERTY = "dhsn:schaltalgebra_test_layout";
 const MAP_LAYOUT_PROPERTY = "dhsn:schaltalgebra_map_layout";
 
@@ -261,45 +265,130 @@ function writeState(state) {
 // --------------------------------------------------
 
 /**
+ * @typedef {object} LampPower Where the script put the redstone block below the lamp.
+ * @property {string} dimension
+ * @property {import("@minecraft/server").Vector3} location The block below the lamp.
+ * @property {string} base The block that was there before (put back when switching off).
+ */
+
+/** The place below the lamp of the current layout, or undefined without layout. */
+function lampPowerPlace() {
+    const layout = getLayout();
+    if (!layout) return undefined;
+    return { dimension: layout.dimension ?? "minecraft:overworld", location: below(layout.startLamp) };
+}
+
+function isSamePlace(a, b) {
+    return a.dimension === b.dimension && isSameBlock(a.location, b.location);
+}
+
+/** @returns {import("@minecraft/server").Block | undefined} The block, undefined if it is not loaded. */
+function blockAt(place) {
+    try {
+        return world.getDimension(place.dimension).getBlock(place.location);
+    } catch {
+        return undefined;
+    }
+}
+
+/**
+ * The saved redstone block below the lamp. Takes over the value of older versions (only the block
+ * type): it belonged to the lamp of the current layout, if a redstone block is there.
+ * @returns {LampPower | undefined}
+ */
+function readLampPower() {
+    const saved = readJson(LAMP_POWER_PROPERTY);
+    if (saved) return saved;
+
+    const oldBase = world.getDynamicProperty(OLD_LAMP_BASE_PROPERTY);
+    if (typeof oldBase !== "string") return undefined;
+    const place = lampPowerPlace();
+    const block = place && blockAt(place);
+    if (!block) return undefined; // Not loaded yet: try again later.
+    world.setDynamicProperty(OLD_LAMP_BASE_PROPERTY, undefined);
+    if (block.typeId !== POWER_BLOCK) return undefined;
+    const power = { ...place, base: oldBase };
+    world.setDynamicProperty(LAMP_POWER_PROPERTY, JSON.stringify(power));
+    return power;
+}
+
+/**
+ * Puts the saved block back where the script placed the redstone block, and forgets the place.
+ * Only a redstone block is replaced; if something else is there now (e.g. the test setup was rebuilt),
+ * nothing is changed.
+ * @returns {boolean} false if the place is not loaded (try again later).
+ */
+function restoreLampPower(power) {
+    const block = blockAt(power);
+    if (!block) return false;
+    try {
+        if (block.typeId === POWER_BLOCK && power.base !== POWER_BLOCK) block.setType(power.base);
+    } catch (error) {
+        console.warn(`[schaltalgebra] Could not switch the lamp off: ${error}`);
+        return false;
+    }
+    world.setDynamicProperty(LAMP_POWER_PROPERTY, undefined);
+    return true;
+}
+
+/**
  * Switches the lamp in the lecture room on or off for good. On: a redstone block below the lamp
- * powers it. Off: the block that was there before comes back. Whether the lamp should be on is not
- * saved separately: it is on exactly when the quest is done (see reconcile).
+ * powers it; the place and the block that was there before are saved. Off: that block comes back at
+ * the saved place. Whether the lamp should be on is not saved separately: it is on exactly when the
+ * quest is done (see reconcile).
+ * If the lamp was moved or the layout deleted, the redstone block at the old place is removed first.
+ * A redstone block that was there before the script (base = redstone block) stays.
  * Everything that switches the lamp goes through here, so a different lamp (e.g. the LED tube,
  * see the plan) would only change this function.
  * @returns {boolean} Whether the lamp is now in the wanted state (false if not loaded).
  */
 function setStartLamp(on) {
-    const layout = getLayout();
-    if (!layout) return false;
+    const power = readLampPower();
+    const place = on ? lampPowerPlace() : undefined;
 
+    // Off, or the lamp is somewhere else now: put the old block back first.
+    if (power && !(place && isSamePlace(power, place))) {
+        if (!restoreLampPower(power)) return false;
+    }
+    // Off, or done but without layout: nothing to switch on.
+    if (!on || !place) return true;
+
+    const block = blockAt(place);
+    if (!block) return false;
     try {
-        const block = getDimension(layout).getBlock(below(layout.startLamp));
-        if (!block) return false;
-
-        if (on && block.typeId !== POWER_BLOCK) {
-            world.setDynamicProperty(LAMP_BASE_PROPERTY, block.typeId);
+        if (block.typeId !== POWER_BLOCK) {
+            world.setDynamicProperty(LAMP_POWER_PROPERTY, JSON.stringify({ ...place, base: block.typeId }));
             block.setType(POWER_BLOCK);
-        } else if (!on && block.typeId === POWER_BLOCK) {
-            const base = world.getDynamicProperty(LAMP_BASE_PROPERTY);
-            block.setType(typeof base === "string" ? base : "minecraft:stone");
+        } else if (!readJson(LAMP_POWER_PROPERTY)) {
+            // A redstone block was already there: remember it as the original block, so it stays.
+            world.setDynamicProperty(LAMP_POWER_PROPERTY, JSON.stringify({ ...place, base: POWER_BLOCK }));
         }
         return true;
     } catch (error) {
-        console.warn(`[schaltalgebra] Could not switch the lamp: ${error}`);
+        console.warn(`[schaltalgebra] Could not switch the lamp on: ${error}`);
         return false;
     }
 }
 
-/** @returns {boolean | undefined} Whether the lamp is powered; undefined if it is not loaded. */
+/**
+ * Whether the lamp is switched as the quest state wants it.
+ * @returns {boolean | undefined} undefined if the place to check is not loaded.
+ */
+function isLampAsWanted(on) {
+    const power = readLampPower();
+    const place = lampPowerPlace();
+    if (!on) return power === undefined;
+    if (!place) return power === undefined;
+    if (!power || !isSamePlace(power, place)) return false;
+    const block = blockAt(place);
+    return block ? block.typeId === POWER_BLOCK : undefined;
+}
+
+/** @returns {boolean | undefined} Whether the lamp of the current layout is powered; undefined if not loaded. */
 function isStartLampOn() {
-    const layout = getLayout();
-    if (!layout) return undefined;
-    try {
-        const block = getDimension(layout).getBlock(below(layout.startLamp));
-        return block ? block.typeId === POWER_BLOCK : undefined;
-    } catch {
-        return undefined;
-    }
+    const place = lampPowerPlace();
+    const block = place && blockAt(place);
+    return block ? block.typeId === POWER_BLOCK : undefined;
 }
 
 // --------------------------------------------------
@@ -341,6 +430,9 @@ function updateQuestlog(player) {
 /**
  * Gives the ECTS once. "rewarded" is only saved if the ECTS count really went up (or was already
  * full), so a failed attempt is repeated later and a successful one is never repeated.
+ * ECTS and "rewarded" are two writes. Both run in the same tick, so a reload cannot come in between;
+ * only a failing second write could give the ECTS twice. That is accepted (review Paul, P2): every
+ * guard against it could lose the ECTS instead.
  */
 function giveReward(player) {
     const state = readState();
@@ -367,8 +459,8 @@ function reconcile() {
     const player = world.getAllPlayers()[0];
     if (done && player && !state.rewarded) giveReward(player);
 
-    const lampOn = isStartLampOn();
-    if (lampOn !== undefined && lampOn !== done) setStartLamp(done);
+    // false = wrong (switch), undefined = not loaded (later), true = fine.
+    if (isLampAsWanted(done) === false) setStartLamp(done);
 }
 
 /** @param {{ force?: boolean }} [options] force: solve without a started quest (test command). */
@@ -431,7 +523,8 @@ function teleportWithFade(player, target, layout) {
  * switches the levers off now that the room is loaded, and only checks the target lamp after the
  * circuit had time to settle.
  */
-function arrive(layout) {
+/** Switches all levers of the puzzle off (levers that are not loaded are skipped). */
+function switchLeversOff(layout) {
     const dimension = getDimension(layout);
     for (const location of layout.levers) {
         try {
@@ -441,6 +534,10 @@ function arrive(layout) {
             // Lever not loaded or missing.
         }
     }
+}
+
+function arrive(layout) {
+    switchLeversOff(layout);
     armedFrom = system.currentTick + SETTLE_TICKS;
     // The first check after settling only records whether the lamp is lit; only a change from off
     // to on counts. So a lamp that is still lit from before (e.g. the levers could not be switched
@@ -519,13 +616,23 @@ system.runInterval(() => {
 
     let lit;
     try {
-        lit = getDimension(layout).getBlock(layout.targetLamp)?.typeId === LIT_LAMP;
+        const block = getDimension(layout).getBlock(layout.targetLamp);
+        // Not loaded: unknown, not "off". Otherwise a lamp that is lit when the room loads would count
+        // as a change from off to on (review Paul, P1).
+        if (!block) return;
+        lit = block.typeId === LIT_LAMP;
     } catch {
         return; // Puzzle room not loaded.
     }
     if (baselinePending) {
+        // Only now the room is surely loaded. A lamp lit from before (reset, cleanup, test, or the
+        // levers could not be switched off on arrival) does not count; the levers are switched off
+        // again so the player finds a fresh puzzle.
+        // Known limit (review Paul, P1): a player who lights the lamp within the first ~0.5 s after
+        // arriving is taken as "lit from before"; switching one lever off and on again counts then.
         baselinePending = false;
         lampWasLit = lit;
+        if (lit) switchLeversOff(layout);
         return;
     }
     if (lit && !lampWasLit) solve(player);
@@ -541,6 +648,7 @@ system.runInterval(reconcile, RECONCILE_INTERVAL);
 
 world.afterEvents.worldLoad.subscribe(() => {
     // The lamp flag of older versions is no longer needed; the lamp follows the quest state.
+    // (The old lamp base without position is taken over in readLampPower.)
     world.setDynamicProperty(OLD_LAMP_PROPERTY, undefined);
     reconcile();
 });
