@@ -11,7 +11,7 @@ Quests müssen erkennen, was Spieler tun. Dafür gibt es in [behavior_pack/scrip
 | Block mit Rechtsklick benutzen (Truhe, Notenblock, …) | `onBlockInteract` | [block-interact.md](events/block-interact.md) |
 | Raum / Bereich betreten            | `onEnterTerritory` | [enter-territory.md](events/enter-territory.md)   |
 
-Wie man alle Ereignisse im Spiel ausprobiert, steht in [Testparcours](events/test.md). Das Sortieren in die eigenen Bücherregale prüft der [Bibliotheks-Test](events/test-library.md). Eine vollständige Quest auf Basis der Bausteine ist die [Bibliotheks-Quest](quests/library-quest.md), eine weitere die Quest [Das Erwachen](quests/awakening-quest.md) mit ihrem [Testaufbau](events/test-awakening.md).
+Wie man alle Ereignisse im Spiel ausprobiert, steht in [Testparcours](events/test.md). Das Sortieren in die eigenen Bücherregale prüft der [Bibliotheks-Test](events/test-library.md). Vollständige Quests auf Basis der Bausteine sind die [Bibliotheks-Quest](quests/library-quest.md), die Quest [Das Erwachen](quests/awakening-quest.md) und die [Quest Schaltalgebra](quests/schaltalgebra-quest.md) (alle Englisch), mit eigenen Testaufbauten ([Bibliotheks-Test](events/test-library.md), [Erwachen-Test](events/test-awakening.md), [Schaltalgebra-Test](events/test-schaltalgebra.md)). Belohnungen in ECTS vergeben Quests über [ECTS als XP](Ects.md).
 
 ## Gemeinsames Muster
 
@@ -59,6 +59,7 @@ Außerdem exportiert `index.js` `SHELF_TYPES` (alle unterstützten Regal-Blöcke
 | `events/block-interact.js`  | Block anklicken, siehe Tabelle oben.                                                               |
 | `events/test-library.js`    | Testaufbau (kleine Bibliothek) für die Bibliotheks-Quest, siehe [test-library.md](events/test-library.md). |
 | `events/test-awakening.js`  | Testaufbau für die Quest „Das Erwachen“, siehe [test-awakening.md](events/test-awakening.md). Gehört nicht zur echten Map. |
+| `events/test-schaltalgebra.js` | Testaufbau (Hochschulraum und Rätselraum) für die Quest Schaltalgebra, siehe [test-schaltalgebra.md](events/test-schaltalgebra.md). |
 | `custom_bookshelf.js`       | Macht unsere eigenen Bücherregale benutzbar (liegt direkt in `behavior_pack/scripts/`). Siehe [item-in-shelf.md](events/item-in-shelf.md#eigene-bücherregale). |
 
 ## Hilfsfunktionen in `area.js`

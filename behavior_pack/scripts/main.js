@@ -10,11 +10,13 @@ import './ects.js'
 import './util/storage.js'
 import './custom_bookshelf.js'
 import './quests/library-quest.js'
+import './quests/schaltalgebra-quest.js'
 import './quests/awakening-quest.js'
 import './quests/awakening-setup.js' // in-game setup menu for the awakening quest
 import './quests/library-setup.js' // in-game setup menu for the library quest
 import './events/test.js'
 import './events/test-library.js'
 import './events/test-awakening.js' // test setup for the awakening quest, NOT part of the real map
+import './events/test-schaltalgebra.js' // test setup for the Schaltalgebra quest, NOT part of the real map
 import './server.js'
 import './quests/operation-freshman/index.js'

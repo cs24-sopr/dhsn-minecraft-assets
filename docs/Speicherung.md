@@ -20,7 +20,10 @@ const raw = takeOverPerPlayerValue("dhsn:quest_meine_quest"); // alter Wert wird
 
 | Art | Beispiele | Bei `dhsn:map_cleanup` |
 | --- | --- | --- |
-| Quest-Fortschritt | `dhsn:quest_library`, `dhsn:ects` | gelöscht |
+| Quest-Fortschritt | `dhsn:quest_library`, `dhsn:ects`, `dhsn:quest_schaltalgebra` | gelöscht |
+| Redstone-Block unter der Schaltalgebra-Lampe: Ort und ursprünglicher Block | `dhsn:schaltalgebra_lamp_power` | **bleibt** (gehört zur Map, per `keepOnCleanup`) |
+| Testaufbau der Schaltalgebra | `dhsn:schaltalgebra_test_layout`, `dhsn:schaltalgebra_test_substitute` | gelöscht |
+| Orte der Schaltalgebra in der fertigen Map | `dhsn:schaltalgebra_map_layout` (per Befehlsblock gesetzt) | **bleibt** |
 | Zustand der Map-Welt | `dhsn:library_highscores`, `dhsn:shelf_contents:…` | gelöscht |
 | Testaufbauten | `dhsn:library_test_area`, `dhsn:library_test_sign` | gelöscht |
 | Einstellungen der fertigen Map | `dhsn:library_map_layout` (mit dem Setup-Menü gesetzt, `/scriptevent dhsn:library_setup`) | **bleibt** |
