@@ -9,7 +9,8 @@ import { system, world } from "@minecraft/server";
 // Commands:
 //   /scriptevent dhsn:progress            lists everything the add-on saved in this world
 //   /scriptevent dhsn:map_cleanup confirm deletes all saved progress and test data before the map
-//                                         is handed out; only the map setup (*_map_layout) stays
+//                                         is handed out; only the map setup (*_map_layout and keys
+//                                         registered with keepOnCleanup) stays
 
 const PREFIX = "dhsn:";
 const PROGRESS_COMMAND = "dhsn:progress";
@@ -17,6 +18,17 @@ const CLEANUP_COMMAND = "dhsn:map_cleanup";
 
 // Saved values that belong to the finished map and must survive the cleanup.
 const KEEP_ON_CLEANUP = /_map_layout$/;
+
+// Further keys that belong to the map and survive the cleanup; quests register them with keepOnCleanup.
+const keepKeys = new Set();
+
+/**
+ * Marks a saved value as part of the map, so /scriptevent dhsn:map_cleanup does not delete it.
+ * @param {string} key
+ */
+export function keepOnCleanup(key) {
+    keepKeys.add(key);
+}
 
 // Keys already searched for old per-player values in this script load.
 const checkedKeys = new Set();
@@ -32,16 +44,15 @@ const checkedKeys = new Set();
 export function takeOverPerPlayerValue(key, choose = (values) => values[0]) {
     const current = world.getDynamicProperty(key);
     if (current !== undefined || checkedKeys.has(key)) return current;
-    // New per-player values are never written any more, so one search per script load is enough.
-    checkedKeys.add(key);
 
     const oldIds = world.getDynamicPropertyIds().filter((id) => id.startsWith(`${key}:`));
-    if (oldIds.length === 0) return undefined;
-
     const values = oldIds.map((id) => world.getDynamicProperty(id)).filter((value) => value !== undefined);
     const value = values.length > 0 ? choose(values) : undefined;
     if (value !== undefined) world.setDynamicProperty(key, value);
     for (const id of oldIds) world.setDynamicProperty(id, undefined);
+    // New per-player values are never written any more, so one search per script load is enough.
+    // Marked only after the writes: if one fails, the next read tries again.
+    checkedKeys.add(key);
     return value;
 }
 
@@ -85,7 +96,7 @@ system.afterEvents.scriptEventReceive.subscribe(({ id, message }) => {
         world.sendMessage(`§eLöscht allen Fortschritt und alle Testdaten dieser Welt, nur die Map-Einstellungen (*_map_layout) bleiben. Ausführen mit: /scriptevent ${CLEANUP_COMMAND} confirm`);
         return;
     }
-    const removed = ids.filter((key) => !KEEP_ON_CLEANUP.test(key));
+    const removed = ids.filter((key) => !KEEP_ON_CLEANUP.test(key) && !keepKeys.has(key));
     for (const key of removed) world.setDynamicProperty(key, undefined);
     world.sendMessage(`§e${removed.length} Werte gelöscht, ${ids.length - removed.length} Map-Einstellungen behalten. Welt neu betreten, damit Questlog und Anzeigen frisch starten.`);
 });

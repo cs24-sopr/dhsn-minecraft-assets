@@ -8,7 +8,7 @@ Alles, was das Add-on sich merkt, liegt **in der Welt (Map)** als World-Dynamic-
 
 Das Spiel ist **Einzelspieler**. Quest-Fortschritt wird deshalb **einmal pro Welt** gespeichert, ohne Spieler-ID im Schlüssel, z. B. `dhsn:quest_library`. So macht es auch Operation Erstsemester (`dhsn:operation_freshman_…`).
 
-Frühere Versionen speicherten pro Spieler (`dhsn:quest_library:<Spieler-ID>`). `takeOverPerPlayerValue(key)` übernimmt solche Werte beim ersten Lesen unter den neuen Schlüssel und löscht die alten.
+Frühere Versionen speicherten pro Spieler (`dhsn:quest_library:<Spieler-ID>`). `takeOverPerPlayerValue(key)` übernimmt solche Werte beim ersten Lesen unter den neuen Schlüssel und löscht die alten. Schlägt das Schreiben fehl, versucht es der nächste Lesezugriff erneut. Werte, die zur Map gehören, aber nicht auf `_map_layout` enden, meldet eine Quest mit `keepOnCleanup(key)` an, damit `dhsn:map_cleanup` sie behält.
 
 ```js
 import { takeOverPerPlayerValue } from "../util/storage.js";
@@ -34,7 +34,7 @@ Weitere Quests ergänzen hier ihre Schlüssel (ECTS, Schaltalgebra, …). Orte d
 | Befehl | Wirkung |
 | --- | --- |
 | `/scriptevent dhsn:progress` | Listet alles, was in dieser Welt gespeichert ist. Regal-Zähler werden nur gezählt. |
-| `/scriptevent dhsn:map_cleanup confirm` | Löscht **allen Fortschritt und alle Testdaten** dieser Welt. Nur die Map-Einstellungen (`…_map_layout`) bleiben. Ohne `confirm` passiert nichts, es kommt nur eine Erklärung. |
+| `/scriptevent dhsn:map_cleanup confirm` | Löscht **allen Fortschritt und alle Testdaten** dieser Welt. Nur die Map-Einstellungen (`…_map_layout` und per `keepOnCleanup` angemeldete Werte) bleiben. Ohne `confirm` passiert nichts, es kommt nur eine Erklärung. |
 
 ### Vor dem Ausliefern der Map
 
@@ -43,7 +43,7 @@ Wer in der Map-Welt testet, hinterlässt dort Fortschritt, Bestzeiten, Regal-Zä
 1. `/scriptevent dhsn:progress`: prüfen, was gespeichert ist.
 2. `/scriptevent dhsn:map_cleanup confirm`
 3. Welt verlassen und neu betreten, damit Questlog und Anzeigen frisch starten.
-4. `/scriptevent dhsn:progress`: Es sollten nur noch die `…_map_layout`-Werte übrig sein.
+4. `/scriptevent dhsn:progress`: Es sollten nur noch die Map-Einstellungen übrig sein (`…_map_layout` und per `keepOnCleanup` angemeldete Werte).
 
 Gebaute Blöcke (z. B. Testaufbauten in der Welt) entfernt der Befehl nicht.
 
