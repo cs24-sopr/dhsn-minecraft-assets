@@ -9,6 +9,13 @@
             "is_experimental": false
         },
         "component_groups": {
+            "dhsn:standing": {
+                "minecraft:behavior.look_at_player": {
+                    "priority": 1,
+                    "look_distance": 6,
+                    "probability": 0.02
+                }
+            },
             "dhsn:following": {
                 "minecraft:behavior.follow_mob": {
                     "priority": 0,
@@ -56,13 +63,8 @@
                 "table": "loot_tables/empty.json"
             },
             "minecraft:collision_box": {
-                "width": 0.6,
-                "height": 2.1
-            },
-            "minecraft:behavior.look_at_player": {
-                "priority": 1,
-                "look_distance": 6,
-                "probability": 0.02
+                "width": 0.5,
+                "height": 1.7
             },
             "minecraft:persistent": {},
             "minecraft:npc": {
@@ -89,6 +91,21 @@
             "minecraft:physics": {}
         },
         "events": {
+            "minecraft:entity_spawned": {
+                "add": {
+                    "component_groups": ["dhsn:standing"]
+                }
+            },
+            "dhsn:sit": {
+                "remove": {
+                    "component_groups": ["dhsn:standing"]
+                }
+            },
+            "dhsn:stand": {
+                "add": {
+                    "component_groups": ["dhsn:standing"]
+                }
+            },
             "dhsn:start_following": {
                 "add": {
                     "component_groups": ["dhsn:following"]
