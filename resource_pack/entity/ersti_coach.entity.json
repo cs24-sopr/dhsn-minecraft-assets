@@ -13,21 +13,31 @@
                 "default": "geometry.ersti_coach"
             },
             "scripts": {
-                "scale": "0.5",
+                "scale": "0.4",
                 "animate": [
                     {
                         "move": "query.modified_move_speed"
                     },
-                    "look_at_target",
+                    {
+                        "look_at_target": "!query.is_riding"
+                    },
                     {
                         "baby_transform": "query.is_baby"
+                    },
+                    {
+                        "riding": "query.is_riding"
+                    },
+                    {
+                        "sitting_reading": "query.is_riding"
                     }
                 ]
             },
             "animations": {
                 "look_at_target": "animation.common.look_at_target",
                 "move": "animation.npc.move",
-                "baby_transform": "animation.npc.baby_transform"
+                "baby_transform": "animation.npc.baby_transform",
+                "riding": "animation.ersti_coach.riding",
+                "sitting_reading": "animation.ersti_coach.sitting_reading"
             },
             "render_controllers": ["controller.render.default"],
             "spawn_egg": {

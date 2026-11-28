@@ -62,7 +62,7 @@
                 {
                     "name": "arm_right",
                     "parent": "arms",
-                    "pivot": [0, 0, 0],
+                    "pivot": [8, 46, 0],
                     "cubes": [
                         {
                             "origin": [-16, 22, -6],
