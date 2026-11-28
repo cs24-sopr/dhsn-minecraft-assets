@@ -10,7 +10,7 @@
                 "default": "textures/entity/librarian"
             },
             "geometry": {
-                "default": "geometry.npc"
+                "default": "geometry.librarian"
             },
             "scripts": {
                 "animate": [

@@ -4,6 +4,51 @@
     "padding": 8,
     "num_mip_levels": 4,
     "texture_data": {
+        "pile_of_papers_2": {
+            "textures": "textures/blocks/pile_of_papers_2"
+        },
+        "server_monitor": {
+            "textures": "textures/blocks/server_monitor"
+        },
+        "postit": {
+            "textures": "textures/blocks/postit"
+        },
+        "server_a_off": {
+            "textures": "textures/blocks/server_a_off"
+        },
+        "server_a_on": {
+            "textures": "textures/blocks/server_a_on"
+        },
+        "server_b_off": {
+            "textures": "textures/blocks/server_b_off"
+        },
+        "server_b_on": {
+            "textures": "textures/blocks/server_b_on"
+        },
+        "server_c_off": {
+            "textures": "textures/blocks/server_c_off"
+        },
+        "server_c_on": {
+            "textures": "textures/blocks/server_c_on"
+        },
+        "server_d_off": {
+            "textures": "textures/blocks/server_d_off"
+        },
+        "server_d_on": {
+            "textures": "textures/blocks/server_d_on"
+        },
+        "cracks": {
+            "textures": "textures/blocks/cracks"
+        },
+        "logical_not_poster": {
+            "textures": "textures/blocks/logical_not_poster"
+        },
+        "logical_or_poster": {
+            "textures": "textures/blocks/logical_or_poster"
+        },
+        "logical_and_poster": {
+            "textures": "textures/blocks/logical_and_poster"
+        },
         "papers": {
             "textures": "textures/blocks/papers"
         },
@@ -18,6 +63,9 @@
         },
         "smart_board_206": {
             "textures": "textures/blocks/smart_board_206"
+        },
+        "smart_board_graph": {
+            "textures": "textures/blocks/smart_board_graph"
         },
         "desk": {
             "textures": "textures/blocks/desk"
@@ -78,6 +126,15 @@
         },
         "monitor": {
             "textures": "textures/blocks/monitor"
+        },
+        "monitor_1": {
+            "textures": "textures/blocks/monitor_1"
+        },
+        "monitor_2": {
+            "textures": "textures/blocks/monitor_2"
+        },
+        "monitor_3": {
+            "textures": "textures/blocks/monitor_3"
         },
         "toilet": {
             "textures": "textures/blocks/toilet"

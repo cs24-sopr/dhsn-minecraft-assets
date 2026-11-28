@@ -8,9 +8,10 @@ Quests müssen erkennen, was Spieler tun. Dafür gibt es in [behavior_pack/scrip
 | Item in einen Trichter (Hopper)    | `onItemInHopper`   | [item-in-hopper.md](events/item-in-hopper.md)     |
 | Bestimmtes Item ins Regal stellen, optional mit Anzahl | `onItemInShelf`    | [item-in-shelf.md](events/item-in-shelf.md)       |
 | Block an bestimmtem Ort platzieren | `onBlockPlaced`    | [block-placed.md](events/block-placed.md)         |
+| Block mit Rechtsklick benutzen (Truhe, Notenblock, …) | `onBlockInteract` | [block-interact.md](events/block-interact.md) |
 | Raum / Bereich betreten            | `onEnterTerritory` | [enter-territory.md](events/enter-territory.md)   |
 
-Wie man alle Ereignisse im Spiel ausprobiert, steht in [Testparcours](events/test.md). Das Sortieren in die eigenen Bücherregale prüft der [Bibliotheks-Test](events/test-library.md). Vollständige Quests auf Basis der Bausteine sind die [Bibliotheks-Quest](quests/library-quest.md) und die [Quest Schaltalgebra](quests/schaltalgebra-quest.md) (beide Englisch), mit eigenen Testaufbauten ([Bibliotheks-Test](events/test-library.md), [Schaltalgebra-Test](events/test-schaltalgebra.md)). Belohnungen in ECTS vergeben Quests über [ECTS als XP](Ects.md).
+Wie man alle Ereignisse im Spiel ausprobiert, steht in [Testparcours](events/test.md). Das Sortieren in die eigenen Bücherregale prüft der [Bibliotheks-Test](events/test-library.md). Vollständige Quests auf Basis der Bausteine sind die [Bibliotheks-Quest](quests/library-quest.md), die Quest [Das Erwachen](quests/awakening-quest.md) und die [Quest Schaltalgebra](quests/schaltalgebra-quest.md) (alle Englisch), mit eigenen Testaufbauten ([Bibliotheks-Test](events/test-library.md), [Erwachen-Test](events/test-awakening.md), [Schaltalgebra-Test](events/test-schaltalgebra.md)). Belohnungen in ECTS vergeben Quests über [ECTS als XP](Ects.md).
 
 ## Gemeinsames Muster
 
@@ -32,7 +33,7 @@ stop();
 Alle Funktionen lassen sich gesammelt importieren. Der Pfad ist relativ zur Datei, die importiert; aus `behavior_pack/scripts/` heraus:
 
 ```js
-import { onBlockPlaced, onEnterTerritory, onItemInHopper, onItemInShelf, onItemPickup } from "./events/index.js";
+import { onBlockInteract, onBlockPlaced, onEnterTerritory, onItemInHopper, onItemInShelf, onItemPickup } from "./events/index.js";
 ```
 
 Außerdem exportiert `index.js` `SHELF_TYPES` (alle unterstützten Regal-Blöcke) und `getShelfCount` (aktueller Stand eines Regals), siehe [item-in-shelf.md](events/item-in-shelf.md).
@@ -55,7 +56,9 @@ Außerdem exportiert `index.js` `SHELF_TYPES` (alle unterstützten Regal-Blöcke
 | `events/shelf-contents.js`  | Zählt den Inhalt von Regalen mit, Grundlage für `onItemInShelf`. Siehe [item-in-shelf.md](events/item-in-shelf.md#für-entwickler-shelf-contentsjs). |
 | `events/area.js`            | Gemeinsame Hilfsfunktionen, siehe unten.                                                           |
 | `events/test.js`            | Testparcours für alle Ereignisse, siehe [test.md](events/test.md).                                 |
+| `events/block-interact.js`  | Block anklicken, siehe Tabelle oben.                                                               |
 | `events/test-library.js`    | Testaufbau (kleine Bibliothek) für die Bibliotheks-Quest, siehe [test-library.md](events/test-library.md). |
+| `events/test-awakening.js`  | Testaufbau für die Quest „Das Erwachen“, siehe [test-awakening.md](events/test-awakening.md). Gehört nicht zur echten Map. |
 | `events/test-schaltalgebra.js` | Testaufbau (Hochschulraum und Rätselraum) für die Quest Schaltalgebra, siehe [test-schaltalgebra.md](events/test-schaltalgebra.md). |
 | `custom_bookshelf.js`       | Macht unsere eigenen Bücherregale benutzbar (liegt direkt in `behavior_pack/scripts/`). Siehe [item-in-shelf.md](events/item-in-shelf.md#eigene-bücherregale). |
 

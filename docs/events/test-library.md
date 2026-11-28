@@ -50,8 +50,8 @@ Weiter geht es mit der Bibliotheks-Quest: Bibliothekarin ansprechen, Quest anneh
 | --- | --- |
 | `/scriptevent dhsn:quest_test_library` | Baut die Bibliothek an der aktuellen Position (neu) auf. |
 | `/scriptevent dhsn:quest_test_library_clear` | Löscht den gespeicherten Bibliotheksbereich und das Test-Schild. Danach gelten wieder die per Befehlsblock gesetzten Werte, sonst `LIBRARY_AREA` und `HIGHSCORE_SIGN` aus dem Code. Die Blöcke bleiben stehen. |
-| `/scriptevent dhsn:quest_reset_library` | Setzt den Quest-Stand zurück (einmal pro Welt), nimmt die Bücher einer laufenden Runde oder Challenge weg und trägt sie aus den Regalen aus. |
-| `/scriptevent dhsn:quest_library_state` | Schreibt den Stand in den Chat: Runde, ausgegebene und einsortierte Bücher pro Studiengang, in welches Regal jedes Buch kam, den Bibliotheksbereich. |
+| `/scriptevent dhsn:quest_reset_library` | Setzt den eigenen Quest-Stand zurück, nimmt die Bücher einer laufenden Runde oder Challenge weg und trägt sie aus den Regalen aus. |
+| `/scriptevent dhsn:quest_library_state` | Schreibt den eigenen Stand in den Chat: Runde, ausgegebene und einsortierte Bücher pro Studiengang, in welches Regal jedes Buch kam, den Bibliotheksbereich. |
 | `/scriptevent dhsn:library_highscores_add <Name> <Sekunden>` | Trägt eine Fake-Zeit ein, z. B. `Kai 42,5`. So lassen sich Sortierung und „Top 3“ ohne viele Durchläufe prüfen. |
 | `/scriptevent dhsn:library_highscores_reset` | Leert die Bestenliste. |
 

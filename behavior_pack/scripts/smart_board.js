@@ -1,9 +1,11 @@
 import { BlockPermutation, system, world } from "@minecraft/server";
 
-const SMART_BOARDS = ["myname:smart_board", "myname:smart_board_206"];
-const PART_STATE = "myname:smart_board_part";
+const SMART_BOARDS = new Map([
+    ["myname:smart_board", { partState: "myname:smart_board_part", widthState: "myname:smart_board_width" }],
+    ["myname:smart_board_206", { partState: "myname:smart_board_part", widthState: "myname:smart_board_width" }],
+    ["dhsn:smart_board_graph", { partState: "dhsn:smart_board_part", widthState: "dhsn:smart_board_width" }],
+]);
 const FACING_STATE = "minecraft:cardinal_direction";
-const WIDTH_STATE = "myname:smart_board_width";
 
 const WIDTH_AXES = {
     east: { x: 1, z: 0 },
@@ -38,8 +40,10 @@ function getPartPositions(center, widthDirection) {
 
 world.afterEvents.playerPlaceBlock.subscribe(({ block, player }) => {
     const blockTypeId = block.typeId;
-    if (!SMART_BOARDS.includes(blockTypeId)) return;
+    const config = SMART_BOARDS.get(blockTypeId);
+    if (!config) return;
 
+    const { partState, widthState } = config;
     const dimension = block.dimension;
     const location = { ...block.location };
     const facing = block.permutation.getState(FACING_STATE);
@@ -78,9 +82,9 @@ world.afterEvents.playerPlaceBlock.subscribe(({ block, player }) => {
                 if (position.part !== 1) createdLocations.push(position);
                 target.setPermutation(
                     BlockPermutation.resolve(blockTypeId, {
-                        [PART_STATE]: position.part,
+                        [partState]: position.part,
                         [FACING_STATE]: facing,
-                        [WIDTH_STATE]: widthName,
+                        [widthState]: widthName,
                     }),
                 );
             }
@@ -99,11 +103,13 @@ world.afterEvents.playerPlaceBlock.subscribe(({ block, player }) => {
 
 world.afterEvents.playerBreakBlock.subscribe(({ block, brokenBlockPermutation }) => {
     const blockTypeId = brokenBlockPermutation.type.id;
-    if (!SMART_BOARDS.includes(blockTypeId)) return;
+    const config = SMART_BOARDS.get(blockTypeId);
+    if (!config) return;
 
-    const part = brokenBlockPermutation.getState(PART_STATE);
+    const { partState, widthState } = config;
+    const part = brokenBlockPermutation.getState(partState);
     const facing = brokenBlockPermutation.getState(FACING_STATE);
-    const widthName = brokenBlockPermutation.getState(WIDTH_STATE);
+    const widthName = brokenBlockPermutation.getState(widthState);
     const widthDirection =
         typeof widthName === "string"
             ? WIDTH_AXES[widthName]
@@ -127,7 +133,7 @@ world.afterEvents.playerBreakBlock.subscribe(({ block, brokenBlockPermutation })
             const target = dimension.getBlock(position);
             if (
                 target?.typeId === blockTypeId &&
-                target.permutation.getState(PART_STATE) === position.part &&
+                target.permutation.getState(partState) === position.part &&
                 target.permutation.getState(FACING_STATE) === facing
             ) {
                 target.setType("minecraft:air");

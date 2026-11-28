@@ -1,0 +1,25 @@
+{
+    "format_version": "1.8.0",
+    "animations": {
+        "animation.crack_o_meter.first_person_hold": {
+            "loop": true,
+            "bones": {
+                "root_item": {
+                    "rotation": [250, 238, 40],
+                    "position": [0, 17, 2],
+                    "scale": 2.0
+                }
+            }
+        },
+        "animation.crack_o_meter.third_person_hold": {
+            "loop": true,
+            "bones": {
+                "root_item": {
+                    "rotation": [-20, 180, 0],
+                    "position": [3, 18, -9],
+                    "scale": 2.0
+                }
+            }
+        }
+    }
+}
