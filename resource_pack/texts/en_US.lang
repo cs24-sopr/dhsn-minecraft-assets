@@ -64,6 +64,8 @@ entity.dhsn:prof_dr_brenner.name=Prof. Dr. Brenner
 item.spawn_egg.entity.dhsn:prof_dr_brenner.name=Prof. Dr. Brenner Egg
 entity.dhsn:professor_tieserg.name=Professor Tieserg
 item.spawn_egg.entity.dhsn:professor_tieserg.name=Professor Tieserg Egg
+entity.dhsn:sabine_graser.name=sabine_graser
+item.spawn_egg.entity.dhsn:sabine_graser.name=Spawn sabine_graser
 
 item.myname:cs_book=Buch Informatik
 item.myname:niia_book=Buch Nachhaltige Ingenieurwissenschaft
