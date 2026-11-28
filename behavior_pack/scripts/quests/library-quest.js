@@ -6,7 +6,6 @@ import { onItemInShelf } from "../events/index.js";
 import { changeShelfContents, DHSN_SHELF_TYPES } from "../events/shelf-contents.js";
 import { addEcts } from "../ects.js";
 import { questlog } from "../questlog.js";
-import { commandSource, parseCoordinates, toVector } from "../util/command-coordinates.js";
 import { takeOverPerPlayerValue } from "../util/storage.js";
 
 // Library quest "Aushilfe in der Bibliothek", played in rounds (see ROUNDS):
@@ -34,10 +33,10 @@ const LIBRARIAN = "dhsn:librarian";
 // The library room. Only shelves inside it count, and leaving it resets a running round.
 // Undefined means "every shelf in the world counts, leaving is not checked", until the library
 // is built in the map and its corners are known.
-// In the finished map the area and the highscore sign are usually set with command blocks instead:
-//   /scriptevent dhsn:library_set library_area <x y z x y z>
-//   /scriptevent dhsn:library_set highscore_sign <x y z>
-// Order of precedence: test setup (dhsn:quest_test_library), then the command block values, then these constants.
+// In the finished map the area and the highscore sign are set in the game with the setup menu instead:
+//   /scriptevent dhsn:library_setup   (compass "Quest-Setup", see quests/library-setup.js)
+// Order of precedence: test setup (dhsn:quest_test_library), then the setup menu, then these constants.
+// Saving in the setup menu removes a saved test setup, so the last saved one always applies.
 // Example: { from: { x: 100, y: 64, z: 40 }, to: { x: 120, y: 70, z: 60 }, dimension: "minecraft:overworld" }
 /** @type {{ from: import("@minecraft/server").Vector3, to: import("@minecraft/server").Vector3, dimension?: string } | undefined} */
 const LIBRARY_AREA = undefined;
@@ -63,6 +62,12 @@ const LEAVE_GRACE_SECONDS = 5;
 
 // Books per study program in the challenge: one per shelf, but at most this many.
 const CHALLENGE_MAX_PER_PROGRAM = 3;
+
+// Books of a normal round: every study program gets a random number from 1 to this (but not more
+// than it has shelves); all of them are shuffled, and at most MAX_BOOKS_PER_ROUND are handed out.
+// Every study program keeps at least one book. See planRoundBooks.
+const MAX_BOOKS_PER_PROGRAM = 5;
+const MAX_BOOKS_PER_ROUND = 14;
 
 // How many times the highscore sign shows.
 const HIGHSCORE_SIZE = 3;
@@ -161,15 +166,6 @@ const STATE_COMMAND = "dhsn:quest_library_state";
 const HIGHSCORES_RESET_COMMAND = "dhsn:library_highscores_reset";
 const HIGHSCORES_ADD_COMMAND = "dhsn:library_highscores_add";
 const TEST_CLEAR_COMMAND = "dhsn:quest_test_library_clear";
-const MAP_SET_COMMAND = "dhsn:library_set";
-const MAP_SHOW_COMMAND = "dhsn:library_layout";
-const MAP_CLEAR_COMMAND = "dhsn:library_layout_clear";
-
-// Variables of /scriptevent dhsn:library_set and how many numbers each takes.
-const MAP_VARIABLES = {
-    library_area: { numbers: 6, help: "Bibliothek, zwei gegenüberliegende Ecken (x y z x y z)" },
-    highscore_sign: { numbers: 3, help: "Schild für die Bestenliste der Challenge (x y z)" },
-};
 
 // Prepared for "Operation Erstsemester" (#79): later this checks for the student ID card.
 function canStartQuest(player) {
@@ -264,11 +260,32 @@ function giveItem(player, typeId, amount = 1) {
     if (leftover) player.dimension.spawnItem(leftover, player.location);
 }
 
-/** Our books stack only to 1, so each one is handed out separately. */
-function giveBooks(player, books) {
-    for (const [book, amount] of Object.entries(books)) {
-        for (let i = 0; i < amount; i++) giveItem(player, book);
+/**
+ * Shuffles a list in place (Fisher-Yates) and returns it.
+ * @template T
+ * @param {T[]} list
+ * @param {() => number} [random]
+ */
+export function shuffle(list, random = Math.random) {
+    for (let i = list.length - 1; i > 0; i--) {
+        const j = Math.floor(random() * (i + 1));
+        [list[i], list[j]] = [list[j], list[i]];
     }
+    return list;
+}
+
+/** Book id -> amount, as a shuffled list of single books. */
+function shuffledBooks(books) {
+    const list = [];
+    for (const [book, amount] of Object.entries(books)) {
+        for (let i = 0; i < amount; i++) list.push(book);
+    }
+    return shuffle(list);
+}
+
+/** Our books stack only to 1, so each one is handed out separately, in random order. */
+function giveBooks(player, books) {
+    for (const book of shuffledBooks(books)) giveItem(player, book);
 }
 
 function totalBooks(books) {
@@ -287,7 +304,7 @@ function totalBooks(books) {
  */
 
 /**
- * The library area: the one saved by the test setup, otherwise LIBRARY_AREA.
+ * The library area: the one saved by the test setup, otherwise the one of the setup menu, otherwise LIBRARY_AREA.
  * @returns {Library | undefined}
  */
 function getLibrary() {
@@ -309,45 +326,68 @@ function getHighscoreSign() {
 }
 
 // --------------------------------------------------
-// LIBRARY POSITIONS FROM COMMAND BLOCKS (finished map)
+// LIBRARY POSITIONS FROM THE SETUP MENU (finished map)
 // --------------------------------------------------
 
-/** @returns {Record<string, any>} The values set so far with /scriptevent dhsn:library_set. */
+/**
+ * The values saved by the setup menu (quests/library-setup.js) in the world:
+ * { dimension, library_area: { from, to }, library_area_corners: { a, b }, highscore_sign: { x, y, z } }.
+ * @returns {Record<string, any>}
+ */
 function readMapValues() {
     const values = readJsonProperty(world, MAP_LAYOUT_PROPERTY);
     return values && typeof values === "object" ? values : {};
 }
 
-/**
- * Handles /scriptevent dhsn:library_set <variable> <coordinates>.
- * @returns {string} Feedback for the chat.
- */
-function setMapVariable(message, origin, dimensionId) {
-    const [name, ...tokens] = message.trim().split(/\s+/);
-    const variable = MAP_VARIABLES[name];
-    if (!variable) return `Unbekannte Variable „${name ?? ""}“. Möglich: ${Object.keys(MAP_VARIABLES).join(", ")}`;
-    if (tokens.length !== variable.numbers) return `${name} braucht ${variable.numbers} Zahlen: ${variable.help}`;
-
-    const numbers = parseCoordinates(tokens, origin);
-    if (!numbers) return `${name}: Koordinaten nicht lesbar. Erlaubt sind Zahlen und ~ / ~5 (relativ zum Befehlsblock).`;
-
-    const values = readMapValues();
-    values[name] = name === "library_area" ? { from: toVector(numbers, 0), to: toVector(numbers, 3) } : toVector(numbers, 0);
-    values.dimension = dimensionId;
-    world.setDynamicProperty(MAP_LAYOUT_PROPERTY, JSON.stringify(values));
-    if (name === "highscore_sign") updateHighscoreSign();
-
-    const missing = Object.keys(MAP_VARIABLES).filter((key) => !(key in values));
-    return `Bibliothek: ${name} = ${numbers.join(" ")}. ${missing.length === 0 ? "Alle Positionen gesetzt." : `Es fehlt noch: ${missing.join(", ")}`}`;
+/** @returns {Record<string, any>} A copy of the values saved by the setup menu. */
+export function getLibraryMapValues() {
+    return readMapValues();
 }
 
-function describeMapVariables() {
-    const values = readMapValues();
-    const lines = Object.keys(MAP_VARIABLES).map((name) => `${name}: ${name in values ? JSON.stringify(values[name]) : "fehlt"}`);
-    if (readJsonProperty(world, TEST_AREA_PROPERTY)) {
-        lines.push("Achtung: Ein Test-Bereich ist gespeichert und hat Vorrang (/scriptevent dhsn:quest_test_library_clear).");
+/**
+ * Saves values of the setup menu (merged into the saved ones; undefined deletes a value). A saved test setup
+ * is removed, so the menu values apply. The highscore sign is rewritten.
+ * @param {Record<string, any>} changes
+ */
+export function setLibraryMapValues(changes) {
+    const values = { ...readMapValues(), ...changes };
+    for (const key of Object.keys(values)) if (values[key] === undefined) delete values[key];
+    world.setDynamicProperty(MAP_LAYOUT_PROPERTY, Object.keys(values).length > 0 ? JSON.stringify(values) : undefined);
+    clearLibraryTestSetup();
+    updateHighscoreSign();
+}
+
+/** Deletes all values of the setup menu. */
+export function clearLibraryMapValues() {
+    world.setDynamicProperty(MAP_LAYOUT_PROPERTY, undefined);
+}
+
+/** @returns {string | undefined} Where the active library area comes from, for the setup menu. */
+export function getLibraryLayoutSource() {
+    if (readJsonProperty(world, TEST_AREA_PROPERTY)) return "Testaufbau";
+    if (readMapValues().library_area) return "Setup-Menü";
+    return LIBRARY_AREA ? "LIBRARY_AREA im Code" : undefined;
+}
+
+/**
+ * For the setup menu: number of shelves per study program in the active library area, all programs listed.
+ * @returns {{ name: string, shelves: number }[] | undefined} undefined without library area.
+ */
+export function getShelfCountsPerProgram() {
+    if (!getLibrary()) return undefined;
+    const counts = countShelves();
+    return PROGRAMS.map((program) => ({ name: program.name, shelves: counts[program.book] ?? 0 }));
+}
+
+/** @returns {number} Number of librarians in the active library area (0 without area). */
+export function countLibrariansInLibrary() {
+    const library = getLibrary();
+    if (!library) return 0;
+    try {
+        return world.getDimension(library.dimension).getEntities({ type: LIBRARIAN }).filter((entity) => isInArea(library.area, entity.location)).length;
+    } catch {
+        return 0;
     }
-    return lines;
 }
 
 function isInLibrary(library, dimensionId, location) {
@@ -381,14 +421,38 @@ function countShelves() {
     return counts;
 }
 
-/** Normal round: for every program a random number from 1 to its number of shelves. */
-function rollRoundBooks() {
+/**
+ * The books of a normal round:
+ * 1. every study program with shelves gets a random number from 1 to MAX_BOOKS_PER_PROGRAM, but not more than
+ *    it has shelves (only one book fits per shelf and round),
+ * 2. all books go into one shuffled list,
+ * 3. at most MAX_BOOKS_PER_ROUND are handed out. Every study program keeps at least one book: first one book
+ *    of each program is taken, then the list fills up to the limit.
+ * @param {Record<string, number>} shelfCounts Book id -> number of shelves.
+ * @param {() => number} [random]
+ * @returns {Record<string, number>} Book id -> number of books.
+ */
+export function planRoundBooks(shelfCounts, random = Math.random) {
+    /** @type {string[]} */
+    const firsts = [];
+    /** @type {string[]} */
+    const extras = [];
+    for (const [book, shelves] of Object.entries(shelfCounts)) {
+        if (shelves <= 0) continue;
+        const amount = 1 + Math.floor(random() * Math.min(shelves, MAX_BOOKS_PER_PROGRAM));
+        firsts.push(book);
+        for (let i = 1; i < amount; i++) extras.push(book);
+    }
+    const chosen = [...firsts, ...shuffle(extras, random)].slice(0, Math.max(MAX_BOOKS_PER_ROUND, firsts.length));
+
     /** @type {Record<string, number>} */
     const books = {};
-    for (const [book, shelves] of Object.entries(countShelves())) {
-        if (shelves > 0) books[book] = 1 + Math.floor(Math.random() * shelves);
-    }
+    for (const book of chosen) books[book] = (books[book] ?? 0) + 1;
     return books;
+}
+
+function rollRoundBooks() {
+    return planRoundBooks(countShelves());
 }
 
 /** Challenge: one book per shelf, at most CHALLENGE_MAX_PER_PROGRAM per program, the same for everyone. */
@@ -649,9 +713,7 @@ function returnMissingBooks(player, run) {
 
     // Books lying on the ground would be duplicates of the new ones, so they disappear.
     removeQuestBooksOnGround(player.dimension);
-    for (const [book, count] of missing) {
-        for (let i = 0; i < count; i++) giveItem(player, book);
-    }
+    giveBooks(player, Object.fromEntries(missing));
     return true;
 }
 
@@ -935,7 +997,22 @@ export function setLibraryTestSetup(area, sign) {
     updateHighscoreSign();
 }
 
-function clearLibraryTestSetup() {
+/**
+ * Resets the quest progress (also used by the setup menu): the books of a running round or challenge are
+ * taken away and out of the shelves.
+ * @param {import("@minecraft/server").Player} player
+ */
+export function resetLibraryQuest(player) {
+    const state = readState(player);
+    resetRun(player, state);
+    cancelCountdown(player, false);
+    writeState(player, undefined);
+    updateQuestlog(player, undefined);
+    chat(player, TEXTS.reset);
+}
+
+/** Removes the library area and sign saved by the test setup, so the setup menu values (or the constants) apply. */
+export function clearLibraryTestSetup() {
     world.setDynamicProperty(TEST_AREA_PROPERTY, undefined);
     world.setDynamicProperty(TEST_SIGN_PROPERTY, undefined);
 }
@@ -998,45 +1075,15 @@ function describeState(state) {
     return lines;
 }
 
-// Setting up the finished map: works from command blocks (no player needed). Feedback goes to the
-// chat of everyone in the world, so it is visible when the command block is triggered.
-system.afterEvents.scriptEventReceive.subscribe((event) => {
-    const { id, message } = event;
-    if (![MAP_SET_COMMAND, MAP_SHOW_COMMAND, MAP_CLEAR_COMMAND].includes(id)) return;
-
-    const { origin, dimensionId } = commandSource(event);
-    /** @type {string[]} */
-    let lines;
-    switch (id) {
-        case MAP_SET_COMMAND:
-            lines = [setMapVariable(message, origin, dimensionId)];
-            break;
-        case MAP_SHOW_COMMAND:
-            lines = describeMapVariables();
-            break;
-        default:
-            world.setDynamicProperty(MAP_LAYOUT_PROPERTY, undefined);
-            lines = ["Bibliothek: alle Positionen der Map gelöscht."];
-    }
-    for (const line of lines) world.sendMessage(`§e${line}`);
-});
-
 system.afterEvents.scriptEventReceive.subscribe(({ id, message, sourceEntity }) => {
     const commands = [RESET_COMMAND, STATE_COMMAND, HIGHSCORES_RESET_COMMAND, HIGHSCORES_ADD_COMMAND, TEST_CLEAR_COMMAND];
     if (!commands.includes(id) || sourceEntity?.typeId !== "minecraft:player") return;
 
     const player = /** @type {import("@minecraft/server").Player} */ (sourceEntity);
     switch (id) {
-        case RESET_COMMAND: {
-            const state = readState(player);
-            // Takes the books of a running round or challenge away and out of the shelves.
-            resetRun(player, state);
-            cancelCountdown(player, false);
-            writeState(player, undefined);
-            updateQuestlog(player, undefined);
-            chat(player, TEXTS.reset);
+        case RESET_COMMAND:
+            resetLibraryQuest(player);
             break;
-        }
         case STATE_COMMAND:
             for (const line of describeState(readState(player))) chat(player, line);
             break;
@@ -1059,7 +1106,7 @@ system.afterEvents.scriptEventReceive.subscribe(({ id, message, sourceEntity }) 
         }
         case TEST_CLEAR_COMMAND:
             clearLibraryTestSetup();
-            chat(player, "Test-Bereich und Test-Schild der Bibliothek gelöscht. Es gelten wieder die Werte aus dem Code.");
+            chat(player, "Test-Bereich und Test-Schild der Bibliothek gelöscht. Es gelten wieder die Werte aus dem Setup-Menü oder dem Code.");
             break;
     }
 });

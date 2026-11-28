@@ -41,7 +41,7 @@ Die Map läuft im **Abenteuermodus**, alles muss in **einer Dimension** liegen.
 /scriptevent dhsn:awakening_setup
 ```
 
-Du bekommst einen **Kompass „Quest-Setup“**. Rechtsklick öffnet das Menü. Jeder Klick speichert sofort, ✔ und ✘ zeigen, was fehlt. Zum Laufen das Menü schließen und mit dem Kompass neu öffnen.
+Du bekommst einen **Kompass „Quest-Setup“**. Der Befehl öffnet das Menü direkt. Rechtsklick mit dem Kompass öffnet wieder das Menü, das du zuletzt geöffnet hast. Derselbe Kompass dient auch der [Bibliothek](library-quest-map-guide.md): Mit **Schleichen + Rechtsklick** wählst du die Quest. Mehrere können gleichzeitig einrichten: Jeder Kompass merkt sich sein eigenes Menü, die gesetzten Orte gelten für alle. Jeder Klick speichert sofort, ✔ und ✘ zeigen, was fehlt. Zum Laufen das Menü schließen und mit dem Kompass neu öffnen.
 
 ## 3. Orte setzen
 
@@ -133,6 +133,8 @@ Content-Log einschalten, dort stehen Skriptfehler.
 | Nach dem Teleport wird man zurückgesetzt | Das Insel-Tor liegt im Gebäude- oder Portalbereich. |
 | Professor öffnet das normale NPC-Fenster | Der Tag fehlt: im Menü „Professor“ neu setzen. |
 | Musik fehlt | Welt neu betreten, Test mit `/playsound dhsn.intro_music @s`. |
+| Rechtsklick mit dem Kompass öffnet das falsche Menü | Der Kompass öffnet das zuletzt geöffnete Menü. Schleichen + Rechtsklick und „Das Erwachen“ wählen, oder den Befehl `dhsn:awakening_setup` nutzen. |
+| Gelbe Meldung „Fehler bei „…““ im Chat | Ein Knopf im Menü ist fehlgeschlagen, z. B. weil der Block zu weit weg oder nicht geladen war. Das Menü bleibt offen: näher hingehen und erneut klicken. Kommt die Meldung wieder, sie dem Coding-Team schicken. |
 
 ## 10. Was noch Platzhalter ist
 

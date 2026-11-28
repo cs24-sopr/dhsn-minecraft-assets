@@ -10,7 +10,7 @@ Mit dem Menü trägt man die Orte der echten Map **im Spiel** ein, statt Koordin
 /scriptevent dhsn:awakening_setup
 ```
 
-Das gibt einen Kompass „Quest-Setup“ (Rechtsklick öffnet das Menü) und öffnet das Menü, sobald der Chat zu ist. Jeder Klick speichert sofort und zeigt das Menü wieder. Zum Laufen einfach schließen und mit dem Kompass neu öffnen.
+Das gibt einen Kompass „Quest-Setup“ und öffnet das Menü, sobald der Chat zu ist. Der Kompass gilt für alle Quests mit Setup-Menü: Ein Rechtsklick öffnet das zuletzt geöffnete Menü, Schleichen + Rechtsklick zeigt eine Auswahl („Das Erwachen“, „Bibliothek“, …). Die allgemeinen Teile (Kompass, Formulare, Positionen, Bereiche) liegen in [util/setup-menu.js](../../behavior_pack/scripts/util/setup-menu.js), siehe [setup-menu.md](../setup-menu.md). Jeder Klick speichert sofort und zeigt das Menü wieder. Zum Laufen einfach schließen und mit dem Kompass neu öffnen.
 
 ## Ablauf
 

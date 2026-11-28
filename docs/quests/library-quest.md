@@ -10,7 +10,7 @@ All dialog texts are **placeholders** in German until the story team delivers th
 
 - [Features](#features)
 - [Customization](#customization)
-- [Setting up the finished map (command blocks)](#setting-up-the-finished-map-command-blocks)
+- [Setting up the finished map (setup menu)](#setting-up-the-finished-map-setup-menu)
 - [Testing](#testing)
   - [Resetting the test](#resetting-the-test)
 - [Known limitations](#known-limitations)
@@ -33,7 +33,7 @@ talk to librarian ──► offer round 1 ──accept──► round 1 active �
 ```
 
 1. **Offer.** Right-clicking the librarian (`dhsn:librarian`) opens a dialog that offers the first round. If the player accepts, `playIntro(player)` is called (hook for the camera ride, empty for now), the player receives the round's books and a questlog entry appears.
-2. **Books.** For every study program, the round hands out a **random number of books between 1 and the number of that program's bookshelves in the library**. The numbers are rolled when the round is accepted and stored, so they stay the same after rejoining.
+2. **Books.** Every study program with shelves in the library gets a **random number of books from 1 to 5**, but not more than it has shelves. All of them go into one **shuffled** list, and the librarian hands out **at most 14**; every study program keeps at least one book. The books arrive in random order in the inventory. The numbers are rolled when the round is accepted and stored, so they stay the same after rejoining (see `planRoundBooks`).
 3. **Sorting.** Every book has to go into a bookshelf of its study program inside the library, and **every shelf takes only one book per round**. Books cannot be taken out of the shelves again. Each book sorted writes `Buch einsortiert: Informatik (1/9)` to the chat and updates the questlog.
 4. **Hand in.** Once all books of the round are sorted, the questlog line turns green and "Zurück zur Bibliothekarin" appears. Talking to the librarian shows the round's finish dialog. She then takes the round's books out of the shelves again ("tidies up"), so the shelves are free for the next round.
 5. **Next round.** Right after finishing a round, the librarian offers the next one in the same conversation. Accepting hands out newly rolled books.
@@ -145,15 +145,14 @@ No value means the quest was never started. Progress saved by earlier versions i
 
 | Command | Effect |
 | --- | --- |
-| `/scriptevent dhsn:quest_reset_library` | Resets **your own** quest progress. A running round or challenge is ended first: its books are taken out of your inventory and out of the shelves. |
+| `/scriptevent dhsn:quest_reset_library` | Resets the quest progress (once per world). A running round or challenge is ended first: its books are taken out of your inventory and out of the shelves. |
 | `/scriptevent dhsn:quest_library_state` | Writes your progress to the chat: round, status, books per program (sorted/handed out), the shelf of every sorted book, the library area. |
 | `/scriptevent dhsn:library_highscores_add <name> <seconds>` | Adds a fake time to the highscore list, e.g. `Kai 42,5`. For testing the sign without playing many challenges. |
 | `/scriptevent dhsn:library_highscores_reset` | Empties the highscore list. |
-| `/scriptevent dhsn:quest_test_library` | Test setup: builds a small library, see [Testing](#testing). Starts nothing by itself. |
+| `/scriptevent dhsn:quest_test_library` | Test of the setup menu: gives shelves of all programs (Informatik 6, Controlling 5, Immobilienwirtschaft 4, the others 3), signs, a librarian spawn egg and the setup compass, and removes a saved test area. Starts nothing by itself. |
+| `/scriptevent dhsn:quest_test_library aufbau` | Test setup: builds a small library, see [Testing](#testing). Starts nothing by itself. |
 | `/scriptevent dhsn:quest_test_library_clear` | Removes the library area and sign saved by the test setup. |
-| `/scriptevent dhsn:library_set <variable> <coordinates>` | Sets the library area or the highscore sign of the finished map (command block). |
-| `/scriptevent dhsn:library_layout` | Lists the positions set for the map. |
-| `/scriptevent dhsn:library_layout_clear` | Deletes the positions set for the map. |
+| `/scriptevent dhsn:library_setup` | Gives the compass "Quest-Setup" and opens the setup menu of the library (finished map). |
 
 All need cheats to be enabled.
 
@@ -173,12 +172,12 @@ const LIBRARY_AREA = { from: { x: 100, y: 64, z: 40 }, to: { x: 120, y: 70, z: 6
 - Include some height above the floor, so jumping or standing on a shelf does not count as leaving.
 - The room should have one exit and no shelves directly at its border, so leaving is detected clearly.
 - `undefined` (current value): every own bookshelf in the world counts, every program counts as having **one** shelf (so one book per program), and leaving is not checked. The corners come from the build team.
-- Usually not needed: in the finished map the area is set with a command block (see [Setting up the finished map](#setting-up-the-finished-map-command-blocks)).
-- An area saved by the test setup (`dhsn:library_test_area`) takes precedence over the command block value, which takes precedence over this constant. Remove a test area with `/scriptevent dhsn:quest_test_library_clear`.
+- Usually not needed: in the finished map the area is set with the setup menu (see [Setting up the finished map](#setting-up-the-finished-map-setup-menu)).
+- An area saved by the test setup (`dhsn:library_test_area`) takes precedence over the setup menu value, which takes precedence over this constant. Remove a test area with `/scriptevent dhsn:quest_test_library_clear` (or save anything in the menu).
 
 ### Highscore sign – `HIGHSCORE_SIGN`
 
-Position `{ x, y, z }` of a sign block in the library, placed by the build team. `undefined` (current value): no sign. Usually set with a command block instead (`/scriptevent dhsn:library_set highscore_sign …`). A sign saved by the test setup (`dhsn:library_test_sign`) takes precedence, then the command block value, then this constant. `HIGHSCORE_SIZE` (3) is the number of places.
+Position `{ x, y, z }` of a sign block in the library, placed by the build team. `undefined` (current value): no sign. Usually set with the setup menu instead (button "Highscore-Schild"). A sign saved by the test setup (`dhsn:library_test_sign`) takes precedence, then the menu value, then this constant. `HIGHSCORE_SIZE` (3) is the number of places.
 
 ### Study programs – `PROGRAMS`
 
@@ -224,7 +223,9 @@ Each entry is one round, played in the order of the list. To add a third round, 
 | Constant | Value | Meaning |
 | --- | --- | --- |
 | `LEAVE_GRACE_SECONDS` | `5` | Seconds outside the library before a round is reset. |
-| `CHALLENGE_MAX_PER_PROGRAM` | `3` | Books per program in the challenge: one per shelf, at most this many. |
+| `CHALLENGE_MAX_PER_PROGRAM` | `3` | Books per program in the challenge: one per shelf, at most this many. The challenge has no overall limit, so times stay comparable; its books are handed out shuffled as well. |
+| `MAX_BOOKS_PER_PROGRAM` | `5` | Normal rounds: at most this many books per program (and not more than it has shelves). |
+| `MAX_BOOKS_PER_ROUND` | `14` | Normal rounds: at most this many books in total; every program keeps at least one. |
 | `HIGHSCORE_SIZE` | `3` | Places on the highscore sign. |
 
 ### Common texts – `TEXTS`
@@ -280,7 +281,7 @@ Called before the first round is offered. It returns `true` at the moment. This 
 
 ```js
 function canStartQuest(player) {
-    return countInInventory(player, "dhsn:student_id") > 0; // item id is a placeholder
+    return countInInventory(player, "dhsn:studierendenausweis") > 0; // the student ID from Operation Erstsemester
 }
 ```
 
@@ -310,44 +311,39 @@ The quest takes part in the shelves' decisions through `setShelfInsertCheck` (on
 
 ### Command and property names
 
-`RESET_COMMAND`, `STATE_COMMAND`, `HIGHSCORES_RESET_COMMAND`, `HIGHSCORES_ADD_COMMAND` and `TEST_CLEAR_COMMAND` are the script event ids of the commands. `STATE_PROPERTY` (`dhsn:quest_library`) is the world property of the stored progress; changing it makes the quest start from scratch. `MAP_LAYOUT_PROPERTY` (`dhsn:library_map_layout`) holds the positions set with `dhsn:library_set`. `HIGHSCORE_PROPERTY`, `TEST_AREA_PROPERTY` and `TEST_SIGN_PROPERTY` are the world properties of the highscores and the test setup.
+`RESET_COMMAND`, `STATE_COMMAND`, `HIGHSCORES_RESET_COMMAND`, `HIGHSCORES_ADD_COMMAND` and `TEST_CLEAR_COMMAND` are the script event ids of the commands. `STATE_PROPERTY` (`dhsn:quest_library`) is the world property of the stored progress; changing it makes the quest start from scratch. `MAP_LAYOUT_PROPERTY` (`dhsn:library_map_layout`) holds the positions set with the setup menu. `HIGHSCORE_PROPERTY`, `TEST_AREA_PROPERTY` and `TEST_SIGN_PROPERTY` are the world properties of the highscores and the test setup.
 
-## Setting up the finished map (command blocks)
+## Setting up the finished map (setup menu)
 
-In the finished map, the library area and the highscore sign do not have to be written into the code. They are set **once with command blocks** and saved in the world (`dhsn:library_map_layout`):
-
-```text
-/scriptevent dhsn:library_set <variable> <coordinates>
-```
-
-| Variable | Numbers | Position |
-| --- | --- | --- |
-| `library_area` | x y z x y z | two opposite corners of the library room |
-| `highscore_sign` | x y z | the sign that shows the best times of the challenge (a sign block placed by the builders) |
-
-- **Coordinates** are absolute numbers or relative to the command block with `~` (`~`, `~3`, `~-2`), like in normal Minecraft commands. Minecraft does not resolve `~` inside script event messages; the script does, starting from the command block.
-- **The dimension** is the one of the command block.
-- **Feedback:** the chat says which variable was set and what is still missing, or what was wrong with the input.
-- **Each variable works on its own:** with only `library_area` the quest already uses the library (shelves counted there, leaving resets the round); without `highscore_sign` there is just no sign.
-- **Check:** `/scriptevent dhsn:library_layout` lists the values, `/scriptevent dhsn:library_layout_clear` deletes them.
-- **Order of precedence:** test setup (if saved) → command block values → `LIBRARY_AREA` / `HIGHSCORE_SIGN` in the code. If a test area is still saved in the map, remove it with `/scriptevent dhsn:quest_test_library_clear`.
-- Use **impulse command blocks** (run once), not repeating ones.
-- **Area:** include some height above the floor, so jumping or standing on a shelf does not count as leaving; the room should have one exit and no shelves directly at its border.
-
-Example, command block standing in a corner of the library on floor level:
+In the finished map, the library area and the highscore sign are set **in the game with the setup menu** (compass "Quest-Setup"), like for "Das Erwachen". Nothing has to be written into the code. Step-by-step guide for the map team: [library-quest-map-guide.md](library-quest-map-guide.md) (German).
 
 ```text
-/scriptevent dhsn:library_set library_area ~1 ~-1 ~1 ~20 ~4 ~15
-/scriptevent dhsn:library_set highscore_sign ~3 ~ ~2
+/scriptevent dhsn:library_setup
 ```
+
+Right-clicking the compass reopens the menu the player opened last; sneaking + right-click shows the choice of all quests. If a button fails, the menu stays open and the error is written to the chat in yellow.
+
+| Button | What is saved |
+| --- | --- |
+| Bibliothek: Ecke 1 / Ecke 2 (am Boden) | the blocks the player stands in, at two opposite corners on floor level; the area reaches 1 block below the feet (floor) and 4 blocks above them |
+| Highscore-Schild (ansehen) | the sign the player looks at (only signs are accepted) |
+| Regale prüfen | shows the number of own bookshelves per study program in the area; programs without a shelf are marked |
+| Bibliothekarin prüfen | shows whether a librarian (`dhsn:librarian`) stands in the area |
+| Quest-Stand zurücksetzen | like `/scriptevent dhsn:quest_reset_library` |
+| Alles löschen | deletes area and sign of the menu |
+
+- **Saved in the world** as `dhsn:library_map_layout` (`library_area`, `library_area_corners`, `highscore_sign`, `dimension`); it travels with the map file and survives `/scriptevent dhsn:map_cleanup`.
+- **Only the area is required.** Without a highscore sign there is just no best list.
+- **Order of precedence:** test setup → setup menu → `LIBRARY_AREA` / `HIGHSCORE_SIGN` in the code. Saving anything in the menu removes a saved test setup, so the last saved one always applies. The test setup does not delete the menu values.
+- The menu is built on the shared setup tools [`util/setup-menu.js`](../../behavior_pack/scripts/util/setup-menu.js), see [setup-menu.md](../setup-menu.md) (German). The command block command `dhsn:library_set` of earlier versions was removed. Values it may have saved are not supported: set the corners with the menu.
 
 ## Testing
 
 Test environment: **flat world, adventure mode** (like the map), **cheats on**, DHSN behavior and resource pack active. Turn on the content log (Settings → Creator) to see script errors.
 
-1. Stand on a free spot and run `/scriptevent dhsn:quest_test_library`. It builds a small library (see [test-library.md](../events/test-library.md), German): an oak plank floor (the library area), five rows of shelves (Informatik 4, the others 3, a sign at the end of each row), the librarian and the highscore sign.
+1. Stand on a free spot and run `/scriptevent dhsn:quest_test_library aufbau`. It builds a small library (see [test-library.md](../events/test-library.md), German): an oak plank floor (the library area), five rows of shelves (Informatik 4, the others 3, a sign at the end of each row), the librarian and the highscore sign.
 2. **Adventure mode first:** put any book into its shelf before starting the quest. If the shelf does not react, stop here: the quest cannot work in the map.
-3. Right-click the librarian and accept. You get 1–4 Informatik books and 1–3 of every other program; `/scriptevent dhsn:quest_library_state` shows the numbers. The questlog shows `Runde 1/2` and `Bücher sortiert: 0/<total>`.
+3. Right-click the librarian and accept. You get 1–4 Informatik books and 1–3 of every other program (at most 14 in total), in mixed order in the inventory; `/scriptevent dhsn:quest_library_state` shows the numbers. The questlog shows `Runde 1/2` and `Bücher sortiert: 0/<total>`.
 4. Put a book into the shelf of another program: refused, the librarian names the shelf. Put two books of the same program into the same shelf: the second is refused.
 5. Right-click a shelf with an empty hand: nothing comes out.
    Drop two books (`Q`) and talk to her: she hands them out again, and the two books on the ground disappear.
@@ -376,10 +372,10 @@ Counter-checks:
 
 | Command | Resets | Does not reset |
 | --- | --- | --- |
-| `/scriptevent dhsn:quest_reset_library` | Your own quest progress; the books of a running round or challenge (inventory and shelves). | Highscores, library, librarian |
+| `/scriptevent dhsn:quest_reset_library` | The quest progress (once per world); the books of a running round or challenge (inventory and shelves). | Highscores, library, librarian |
 | `/scriptevent dhsn:library_highscores_reset` | The highscore list and sign. | Quest progress |
-| `/scriptevent dhsn:quest_test_library` | The library: clears the area above the floor, lays the floor, rebuilds shelves, signs, librarian and highscore sign at your position, empties the shelf counters, saves the area. | **Your quest progress** and the highscores |
-| `/scriptevent dhsn:quest_test_library_clear` | The saved test area and sign; afterwards `LIBRARY_AREA` and `HIGHSCORE_SIGN` from the code apply. | The blocks in the world |
+| `/scriptevent dhsn:quest_test_library aufbau` | The library: clears the area above the floor, lays the floor, rebuilds shelves, signs, librarian and highscore sign at your position, empties the shelf counters, saves the area. | **Your quest progress** and the highscores |
+| `/scriptevent dhsn:quest_test_library_clear` | The saved test area and sign; afterwards the setup menu values apply, otherwise `LIBRARY_AREA` and `HIGHSCORE_SIGN` from the code. | The blocks in the world |
 
 Complete restart, in this order:
 
@@ -387,7 +383,7 @@ Complete restart, in this order:
 /clear
 /scriptevent dhsn:quest_reset_library
 /scriptevent dhsn:library_highscores_reset
-/scriptevent dhsn:quest_test_library
+/scriptevent dhsn:quest_test_library aufbau
 ```
 
 `/clear` removes books and emeralds from the inventory. It is optional but keeps the test clear.
@@ -419,4 +415,4 @@ If you moved between two runs, the old floor and shelves stay where they were. T
 | Test setup | `setLibraryTestSetup(area, sign)` | Saves area and sign as world dynamic properties. |
 | Questlog | `behavior_pack/scripts/questlog.js` | One entry per player, `order: 2`. |
 | Progress | World dynamic property `dhsn:quest_library` (once per world) | JSON, see [Progress storage](#progress-storage). Older per-player progress is moved over when read (`takeOverPerPlayerValue` in `util/storage.js`). |
-| Map positions | World dynamic property `dhsn:library_map_layout` | Set with `/scriptevent dhsn:library_set`; coordinates parsed by `util/command-coordinates.js`. |
+| Map positions | World dynamic property `dhsn:library_map_layout` | Set with the setup menu (`quests/library-setup.js`, shared tools in `util/setup-menu.js`); saved via `setLibraryMapValues`. |

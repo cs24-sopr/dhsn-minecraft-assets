@@ -8,7 +8,7 @@ Alles, was das Add-on sich merkt, liegt **in der Welt (Map)** als World-Dynamic-
 
 Das Spiel ist **Einzelspieler**. Quest-Fortschritt wird deshalb **einmal pro Welt** gespeichert, ohne Spieler-ID im Schlüssel, z. B. `dhsn:quest_library`. So macht es auch Operation Erstsemester (`dhsn:operation_freshman_…`).
 
-Frühere Versionen speicherten pro Spieler (`dhsn:quest_library:<Spieler-ID>`). `takeOverPerPlayerValue(key)` übernimmt solche Werte beim ersten Lesen unter den neuen Schlüssel und löscht die alten.
+Frühere Versionen speicherten pro Spieler (`dhsn:quest_library:<Spieler-ID>`). `takeOverPerPlayerValue(key)` übernimmt solche Werte beim ersten Lesen unter den neuen Schlüssel und löscht die alten. Schlägt das Schreiben fehl, versucht es der nächste Lesezugriff erneut. Werte, die zur Map gehören, aber nicht auf `_map_layout` enden, meldet eine Quest mit `keepOnCleanup(key)` an, damit `dhsn:map_cleanup` sie behält.
 
 ```js
 import { takeOverPerPlayerValue } from "../util/storage.js";
@@ -23,16 +23,18 @@ const raw = takeOverPerPlayerValue("dhsn:quest_meine_quest"); // alter Wert wird
 | Quest-Fortschritt | `dhsn:quest_library`, `dhsn:ects` | gelöscht |
 | Zustand der Map-Welt | `dhsn:library_highscores`, `dhsn:shelf_contents:…` | gelöscht |
 | Testaufbauten | `dhsn:library_test_area`, `dhsn:library_test_sign` | gelöscht |
-| Einstellungen der fertigen Map | `dhsn:library_map_layout` (per Befehlsblock gesetzt) | **bleibt** |
+| Einstellungen der fertigen Map | `dhsn:library_map_layout` (mit dem Setup-Menü gesetzt, `/scriptevent dhsn:library_setup`) | **bleibt** |
 
-Weitere Quests ergänzen hier ihre Schlüssel (ECTS, Schaltalgebra, …).
+Weitere Quests ergänzen hier ihre Schlüssel (ECTS, Schaltalgebra, …). Orte der fertigen Map setzt man am einfachsten mit einem Setup-Menü (Kompass „Quest-Setup“, siehe [setup-menu.md](setup-menu.md)).
+
+**Einzige Ausnahme, am Spieler gespeichert:** `dhsn:setup_menu_last`, welches Setup-Menü der Kompass dieses Spielers zuletzt geöffnet hat. So können mehrere Spieler gleichzeitig verschiedene Quests einrichten. Die Orte selbst liegen weiter in der Welt. `dhsn:progress` und `dhsn:map_cleanup` sehen diesen Wert nicht.
 
 ## Befehle
 
 | Befehl | Wirkung |
 | --- | --- |
 | `/scriptevent dhsn:progress` | Listet alles, was in dieser Welt gespeichert ist. Regal-Zähler werden nur gezählt. |
-| `/scriptevent dhsn:map_cleanup confirm` | Löscht **allen Fortschritt und alle Testdaten** dieser Welt. Nur die Map-Einstellungen (`…_map_layout`) bleiben. Ohne `confirm` passiert nichts, es kommt nur eine Erklärung. |
+| `/scriptevent dhsn:map_cleanup confirm` | Löscht **allen Fortschritt und alle Testdaten** dieser Welt. Nur die Map-Einstellungen (`…_map_layout` und per `keepOnCleanup` angemeldete Werte) bleiben. Ohne `confirm` passiert nichts, es kommt nur eine Erklärung. |
 
 ### Vor dem Ausliefern der Map
 
@@ -41,10 +43,10 @@ Wer in der Map-Welt testet, hinterlässt dort Fortschritt, Bestzeiten, Regal-Zä
 1. `/scriptevent dhsn:progress`: prüfen, was gespeichert ist.
 2. `/scriptevent dhsn:map_cleanup confirm`
 3. Welt verlassen und neu betreten, damit Questlog und Anzeigen frisch starten.
-4. `/scriptevent dhsn:progress`: Es sollten nur noch die `…_map_layout`-Werte übrig sein.
+4. `/scriptevent dhsn:progress`: Es sollten nur noch die Map-Einstellungen übrig sein (`…_map_layout` und per `keepOnCleanup` angemeldete Werte).
 
 Gebaute Blöcke (z. B. Testaufbauten in der Welt) entfernt der Befehl nicht.
 
 ## Koordinaten in Befehlen
 
-Befehle für die fertige Map (z. B. `/scriptevent dhsn:library_set`) nehmen Koordinaten wie normale Minecraft-Befehle: absolut oder mit `~` relativ zum Befehlsblock. Minecraft löst `~` in `/scriptevent`-Nachrichten nicht selbst auf; das übernimmt `parseCoordinates` aus `util/command-coordinates.js`.
+Script-Event-Befehle, die Koordinaten im Befehl erwarten (z. B. aus einem Befehlsblock), nehmen Koordinaten wie normale Minecraft-Befehle: absolut oder mit `~` relativ zum Befehlsblock. Minecraft löst `~` in `/scriptevent`-Nachrichten nicht selbst auf; das übernimmt `parseCoordinates` aus `util/command-coordinates.js`.
